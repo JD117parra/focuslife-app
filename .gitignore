@@ -8,7 +8,8 @@
 .env.development
 .env.production
 .env.test
-.env.*
+# Allow .env.example (template file)
+!.env.example
 
 # Dependencies
 node_modules/

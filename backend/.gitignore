@@ -15,7 +15,8 @@ yarn-error.log*
 .env.development
 .env.production
 .env.test
-.env.*
+# Allow .env.example (template file)
+!.env.example
 
 # Prisma
 /src/generated/prisma
