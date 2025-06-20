@@ -17,6 +17,11 @@ interface TaskStats {
     COMPLETED?: number
     IN_PROGRESS?: number
   }
+  byDate?: {
+    today?: number
+    overdue?: number
+    noDate?: number
+  }
 }
 
 interface HabitStats {
@@ -137,10 +142,10 @@ const loadFinanceStats = async () => {
       </div>
 
       {/* Dashboard Content */}
-      <div className="container mx-auto px-4 py-12">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">¿Qué quieres gestionar hoy?</h2>
-          <p className="text-gray-600 text-lg">Elige una sección para comenzar</p>
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">¿Qué quieres gestionar hoy?</h2>
+          <p className="text-gray-600">Elige una sección para comenzar</p>
         </div>
 
         {/* Navigation Cards */}
@@ -257,58 +262,161 @@ const loadFinanceStats = async () => {
           </div>
         </div>
 
-        {/* Quick Stats (opcional - solo números) */}
-        <div className="mt-16 text-center">
-  <h3 className="text-lg font-semibold text-gray-700 mb-6">Resumen rápido</h3>
-  <div className="grid grid-cols-3 gap-8 max-w-2xl mx-auto">
-    {/* Tareas */}
-    <div style={{
-      background: 'rgba(255, 255, 255, 0.75)',
-      backdropFilter: 'blur(10px)',
-      border: '1px solid rgba(255, 255, 255, 0.3)',
-      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
-      borderRadius: '12px',
-      padding: '1rem'
-    }}>
-      <div className="text-2xl font-bold text-blue-600">
-        {statsLoading ? '...' : (taskStats?.byStatus?.PENDING || 0)}
-      </div>
-      <div className="text-sm text-gray-600">Tareas pendientes</div>
-    </div>
-    
-    {/* Hábitos */}
-    <div style={{
-      background: 'rgba(255, 255, 255, 0.75)',
-      backdropFilter: 'blur(10px)',
-      border: '1px solid rgba(255, 255, 255, 0.3)',
-      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
-      borderRadius: '12px',
-      padding: '1rem'
-    }}>
-      <div className="text-2xl font-bold text-green-600">
-        {statsLoading ? '...' : `${habitStats?.todayCompleted || 0}/${habitStats?.active || 0}`}
-      </div>
-      <div className="text-sm text-gray-600">Hábitos hoy</div>
-    </div>
-    
-    {/* Finanzas */}
-    <div style={{
-      background: 'rgba(255, 255, 255, 0.75)',
-      backdropFilter: 'blur(10px)',
-      border: '1px solid rgba(255, 255, 255, 0.3)',
-      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
-      borderRadius: '12px',
-      padding: '1rem'
-    }}>
-      <div className={`text-2xl font-bold ${
-        (financeStats?.balance || 0) >= 0 ? 'text-green-600' : 'text-red-600'
-      }`}>
-        {statsLoading ? '...' : `${Math.abs(financeStats?.balance || 0).toLocaleString()}`}
-      </div>
-      <div className="text-sm text-gray-600">Balance mensual</div>
-    </div>
-  </div>
-    </div>
+        {/* Widget de Resumen General */}
+        <div className="bg-white/90 backdrop-blur-md shadow-2xl ring-1 ring-white/10 p-6 rounded-lg mt-12">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">📊 Resumen General</h2>
+              <p className="text-gray-600">Tu productividad de un vistazo</p>
+            </div>
+            <div className="text-sm text-gray-500">
+              📅 {new Date().toLocaleDateString('es-ES', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
+            </div>
+          </div>
+
+          {statsLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="bg-gray-200 rounded-lg p-4">
+                    <div className="h-4 bg-gray-300 rounded mb-2"></div>
+                    <div className="h-8 bg-gray-300 rounded mb-2"></div>
+                    <div className="h-3 bg-gray-300 rounded"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Widget de Tareas */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="mb-3">
+                  <h3 className="font-semibold text-blue-900 flex items-center">
+                    📋 Tareas
+                  </h3>
+                </div>
+                
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-700">Pendientes</span>
+                    <span className="font-bold text-blue-600 text-lg">
+                      {taskStats?.byStatus?.PENDING || 0}
+                    </span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-700">Completadas</span>
+                    <span className="font-medium text-green-600">
+                      {taskStats?.byStatus?.COMPLETED || 0}
+                    </span>
+                  </div>
+                  
+                  {taskStats?.byDate && (
+                    <>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-700">Para hoy</span>
+                        <span className="font-medium text-blue-500">
+                          {taskStats.byDate.today || 0}
+                        </span>
+                      </div>
+                      
+                      {taskStats.byDate.overdue > 0 && (
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-red-700 flex items-center">
+                            ⚠️ Vencidas
+                          </span>
+                          <span className="font-bold text-red-600">
+                            {taskStats.byDate.overdue}
+                          </span>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Widget de Hábitos */}
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div className="mb-3">
+                  <h3 className="font-semibold text-green-900 flex items-center">
+                    🎯 Hábitos
+                  </h3>
+                </div>
+                
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-700">Total activos</span>
+                    <span className="font-bold text-green-600 text-lg">
+                      {habitStats?.active || 0}
+                    </span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-700">Completados hoy</span>
+                    <span className="font-medium text-green-500">
+                      {habitStats?.todayCompleted || 0}
+                    </span>
+                  </div>
+                  
+                  {habitStats && habitStats.dailyTarget > 0 && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-700">Meta diaria</span>
+                      <span className="font-medium text-green-600">
+                        {habitStats.todayCompleted}/{habitStats.dailyTarget}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Widget de Finanzas */}
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                <div className="mb-3">
+                  <h3 className="font-semibold text-purple-900 flex items-center">
+                    💰 Finanzas
+                  </h3>
+                </div>
+                
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-700">Balance</span>
+                    <span className={`font-bold text-lg ${
+                      (financeStats?.balance || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      ${(financeStats?.balance || 0).toLocaleString()}
+                    </span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-700">Ingresos</span>
+                    <span className="font-medium text-green-600">
+                      +${(financeStats?.totalIncome || 0).toLocaleString()}
+                    </span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-700">Gastos</span>
+                    <span className="font-medium text-red-600">
+                      -${(financeStats?.totalExpenses || 0).toLocaleString()}
+                    </span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-700">Transacciones</span>
+                    <span className="font-medium text-purple-600">
+                      {financeStats?.totalTransactions || 0}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

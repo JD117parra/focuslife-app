@@ -5,6 +5,63 @@ import { authenticateToken, AuthenticatedRequest } from '../middleware/auth';
 
 const router = Router();
 
+// LOGGING MEJORADO PARA DEBUG
+router.use((req, res, next) => {
+  console.log('🎯 HABITS ROUTER:', req.method, req.originalUrl, req.body ? 'Body:' : '', req.body);
+  next();
+});
+
+// DELETE /api/habits/:habitId/unmark - Desmarcar hábito para una fecha específica (más intuitivo)
+router.delete('/:habitId/unmark', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  console.log('🎯 UNMARK endpoint reached for habit:', req.params.habitId, 'date:', req.body.date);
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: 'User not authenticated' });
+      return;
+    }
+
+    const { habitId } = req.params;
+    const { date } = req.body;
+
+    if (!date) {
+      res.status(400).json({ message: 'Date is required' });
+      return;
+    }
+
+    await HabitService.unmarkHabitForDate(habitId, req.user.id, date);
+
+    res.json({
+      message: 'Habit unmarked successfully for the specified date'
+    });
+  } catch (error) {
+    console.error('Unmark habit error:', error);
+    const message = error instanceof Error ? error.message : 'Failed to unmark habit';
+    res.status(400).json({ message });
+  }
+});
+
+// DELETE /api/habits/entries/:entryId - Eliminar entrada específica de hábito por ID (método alternativo)
+router.delete('/entries/:entryId', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  console.log('🟢 DELETE ENTRY endpoint reached:', req.params.entryId);
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: 'User not authenticated' });
+      return;
+    }
+
+    const { entryId } = req.params;
+    await HabitService.deleteHabitEntry(entryId, req.user.id);
+
+    res.json({
+      message: 'Habit entry deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete habit entry error:', error);
+    const message = error instanceof Error ? error.message : 'Failed to delete habit entry';
+    res.status(400).json({ message });
+  }
+});
+
 // GET /api/habits - Obtener todos los hábitos del usuario
 router.get('/', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
@@ -42,27 +99,6 @@ router.get('/stats', authenticateToken, async (req: AuthenticatedRequest, res: R
   } catch (error) {
     console.error('Get habit stats error:', error);
     res.status(500).json({ message: 'Failed to retrieve habit stats' });
-  }
-});
-
-// DELETE /api/habits/entries/:entryId - Eliminar entrada específica de hábito
-router.delete('/entries/:entryId', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  try {
-    if (!req.user) {
-      res.status(401).json({ message: 'User not authenticated' });
-      return;
-    }
-
-    const { entryId } = req.params;
-    await HabitService.deleteHabitEntry(entryId, req.user.id);
-
-    res.json({
-      message: 'Habit entry deleted successfully'
-    });
-  } catch (error) {
-    console.error('Delete habit entry error:', error);
-    const message = error instanceof Error ? error.message : 'Failed to delete habit entry';
-    res.status(400).json({ message });
   }
 });
 
@@ -189,6 +225,7 @@ router.delete('/:id', authenticateToken, async (req: AuthenticatedRequest, res: 
 
 // POST /api/habits/:id/entries - Registrar entrada de hábito (marcar como hecho)
 router.post('/:id/entries', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  console.log('✅ MARK HABIT endpoint reached for habit:', req.params.id, 'date:', req.body.date);
   try {
     if (!req.user) {
       res.status(401).json({ message: 'User not authenticated' });
@@ -218,6 +255,7 @@ router.post('/:id/entries', authenticateToken, async (req: AuthenticatedRequest,
 
 // GET /api/habits/:id/entries - Obtener entradas de un hábito
 router.get('/:id/entries', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  console.log('📋 GET ENTRIES endpoint reached for habit:', req.params.id);
   try {
     if (!req.user) {
       res.status(401).json({ message: 'User not authenticated' });

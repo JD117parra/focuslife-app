@@ -45,6 +45,116 @@ router.get('/stats', authenticateToken, async (req: AuthenticatedRequest, res: R
   }
 });
 
+// ===== NUEVOS ENDPOINTS DE FECHAS =====
+
+// GET /api/tasks/today - Obtener tareas de hoy
+router.get('/today', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: 'User not authenticated' });
+      return;
+    }
+
+    const tasks = await TaskService.getTodayTasks(req.user.id);
+
+    res.json({
+      message: 'Today tasks retrieved successfully',
+      data: tasks
+    });
+  } catch (error) {
+    console.error('Get today tasks error:', error);
+    res.status(500).json({ message: 'Failed to retrieve today tasks' });
+  }
+});
+
+// GET /api/tasks/overdue - Obtener tareas vencidas
+router.get('/overdue', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: 'User not authenticated' });
+      return;
+    }
+
+    const tasks = await TaskService.getOverdueTasks(req.user.id);
+
+    res.json({
+      message: 'Overdue tasks retrieved successfully',
+      data: tasks
+    });
+  } catch (error) {
+    console.error('Get overdue tasks error:', error);
+    res.status(500).json({ message: 'Failed to retrieve overdue tasks' });
+  }
+});
+
+// GET /api/tasks/week - Obtener tareas de esta semana
+router.get('/week', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: 'User not authenticated' });
+      return;
+    }
+
+    const tasks = await TaskService.getThisWeekTasks(req.user.id);
+
+    res.json({
+      message: 'This week tasks retrieved successfully',
+      data: tasks
+    });
+  } catch (error) {
+    console.error('Get week tasks error:', error);
+    res.status(500).json({ message: 'Failed to retrieve week tasks' });
+  }
+});
+
+// GET /api/tasks/no-date - Obtener tareas sin fecha
+router.get('/no-date', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: 'User not authenticated' });
+      return;
+    }
+
+    const tasks = await TaskService.getTasksWithoutDate(req.user.id);
+
+    res.json({
+      message: 'Tasks without date retrieved successfully',
+      data: tasks
+    });
+  } catch (error) {
+    console.error('Get no-date tasks error:', error);
+    res.status(500).json({ message: 'Failed to retrieve tasks without date' });
+  }
+});
+
+// GET /api/tasks/date-range - Obtener tareas por rango de fechas
+router.get('/date-range', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: 'User not authenticated' });
+      return;
+    }
+
+    const { start, end } = req.query;
+
+    if (!start || !end) {
+      res.status(400).json({ message: 'Start and end dates are required. Use format: ?start=YYYY-MM-DD&end=YYYY-MM-DD' });
+      return;
+    }
+
+    const tasks = await TaskService.getTasksByDateRange(req.user.id, start as string, end as string);
+
+    res.json({
+      message: 'Tasks in date range retrieved successfully',
+      data: tasks
+    });
+  } catch (error) {
+    console.error('Get date range tasks error:', error);
+    const message = error instanceof Error ? error.message : 'Failed to retrieve tasks in date range';
+    res.status(400).json({ message });
+  }
+});
+
 // GET /api/tasks/:id - Obtener una tarea específica
 router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {

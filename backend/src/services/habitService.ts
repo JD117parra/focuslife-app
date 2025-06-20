@@ -203,7 +203,7 @@ export class HabitService {
     };
   }
 
-  // Eliminar entrada específica de hábito
+  // Eliminar entrada específica de hábito por ID
   static async deleteHabitEntry(entryId: string, userId: string): Promise<boolean> {
     // Verificar que la entrada existe y pertenece al usuario
     const existingEntry = await prisma.habitEntry.findFirst({
@@ -222,6 +222,53 @@ export class HabitService {
       where: { id: entryId }
     });
 
+    return true;
+  }
+
+  // Desmarcar hábito para una fecha específica (más intuitivo para el frontend)
+  static async unmarkHabitForDate(habitId: string, userId: string, date: string): Promise<boolean> {
+    console.log(`🔍 Attempting to unmark habit ${habitId} for user ${userId} on date ${date}`);
+    
+    // Verificar que el hábito existe y pertenece al usuario
+    const habit = await prisma.habit.findFirst({
+      where: { id: habitId, userId }
+    });
+
+    if (!habit) {
+      throw new Error('Habit not found or you do not have permission to modify it');
+    }
+
+    // Normalizar la fecha (solo fecha, sin hora)
+    const targetDate = new Date(date);
+    targetDate.setHours(0, 0, 0, 0);
+    
+    console.log(`🔍 Looking for entry with normalized date: ${targetDate.toISOString()}`);
+
+    // Buscar la entrada específica para esta fecha
+    const existingEntry = await prisma.habitEntry.findFirst({
+      where: {
+        habitId,
+        userId,
+        date: {
+          gte: targetDate,
+          lt: new Date(targetDate.getTime() + 24 * 60 * 60 * 1000) // Siguiente día
+        }
+      }
+    });
+
+    if (!existingEntry) {
+      console.log(`❌ No entry found for habit ${habitId} on date ${date}`);
+      throw new Error('No habit entry found for this date');
+    }
+
+    console.log(`✅ Found entry ${existingEntry.id}, deleting...`);
+    
+    // Eliminar la entrada
+    await prisma.habitEntry.delete({
+      where: { id: existingEntry.id }
+    });
+
+    console.log(`✅ Successfully unmarked habit ${habitId} for date ${date}`);
     return true;
   }
 

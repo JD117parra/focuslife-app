@@ -35,7 +35,7 @@ export interface CreateTaskDto {
 export interface UpdateTaskDto {
   title?: string;
   description?: string;
-  dueDate?: string;
+  dueDate?: string | null; // ISO string o null para remover fecha
   status?: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
   priority?: 'LOW' | 'MEDIUM' | 'HIGH';
   categoryId?: string;
@@ -52,6 +52,28 @@ export interface TaskResponse {
   userId: string;
   createdAt: Date;
   updatedAt: Date;
+  category?: {
+    id: string;
+    name: string;
+    color: string;
+  } | null;
+}
+
+// Nuevos tipos para estadísticas mejoradas
+export interface TaskStatsResponse {
+  total: number;
+  byStatus: Record<string, number>;
+  byDate: {
+    today: number;
+    overdue: number;
+    noDate: number;
+  };
+}
+
+// Tipos para filtros de fechas
+export interface DateRangeQuery {
+  start: string; // YYYY-MM-DD
+  end: string;   // YYYY-MM-DD
 }
 
 // Habit types
