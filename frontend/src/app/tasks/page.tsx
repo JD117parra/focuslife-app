@@ -208,10 +208,10 @@ export default function TasksPage() {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'HIGH': return 'bg-red-100 text-red-800'
-      case 'MEDIUM': return 'bg-yellow-100 text-yellow-800'
-      case 'LOW': return 'bg-green-100 text-green-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'HIGH': return 'bg-red-500/60 text-red-100 backdrop-blur-sm border border-red-400/40'
+      case 'MEDIUM': return 'bg-yellow-500/60 text-yellow-100 backdrop-blur-sm border border-yellow-400/40'
+      case 'LOW': return 'bg-green-500/60 text-green-100 backdrop-blur-sm border border-green-400/40'
+      default: return 'bg-gray-500/60 text-gray-100 backdrop-blur-sm border border-gray-400/40'
     }
   }
 
@@ -252,15 +252,15 @@ export default function TasksPage() {
 
       <div className="container mx-auto px-4 py-8">
         {/* Introducción al servicio */}
-        <div className="bg-blue-50/80 backdrop-blur-sm shadow-xl ring-1 ring-blue-100/20 p-6 rounded-lg mb-8 border border-blue-200">
+        <div className="bg-white/15 backdrop-blur-md shadow-lg border border-white/30 p-6 rounded-lg mb-8">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-blue-900 mb-3">
+            <h2 className="text-2xl font-bold text-white mb-3" style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3)' }}>
               📋 Gestiona tus Tareas de Forma Eficiente
             </h2>
-            <p className="text-blue-800 text-lg mb-4">
+            <p className="text-white/90 text-lg mb-4" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>
               Organiza tu día, establece prioridades y nunca olvides una tarea importante.
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-blue-700">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-white/80" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>
               <div className="flex items-center justify-center space-x-2">
                 <span className="text-lg">📅</span>
                 <span>Fechas de vencimiento</span>
@@ -278,9 +278,9 @@ export default function TasksPage() {
         </div>
 
         {/* Plantillas de tareas comunes */}
-        <div className="bg-white/90 backdrop-blur-md shadow-2xl ring-1 ring-white/10 p-6 rounded-lg mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">✨ Plantillas Rápidas</h2>
-          <p className="text-gray-600 text-xs mb-4">Click para autocompletar el formulario</p>
+        <div className="bg-white/15 backdrop-blur-md shadow-lg border border-white/30 p-6 rounded-lg mb-6">
+          <h2 className="text-lg font-semibold text-white mb-2" style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3)' }}>✨ Plantillas Rápidas</h2>
+          <p className="text-white/80 text-xs mb-4" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>Click para autocompletar el formulario</p>
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             {[
@@ -294,16 +294,16 @@ export default function TasksPage() {
               <div 
                 key={index}
                 onClick={() => useTemplate(template)}
-                className="border border-gray-200 rounded-lg p-3 hover:shadow-md hover:border-blue-300 cursor-pointer transition-all bg-white"
+                className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg p-3 hover:bg-white/30 cursor-pointer transition-all duration-300 hover:scale-105"
               >
                 <div className="text-center">
                   <div className="text-xl mb-1">{template.icon}</div>
-                  <h3 className="font-medium text-gray-900 text-xs mb-1 leading-tight">{template.title}</h3>
+                  <h3 className="font-medium text-white text-xs mb-1 leading-tight" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>{template.title}</h3>
                   <span className={`inline-block px-1.5 py-0.5 text-xs rounded-full font-medium ${
-                    template.priority === 'HIGH' ? 'bg-red-100 text-red-700' :
-                    template.priority === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' :
-                    'bg-green-100 text-green-700'
-                  }`}>
+                    template.priority === 'HIGH' ? 'bg-red-500/60 text-red-100 backdrop-blur-sm border border-red-400/40' :
+                    template.priority === 'MEDIUM' ? 'bg-yellow-500/60 text-yellow-100 backdrop-blur-sm border border-yellow-400/40' :
+                    'bg-green-500/60 text-green-100 backdrop-blur-sm border border-green-400/40'
+                  }`} style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>
                     {template.priority === 'HIGH' ? 'Alta' :
                      template.priority === 'MEDIUM' ? 'Media' : 'Baja'}
                   </span>
@@ -312,18 +312,18 @@ export default function TasksPage() {
             ))}
           </div>
         </div>
-        <div id="task-form" className="bg-white/90 backdrop-blur-md shadow-2xl ring-1 ring-white/10 p-6 rounded-lg mb-8">
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">✏️ Crear Tarea Personalizada</h2>
-          <p className="text-gray-600 text-sm mb-6">¿No encontraste lo que buscabas arriba? Crea tu tarea personalizada con todos los detalles</p>
+        <div id="task-form" className="bg-white/15 backdrop-blur-md shadow-lg border border-white/30 p-6 rounded-lg mb-8">
+          <h2 className="text-lg font-semibold text-white mb-2" style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3)' }}>✏️ Crear Tarea Personalizada</h2>
+          <p className="text-white/80 text-sm mb-6" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>¿No encontraste lo que buscabas arriba? Crea tu tarea personalizada con todos los detalles</p>
           <form onSubmit={createTask} className="space-y-4">
             {/* Primera fila: Título (más ancho) */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Título *</label>
+              <label className="block text-sm font-medium text-white/90 mb-1" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>Título *</label>
               <input
                 type="text"
                 value={newTaskTitle}
                 onChange={(e) => setNewTaskTitle(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full p-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white placeholder-white/60"
                 placeholder="Título de la tarea..."
                 required
               />
@@ -331,11 +331,11 @@ export default function TasksPage() {
             
             {/* Segunda fila: Descripción (más compacta) */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+              <label className="block text-sm font-medium text-white/90 mb-1" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>Descripción</label>
               <textarea
                 value={newTaskDescription}
                 onChange={(e) => setNewTaskDescription(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                className="w-full p-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white placeholder-white/60 resize-none"
                 placeholder="Descripción opcional..."
                 rows={2}
               />
@@ -344,32 +344,33 @@ export default function TasksPage() {
             {/* Tercera fila: Fecha, Prioridad y Botón en una sola fila */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Fecha límite</label>
+                <label className="block text-sm font-medium text-white/90 mb-1" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>Fecha límite</label>
                 <input
                   type="date"
                   value={newTaskDueDate}
                   onChange={(e) => setNewTaskDueDate(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full p-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Prioridad</label>
+                <label className="block text-sm font-medium text-white/90 mb-1" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>Prioridad</label>
                 <select
                   value={newTaskPriority}
                   onChange={(e) => setNewTaskPriority(e.target.value as 'LOW' | 'MEDIUM' | 'HIGH')}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full p-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white"
                 >
-                  <option value="LOW">🟢 Baja</option>
-                  <option value="MEDIUM">🟡 Media</option>
-                  <option value="HIGH">🔴 Alta</option>
+                  <option value="LOW" className="bg-gray-800 text-white">🟢 Baja</option>
+                  <option value="MEDIUM" className="bg-gray-800 text-white">🟡 Media</option>
+                  <option value="HIGH" className="bg-gray-800 text-white">🔴 Alta</option>
                 </select>
               </div>
               
               <div className="md:col-span-2">
                 <button
                   type="submit"
-                  className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                  className="w-full bg-blue-600/60 backdrop-blur-md text-white px-6 py-3 rounded-lg font-bold border border-blue-400/60 hover:bg-blue-700/70 transition-all duration-300 shadow-lg"
+                  style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}
                 >
                   ➕ Crear Tarea
                 </button>
@@ -378,9 +379,9 @@ export default function TasksPage() {
           </form>
         </div>
 
-        <div className="bg-white/90 backdrop-blur-md shadow-2xl ring-1 ring-white/10 rounded-lg">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">
+        <div className="bg-white/15 backdrop-blur-md shadow-lg border border-white/30 rounded-lg">
+          <div className="p-6 border-b border-white/20">
+            <h2 className="text-lg font-semibold text-white" style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3)' }}>
               Mis Tareas ({tasks.length})
             </h2>
           </div>
@@ -389,24 +390,24 @@ export default function TasksPage() {
             {loading ? (
               <div className="text-center py-8">
                 <div className="text-2xl mb-4">⌛</div>
-                <p className="text-gray-600">Cargando tareas...</p>
+                <p className="text-white/90" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>Cargando tareas...</p>
               </div>
             ) : tasks.length === 0 ? (
               <div className="text-center py-8">
                 <div className="text-4xl mb-4">📝</div>
-                <p className="text-gray-600">No tienes tareas aún.</p>
-                <p className="text-gray-500 text-sm">Crea tu primera tarea usando el formulario de arriba.</p>
+                <p className="text-white/90" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>No tienes tareas aún.</p>
+                <p className="text-white/70 text-sm" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>Crea tu primera tarea usando el formulario de arriba.</p>
               </div>
             ) : (
               <div className="space-y-3">
                 {tasks.map((task: Task) => {
                   const dateInfo = formatDate(task.dueDate)
                   return (
-                    <div key={task.id} className={`p-3 rounded-lg border-l-4 bg-gray-50 ${
-                      dateInfo?.isOverdue && task.status !== 'COMPLETED' ? 'border-l-red-500 bg-red-50' :
-                      dateInfo?.isToday ? 'border-l-blue-500 bg-blue-50' :
-                      'border-l-gray-300'
-                    }`}>
+                    <div key={task.id} className={`p-3 rounded-lg border-l-4 bg-white/20 backdrop-blur-sm border border-white/30 ${
+                      dateInfo?.isOverdue && task.status !== 'COMPLETED' ? 'border-l-red-400 shadow-red-500/20' :
+                      dateInfo?.isToday ? 'border-l-blue-400 shadow-blue-500/20' :
+                      'border-l-white/40'
+                    } shadow-lg`}>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3 flex-1 min-w-0">
                           <input 
@@ -419,8 +420,8 @@ export default function TasksPage() {
                             {/* Título y prioridad */}
                             <div className="flex items-center space-x-2 mb-1">
                               <span className={`font-medium truncate ${
-                                task.status === 'COMPLETED' ? 'line-through text-gray-500' : 'text-gray-900'
-                              }`}>
+                                task.status === 'COMPLETED' ? 'line-through text-white/50' : 'text-white'
+                              }`} style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>
                                 {task.title}
                               </span>
                               <span className={`px-1.5 py-0.5 text-xs rounded-full font-medium whitespace-nowrap ${
@@ -433,7 +434,7 @@ export default function TasksPage() {
                             
                             {/* Descripción (si existe) */}
                             {task.description && (
-                              <div className="text-xs text-gray-600 truncate">
+                              <div className="text-xs text-white/70 truncate" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>
                                 {task.description}
                               </div>
                             )}
@@ -446,18 +447,18 @@ export default function TasksPage() {
                           <div className="text-xs text-center min-w-0">
                             {dateInfo ? (
                               <div className={`flex items-center space-x-1 ${
-                                dateInfo.isOverdue && task.status !== 'COMPLETED' ? 'text-red-600 font-medium' :
-                                dateInfo.isToday ? 'text-blue-600 font-medium' :
-                                'text-gray-500'
-                              }`}>
+                                dateInfo.isOverdue && task.status !== 'COMPLETED' ? 'text-red-200 font-medium' :
+                                dateInfo.isToday ? 'text-blue-200 font-medium' :
+                                'text-white/70'
+                              }`} style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>
                                 <span>📅</span>
                                 <span className="whitespace-nowrap">{dateInfo.text}</span>
                                 {dateInfo.isOverdue && task.status !== 'COMPLETED' && (
-                                  <span className="text-red-600">⚠️</span>
+                                  <span className="text-red-200">⚠️</span>
                                 )}
                               </div>
                             ) : (
-                              <div className="text-gray-400 flex items-center space-x-1">
+                              <div className="text-white/60 flex items-center space-x-1" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>
                                 <span>📅</span>
                                 <span className="whitespace-nowrap">Sin fecha</span>
                               </div>
@@ -466,11 +467,11 @@ export default function TasksPage() {
                           
                           {/* Estado */}
                           <div>
-                            <span className={`px-1.5 py-0.5 rounded-full text-xs whitespace-nowrap ${
-                              task.status === 'COMPLETED' ? 'bg-green-100 text-green-700' :
-                              task.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-700' :
-                              'bg-yellow-100 text-yellow-700'
-                            }`}>
+                            <span className={`px-1.5 py-0.5 rounded-full text-xs whitespace-nowrap backdrop-blur-sm border ${
+                              task.status === 'COMPLETED' ? 'bg-green-500/60 text-green-100 border-green-400/40' :
+                              task.status === 'IN_PROGRESS' ? 'bg-blue-500/60 text-blue-100 border-blue-400/40' :
+                              'bg-yellow-500/60 text-yellow-100 border-yellow-400/40'
+                            }`} style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>
                               {task.status === 'COMPLETED' ? 'Completada' :
                                task.status === 'IN_PROGRESS' ? 'En progreso' : 'Pendiente'}
                             </span>
@@ -479,15 +480,17 @@ export default function TasksPage() {
                           {/* Botones */}
                           <div className="flex items-center space-x-1">
                             <button 
-                              className="text-blue-600 hover:bg-blue-100 text-xs px-2 py-1 rounded transition-colors"
+                              className="text-white bg-blue-500/60 backdrop-blur-sm border border-blue-400/40 hover:bg-blue-600/70 text-xs px-2 py-1 rounded transition-all duration-300"
                               onClick={() => editTask(task.id, task.title)}
                               title="Editar tarea"
+                              style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}
                             >
                               Editar
                             </button>
                             <button 
-                              className="text-red-600 hover:bg-red-100 text-xs px-2 py-1 rounded transition-colors"
+                              className="text-white bg-red-500/60 backdrop-blur-sm border border-red-400/40 hover:bg-red-600/70 text-xs px-2 py-1 rounded transition-all duration-300"
                               onClick={() => deleteTask(task.id, task.title)}
+                              style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}
                             >
                               ×
                             </button>

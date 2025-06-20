@@ -490,8 +490,8 @@ export default function HabitsPage() {
       {/* Content */}
       <div className="container mx-auto px-4 py-8">
         {/* Today's Date */}
-        <div className="bg-blue-50/80 backdrop-blur-sm shadow-xl ring-1 ring-blue-100/20 p-4 rounded-lg mb-8 text-center border border-blue-200">
-          <h2 className="text-lg font-semibold text-blue-900">
+        <div className="bg-white/15 backdrop-blur-md shadow-lg border border-white/30 p-4 rounded-lg mb-8 text-center">
+          <h2 className="text-lg font-semibold text-white" style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3)' }}>
             📅 Hoy: {new Date().toLocaleDateString('es-ES', { 
               weekday: 'long', 
               year: 'numeric', 
@@ -499,13 +499,13 @@ export default function HabitsPage() {
               day: 'numeric' 
             })}
           </h2>
-          <p className="text-blue-700 text-sm">Haz click en el botón ➕ para marcar como completado, o en el ✓ para desmarcar</p>
+          <p className="text-white/80 text-sm" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>Haz click en el botón ➕ para marcar como completado, o en el ✓ para desmarcar</p>
         </div>
 
         {/* Predefined Habits Section */}
-        <div className="bg-white/90 backdrop-blur-md shadow-2xl ring-1 ring-white/10 p-6 rounded-lg mb-8">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">🌟 Hábitos Populares</h2>
-          <p className="text-gray-600 text-sm mb-6">Elige de nuestra selección de hábitos más comunes para empezar rápidamente</p>
+        <div className="bg-white/15 backdrop-blur-md shadow-lg border border-white/30 p-6 rounded-lg mb-8">
+          <h2 className="text-lg font-semibold text-white mb-4" style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3)' }}>🌟 Hábitos Populares</h2>
+          <p className="text-white/80 text-sm mb-6" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>Elige de nuestra selección de hábitos más comunes para empezar rápidamente</p>
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
             {predefinedHabits.map((habit, index) => {
@@ -515,21 +515,21 @@ export default function HabitsPage() {
                 <div 
                   key={index} 
                   onClick={() => !isAdded && addPredefinedHabit(habit.name)}
-                  className={`border rounded-lg p-3 transition-all ${
+                  className={`backdrop-blur-sm border rounded-lg p-3 transition-all duration-300 ${
                     isAdded 
-                      ? 'border-green-200 bg-green-50 cursor-not-allowed' 
-                      : 'border-gray-200 bg-white hover:shadow-md hover:border-green-300 cursor-pointer'
+                      ? 'border-green-400/40 bg-green-500/20 cursor-not-allowed' 
+                      : 'border-white/30 bg-white/20 hover:bg-white/30 hover:border-green-400/40 cursor-pointer hover:scale-105'
                   }`}
                 >
                   <div className="text-center">
                     <div className="text-2xl mb-1">{habit.icon}</div>
                     <h3 className={`font-medium mb-1 text-sm ${
-                      isAdded ? 'text-green-700' : 'text-gray-900'
-                    }`}>
+                      isAdded ? 'text-green-100' : 'text-white'
+                    }`} style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>
                       {habit.name}
                     </h3>
                     {isAdded && (
-                      <div className="text-xs text-green-600 font-medium">
+                      <div className="text-xs text-green-200 font-medium" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>
                         ✓ Agregado
                       </div>
                     )}
@@ -541,20 +541,21 @@ export default function HabitsPage() {
         </div>
 
         {/* Create Custom Habit Form */}
-        <div className="bg-white/90 backdrop-blur-md shadow-2xl ring-1 ring-white/10 p-6 rounded-lg mb-8">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">✏️ Crear Hábito Personalizado</h2>
+        <div className="bg-white/15 backdrop-blur-md shadow-lg border border-white/30 p-6 rounded-lg mb-8">
+          <h2 className="text-lg font-semibold text-white mb-4" style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3)' }}>✏️ Crear Hábito Personalizado</h2>
           <form onSubmit={createHabit} className="flex space-x-4">
             <input
               type="text"
               value={newHabitName}
               onChange={(e) => setNewHabitName(e.target.value)}
-              className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              className="flex-1 p-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white placeholder-white/60"
               placeholder="¿No encuentras tu hábito arriba? Escríbelo aquí..."
               required
             />
             <button
               type="submit"
-              className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors"
+              className="bg-green-600/60 backdrop-blur-md text-white px-6 py-3 rounded-lg font-bold border border-green-400/60 hover:bg-green-700/70 transition-all duration-300 shadow-lg"
+              style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}
             >
               Crear Hábito
             </button>
@@ -562,9 +563,9 @@ export default function HabitsPage() {
         </div>
 
         {/* Habits List */}
-        <div className="bg-white/90 backdrop-blur-md shadow-2xl ring-1 ring-white/10 rounded-lg">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">
+        <div className="bg-white/15 backdrop-blur-md shadow-lg border border-white/30 rounded-lg">
+          <div className="p-6 border-b border-white/20">
+            <h2 className="text-lg font-semibold text-white" style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3)' }}>
               Mis Hábitos ({habits.length})
             </h2>
           </div>
@@ -573,8 +574,8 @@ export default function HabitsPage() {
             {habits.length === 0 ? (
               <div className="text-center py-8">
                 <div className="text-4xl mb-4">🌱</div>
-                <p className="text-gray-600">No tienes hábitos configurados aún.</p>
-                <p className="text-gray-500 text-sm">Crea tu primer hábito usando el formulario de arriba.</p>
+                <p className="text-white/90" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>No tienes hábitos configurados aún.</p>
+                <p className="text-white/70 text-sm" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>Crea tu primer hábito usando el formulario de arriba.</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -585,15 +586,15 @@ export default function HabitsPage() {
                   const isCompleted = isCompletedToday(habit.id, habit.target)
                   
                   return (
-                    <div key={habit.id} className="border border-gray-200 rounded-lg p-4">
+                    <div key={habit.id} className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg p-4 shadow-lg">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
                           <button 
-                            className={`w-12 h-12 rounded-full border-2 flex items-center justify-center transition-colors cursor-pointer ${
+                            className={`w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all duration-300 cursor-pointer backdrop-blur-sm ${
                               isCompleted 
-                                ? 'border-green-500 bg-green-500 text-white hover:bg-green-600' 
-                                : 'border-green-500 hover:bg-green-50 text-green-500'
-                            }`}
+                                ? 'border-green-400 bg-green-500/60 text-white hover:bg-green-600/70 shadow-green-500/20' 
+                                : 'border-green-400 bg-white/20 hover:bg-green-500/30 text-green-200 hover:text-white'
+                            } shadow-lg`}
                             onClick={() => toggleHabitComplete(habit.id, habit.target)}
                             title={isCompleted ? 'Click para desmarcar' : 'Click para marcar como completado'}
                           >
@@ -602,9 +603,9 @@ export default function HabitsPage() {
                           <div>
                             <div className="flex items-center space-x-2">
                               <span className="text-lg">{getHabitIcon(habit.name)}</span>
-                              <h3 className="font-semibold text-gray-900">{habit.name}</h3>
+                              <h3 className="font-semibold text-white" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>{habit.name}</h3>
                             </div>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-white/80" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>
                               Frecuencia: {habit.frequency} | Meta: {habit.target} vez(es)
                             </p>
                           </div>
@@ -613,16 +614,16 @@ export default function HabitsPage() {
                         <div className="flex items-center space-x-4">
                           {/* Progress indicator */}
                           <div className="text-center">
-                            <div className="text-sm font-medium text-green-600">Hoy</div>
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-colors ${
+                            <div className="text-sm font-medium text-green-200" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>Hoy</div>
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-colors backdrop-blur-sm border ${
                               isCompleted 
-                                ? 'bg-green-100 text-green-800 border border-green-300' 
-                                : 'bg-gray-100 text-gray-600'
-                            }`}>
+                                ? 'bg-green-500/60 text-green-100 border-green-400/40' 
+                                : 'bg-white/20 text-white/80 border-white/40'
+                            } shadow-lg`} style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>
                               {todayProgress.completed}/{todayProgress.target}
                             </div>
                             {isCompleted && (
-                              <div className="text-xs text-green-600 mt-1 font-medium">
+                              <div className="text-xs text-green-200 mt-1 font-medium" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>
                                 ¡Completado!
                               </div>
                             )}
@@ -630,23 +631,25 @@ export default function HabitsPage() {
                           
                           {/* Streak */}
                           <div className="text-center">
-                            <div className="text-sm font-medium text-orange-600">Racha</div>
-                            <div className="text-lg font-bold text-orange-600">
+                            <div className="text-sm font-medium text-orange-200" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>Racha</div>
+                            <div className="text-lg font-bold text-orange-200" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>
                               {streak > 0 ? `🔥 ${streak}` : '–'}
                             </div>
                           </div>
                           
                           {/* Edit and Delete buttons */}
                           <button 
-                            className="text-blue-600 hover:text-white text-sm px-3 py-1.5 rounded-lg transition-all duration-200 hover:bg-blue-600 hover:shadow-md transform hover:scale-105"
+                            className="text-white bg-blue-500/60 backdrop-blur-sm border border-blue-400/40 hover:bg-blue-600/70 text-sm px-3 py-1.5 rounded-lg transition-all duration-300 hover:shadow-md transform hover:scale-105"
                             onClick={() => editHabit(habit.id, habit.name)}
                             title="Editar hábito"
+                            style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}
                           >
                             Editar
                           </button>
                           <button 
-                            className="text-red-600 hover:text-white text-sm px-3 py-1.5 rounded-lg transition-all duration-200 hover:bg-red-600 hover:shadow-md transform hover:scale-105" 
+                            className="text-white bg-red-500/60 backdrop-blur-sm border border-red-400/40 hover:bg-red-600/70 text-sm px-3 py-1.5 rounded-lg transition-all duration-300 hover:shadow-md transform hover:scale-105" 
                             onClick={() => deleteHabit(habit.id, habit.name)}
+                            style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}
                           >
                             Eliminar
                           </button>
@@ -655,12 +658,12 @@ export default function HabitsPage() {
                       
                       {/* Progress bar */}
                       <div className="mt-4">
-                        <div className="flex justify-between text-xs text-gray-600 mb-1">
+                        <div className="flex justify-between text-xs text-white/80 mb-1" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>
                           <span>Progreso semanal</span>
                           <span>{weeklyProgress.completed}/{weeklyProgress.total} días</span>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div className="bg-green-500 h-2 rounded-full transition-all" style={{width: `${weeklyProgress.percentage}%`}}></div>
+                        <div className="w-full bg-white/20 backdrop-blur-sm rounded-full h-2 border border-white/30">
+                          <div className="bg-green-500/80 h-2 rounded-full transition-all shadow-sm" style={{width: `${weeklyProgress.percentage}%`}}></div>
                         </div>
                       </div>
                     </div>

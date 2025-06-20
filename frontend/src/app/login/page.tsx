@@ -19,8 +19,6 @@ export default function LoginPage() {
       // Guardar token y datos del usuario
       AuthService.setToken(response.data.token)
       
-      alert(`¡Login exitoso! Bienvenido ${response.data.user.name || response.data.user.email}`)
-      
       // Redireccionar al dashboard
       window.location.href = '/dashboard'
       
@@ -32,20 +30,20 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h1 className="text-2xl font-bold text-center text-gray-900 mb-6">
-          Iniciar Sesión
+    <div className="min-h-screen bg-gradient-to-br from-slate-300 via-blue-400 to-indigo-500 flex items-center justify-center px-4 py-8">
+      <div className="bg-white/15 backdrop-blur-md shadow-lg border border-white/30 p-8 rounded-lg w-full max-w-md">
+        <h1 className="text-2xl font-bold text-center text-white mb-6" style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3)' }}>
+          🔐 Iniciar Sesión
         </h1>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Email</label>
+            <label className="block text-sm font-medium text-white/90" style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3)' }}>Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full p-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white placeholder-white/60"
               placeholder="tu@email.com"
               disabled={loading}
               required
@@ -53,12 +51,12 @@ export default function LoginPage() {
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700">Contraseña</label>
+            <label className="block text-sm font-medium text-white/90" style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3)' }}>Contraseña</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full p-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white placeholder-white/60"
               placeholder="••••••••"
               disabled={loading}
               required
@@ -68,24 +66,27 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className={`w-full py-3 rounded-lg font-semibold transition-colors ${
+            className={`w-full py-3 rounded-lg font-bold transition-all duration-300 ${
               loading 
-                ? 'bg-gray-400 cursor-not-allowed' 
-                : 'bg-blue-600 hover:bg-blue-700'
-            } text-white`}
+                ? 'bg-white/10 text-white/50 cursor-not-allowed backdrop-blur-sm border border-white/20' 
+                : 'bg-blue-600/60 backdrop-blur-md text-white border border-blue-400/60 hover:bg-blue-700/70 shadow-lg'
+            }`}
+            style={{
+              textShadow: loading ? 'none' : '0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3)'
+            }}
           >
             {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
           </button>
         </form>
         
         <div className="mt-4 text-center space-y-2">
-          <p className="text-gray-600">
+          <p className="text-white/90">
             ¿No tienes cuenta?{' '}
-            <Link href="/register" className="text-blue-600 hover:text-blue-800">
+            <Link href="/register" className="text-white font-semibold hover:text-white/80">
               Registrarse
             </Link>
           </p>
-          <Link href="/" className="text-blue-600 hover:text-blue-800 block">
+          <Link href="/" className="text-white/80 hover:text-white block">
             ← Volver al inicio
           </Link>
         </div>

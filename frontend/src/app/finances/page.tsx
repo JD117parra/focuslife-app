@@ -195,55 +195,63 @@ export default function FinancesPage() {
       <div className="container mx-auto px-4 py-8">
         {/* Financial Summary */}
         <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-green-50/80 backdrop-blur-sm shadow-xl ring-1 ring-green-100/20 p-6 rounded-lg border border-green-200">
-            <h3 className="text-sm font-medium text-green-800 mb-2">Ingresos</h3>
-            <p className="text-2xl font-bold text-green-600">
+          <div className="bg-green-500/20 backdrop-blur-md shadow-lg border border-green-400/30 p-6 rounded-lg">
+            <h3 className="text-sm font-medium text-green-100 mb-2" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>Ingresos</h3>
+            <p className="text-2xl font-bold text-green-200" style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.5)' }}>
               +${totalIncome.toLocaleString()}
             </p>
           </div>
           
-          <div className="bg-red-50/80 backdrop-blur-sm shadow-xl ring-1 ring-red-100/20 p-6 rounded-lg border border-red-200">
-            <h3 className="text-sm font-medium text-red-800 mb-2">Gastos</h3>
-            <p className="text-2xl font-bold text-red-600">
+          <div className="bg-red-500/20 backdrop-blur-md shadow-lg border border-red-400/30 p-6 rounded-lg">
+            <h3 className="text-sm font-medium text-red-100 mb-2" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>Gastos</h3>
+            <p className="text-2xl font-bold text-red-200" style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.5)' }}>
               -${totalExpenses.toLocaleString()}
             </p>
           </div>
           
-          <div className={`p-6 rounded-lg border backdrop-blur-sm shadow-xl ring-1 ${balance >= 0 ? 'bg-blue-50/80 border-blue-200 ring-blue-100/20' : 'bg-orange-50/80 border-orange-200 ring-orange-100/20'}`}>
-            <h3 className={`text-sm font-medium mb-2 ${balance >= 0 ? 'text-blue-800' : 'text-orange-800'}`}>
+          <div className={`p-6 rounded-lg border backdrop-blur-md shadow-lg ${
+            balance >= 0 
+              ? 'bg-blue-500/20 border-blue-400/30' 
+              : 'bg-orange-500/20 border-orange-400/30'
+          }`}>
+            <h3 className={`text-sm font-medium mb-2 ${
+              balance >= 0 ? 'text-blue-100' : 'text-orange-100'
+            }`} style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>
               Balance
             </h3>
-            <p className={`text-2xl font-bold ${balance >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
+            <p className={`text-2xl font-bold ${
+              balance >= 0 ? 'text-blue-200' : 'text-orange-200'
+            }`} style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.5)' }}>
               ${balance.toLocaleString()}
             </p>
           </div>
         </div>
 
         {/* Create Transaction Form */}
-        <div className="bg-white/90 backdrop-blur-md shadow-2xl ring-1 ring-white/10 p-6 rounded-lg mb-8">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Registrar Nueva Transacción</h2>
+        <div className="bg-white/15 backdrop-blur-md shadow-lg border border-white/30 p-6 rounded-lg mb-8">
+          <h2 className="text-lg font-semibold text-white mb-4" style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3)' }}>Registrar Nueva Transacción</h2>
           <form onSubmit={createTransaction} className="space-y-4">
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                <label className="block text-sm font-medium text-white/90 mb-1" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>Tipo</label>
                 <select
                   value={type}
                   onChange={(e) => setType(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  className="w-full p-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white"
                 >
-                  <option value="EXPENSE">💸 Gasto</option>
-                  <option value="INCOME">💵 Ingreso</option>
+                  <option value="EXPENSE" className="bg-gray-800 text-white">💸 Gasto</option>
+                  <option value="INCOME" className="bg-gray-800 text-white">💵 Ingreso</option>
                 </select>
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Cantidad</label>
+                <label className="block text-sm font-medium text-white/90 mb-1" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>Cantidad</label>
                 <input
                   type="number"
                   step="0.01"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  className="w-full p-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white placeholder-white/60"
                   placeholder="0.00"
                   required
                 />
@@ -251,12 +259,12 @@ export default function FinancesPage() {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+              <label className="block text-sm font-medium text-white/90 mb-1" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>Descripción</label>
               <input
                 type="text"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                className="w-full p-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white placeholder-white/60"
                 placeholder="Ej: Supermercado, Salario, Gasolina..."
                 required
               />
@@ -264,7 +272,8 @@ export default function FinancesPage() {
             
             <button
               type="submit"
-              className="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors"
+              className="w-full bg-purple-600/60 backdrop-blur-md text-white py-3 rounded-lg font-bold border border-purple-400/60 hover:bg-purple-700/70 transition-all duration-300 shadow-lg"
+              style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}
             >
               Registrar Transacción
             </button>
@@ -272,9 +281,9 @@ export default function FinancesPage() {
         </div>
 
         {/* Transactions List */}
-        <div className="bg-white/90 backdrop-blur-md shadow-2xl ring-1 ring-white/10 rounded-lg">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">
+        <div className="bg-white/15 backdrop-blur-md shadow-lg border border-white/30 rounded-lg">
+          <div className="p-6 border-b border-white/20">
+            <h2 className="text-lg font-semibold text-white" style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3)' }}>
               Transacciones Recientes ({transactions.length})
             </h2>
           </div>
@@ -283,24 +292,26 @@ export default function FinancesPage() {
             {transactions.length === 0 ? (
               <div className="text-center py-8">
                 <div className="text-4xl mb-4">💳</div>
-                <p className="text-gray-600">No tienes transacciones registradas aún.</p>
-                <p className="text-gray-500 text-sm">Registra tu primera transacción usando el formulario de arriba.</p>
+                <p className="text-white/90" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>No tienes transacciones registradas aún.</p>
+                <p className="text-white/70 text-sm" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>Registra tu primera transacción usando el formulario de arriba.</p>
               </div>
             ) : (
               <div className="space-y-3">
                 {transactions.map((transaction: any) => (
-                  <div key={transaction.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div key={transaction.id} className="flex items-center justify-between p-4 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg shadow-lg">
                     <div className="flex items-center space-x-4">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        transaction.type === 'INCOME' ? 'bg-green-100' : 'bg-red-100'
-                      }`}>
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-sm border ${
+                        transaction.type === 'INCOME' 
+                          ? 'bg-green-500/60 border-green-400/40' 
+                          : 'bg-red-500/60 border-red-400/40'
+                      } shadow-lg`}>
                         <span className="text-xl">
                           {transaction.type === 'INCOME' ? '💵' : '💸'}
                         </span>
                       </div>
                       <div>
-                        <h3 className="font-medium text-gray-900">{transaction.description}</h3>
-                        <p className="text-sm text-gray-500">
+                        <h3 className="font-medium text-white" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>{transaction.description}</h3>
+                        <p className="text-sm text-white/70" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>
                           {new Date(transaction.date).toLocaleDateString('es-ES')}
                         </p>
                       </div>
@@ -308,20 +319,22 @@ export default function FinancesPage() {
                     
                     <div className="flex items-center space-x-4">
                       <span className={`text-lg font-semibold ${
-                        transaction.type === 'INCOME' ? 'text-green-600' : 'text-red-600'
-                      }`}>
+                        transaction.type === 'INCOME' ? 'text-green-200' : 'text-red-200'
+                      }`} style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>
                         {transaction.type === 'INCOME' ? '+' : '-'}${Math.abs(transaction.amount).toLocaleString()}
                       </span>
                       <button 
-                        className="text-blue-600 hover:text-white text-sm px-3 py-1.5 rounded-lg transition-all duration-200 hover:bg-blue-600 hover:shadow-md transform hover:scale-105"
+                        className="text-white bg-blue-500/60 backdrop-blur-sm border border-blue-400/40 hover:bg-blue-600/70 text-sm px-3 py-1.5 rounded-lg transition-all duration-300 hover:shadow-md transform hover:scale-105"
                         onClick={() => editTransaction(transaction.id, transaction.description)}
                         title="Editar transacción"
+                        style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}
                       >
                         Editar
                       </button>
                       <button 
-                        className="text-red-600 hover:text-white text-sm px-3 py-1.5 rounded-lg transition-all duration-200 hover:bg-red-600 hover:shadow-md transform hover:scale-105"
+                        className="text-white bg-red-500/60 backdrop-blur-sm border border-red-400/40 hover:bg-red-600/70 text-sm px-3 py-1.5 rounded-lg transition-all duration-300 hover:shadow-md transform hover:scale-105"
                         onClick={() => deleteTransaction(transaction.id, transaction.description)}
+                        style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}
                       >
                         Eliminar
                       </button>
