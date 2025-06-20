@@ -155,7 +155,6 @@ export default function HabitsPage() {
       }
       
       setHabitEntries(allEntries)
-      console.log('Loaded habit entries:', allEntries)
     } catch (error) {
       console.error('Error loading habit entries:', error)
     }
@@ -292,9 +291,6 @@ export default function HabitsPage() {
       
       const data = await response.json()
       
-      // DEBUG: Verificar qué devuelve el backend
-      console.log('Backend response for new entry:', data)
-      
       if (response.ok) {
         // Verificar que tenemos un ID válido del backend
         if (!data.data?.id) {
@@ -340,8 +336,6 @@ export default function HabitsPage() {
         entry.habitId === habitId && entry.date === today
       )
       
-      console.log('Today entries found:', todayEntries) // DEBUG
-      
       if (todayEntries.length === 0) {
         toast.warning('No hay entradas que desmarcar')
         return
@@ -349,14 +343,11 @@ export default function HabitsPage() {
       
       // Tomar la entrada más reciente
       const entryToDelete = todayEntries[todayEntries.length - 1]
-      console.log('Trying to delete entry:', entryToDelete) // DEBUG
       
       // Llamar al endpoint para eliminar la entrada
       const response = await authenticatedFetch(`http://localhost:5000/api/habits/entries/${entryToDelete.id}`, {
         method: 'DELETE',
       })
-      
-      console.log('Delete response status:', response.status) // DEBUG
       
       if (response.ok) {
         // Actualizar el estado local eliminando la entrada
@@ -379,7 +370,6 @@ export default function HabitsPage() {
         }
       } else {
         const data = await response.json()
-        console.error('Delete failed with response:', data) // DEBUG
         toast.error('Error: ' + data.message)
       }
       
