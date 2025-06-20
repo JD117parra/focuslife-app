@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useToast } from '@/hooks/useToast'
+
 
 interface Habit {
   id: string
@@ -12,10 +14,50 @@ interface Habit {
   isActive: boolean
 }
 
+interface ConfirmModalProps {
+  isOpen: boolean
+  title: string
+  message: string
+  onConfirm: () => void
+  onCancel: () => void
+}
+
+function ConfirmModal({ isOpen, title, message, onConfirm, onCancel }: ConfirmModalProps) {
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 max-w-md w-mx-4">
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
+        <p className="text-gray-600 mb-6">{message}</p>
+        <div className="flex space-x-3 justify-end">
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={onConfirm}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Eliminar
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function HabitsPage() {
   const [habits, setHabits] = useState<Habit[]>([])
   const [newHabitName, setNewHabitName] = useState('')
   const [loading, setLoading] = useState(true)
+  const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [habitToDelete, setHabitToDelete] = useState<string | null>(null)
+
+  const { success, error, ToastContainer } = useToast()
+
 
   useEffect(() => {
     loadHabits()
@@ -61,7 +103,7 @@ export default function HabitsPage() {
     const token = localStorage.getItem('authToken')
     
     if (!token) {
-      alert('No estás autenticado. Por favor inicia sesión.')
+      error('No estás autenticado. Por favor inicia sesión.')
       return
     }
 
@@ -79,29 +121,32 @@ export default function HabitsPage() {
     if (response.ok) {
       setHabits([...habits, data.data])
       setNewHabitName('')
-      alert('Hábito creado exitosamente!')
+      success('¡Hábito creado exitosamente! 🎉')
     } else {
-      alert('Error: ' + data.message)
+        error('Error: ' + data.message)
     }
-  } catch (error) {
-    alert('Error de conexión con el servidor')
+  } catch (catchError) {
+    error('Error de conexión con el servidor')
   }
 }
 
-const deleteHabit = async (habitId: string) => {
-  if (!confirm('¿Estás seguro de que deseas eliminar este hábito? Se eliminarán también todos sus registros.')) {
-    return
-  }
+const handleDeleteClick = (habitId: string) => {
+  setHabitToDelete(habitId)
+  setShowConfirmModal(true)
+}
+
+const confirmDelete = async () => {
+  if (!habitToDelete) return
 
   try {
     const token = localStorage.getItem('authToken')
     
     if (!token) {
-      alert('No estás autenticado. Por favor inicia sesión.')
+      error('No estás autenticado. Por favor inicia sesión.')
       return
     }
 
-    const response = await fetch(`http://localhost:5000/api/habits/${habitId}`, {
+    const response = await fetch(`http://localhost:5000/api/habits/${habitToDelete}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -110,16 +155,23 @@ const deleteHabit = async (habitId: string) => {
     })
     
     if (response.ok) {
-      // Remover el hábito de la lista
-      setHabits(habits.filter(h => h.id !== habitId))
-      alert('Hábito eliminado exitosamente!')
+      setHabits(habits.filter(h => h.id !== habitToDelete))
+      success('¡Hábito eliminado exitosamente! ✅')
     } else {
       const data = await response.json()
-      alert('Error: ' + data.message)
+      error('Error: ' + data.message)
     }
-  } catch (error) {
-    alert('Error de conexión con el servidor')
+  } catch (err) {
+    error('Error de conexión con el servidor')
+  } finally {
+    setShowConfirmModal(false)
+    setHabitToDelete(null)
   }
+}
+
+const cancelDelete = () => {
+  setShowConfirmModal(false)
+  setHabitToDelete(null)
 }
 
   if (loading) {
@@ -179,13 +231,7 @@ const deleteHabit = async (habitId: string) => {
               placeholder="Nombre del hábito (ej: Ejercicio, Leer, Meditar)..."
               required
             />
-            <button
-              type="submit"
-              className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors"
-            >
-              Crear Hábito
-            </button>
-          </form>
+            <button type="submit" className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors">Crear Hábito</button></form>
         </div>
 
         {/* Habits List */}
@@ -209,10 +255,7 @@ const deleteHabit = async (habitId: string) => {
                   <div key={habit.id} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
-                        <button 
-                          className="w-12 h-12 rounded-full border-2 border-green-500 flex items-center justify-center hover:bg-green-50 transition-colors"
-                          onClick={() => {/* TODO: mark as done today */}}
-                        >
+                        <button className="w-12 h-12 rounded-full border-2 border-green-500 flex items-center justify-center hover:bg-green-50 transition-colors" onClick={() => {/* TODO: mark as done today */}}>
                           <span className="text-2xl">✓</span>
                         </button>
                         <div>
@@ -239,8 +282,12 @@ const deleteHabit = async (habitId: string) => {
                         </div>
                         
                         {/* Delete button */}
-                        <button className="text-red-600 hover:text-red-800 text-sm"onClick={() => 
-                          deleteHabit(habit.id)}> Eliminar</button>
+                        <button 
+  className="text-red-600 hover:text-red-800 text-sm font-medium px-3 py-1 rounded-md hover:bg-red-50 transition-colors" 
+  onClick={() => handleDeleteClick(habit.id)}
+> 
+  Eliminar
+</button>
                       </div>
                     </div>
                     
@@ -261,6 +308,17 @@ const deleteHabit = async (habitId: string) => {
           </div>
         </div>
       </div>
+      <ConfirmModal
+        isOpen={showConfirmModal}
+        title="Eliminar Hábito"
+        message="¿Estás seguro de que deseas eliminar este hábito? Se eliminarán también todos sus registros."
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+      />
+
+      {/* Toast Container */}
+      <ToastContainer />
+      {/* 🔼 HASTA AQUÍ 🔼 */}
     </div>
   )
 }

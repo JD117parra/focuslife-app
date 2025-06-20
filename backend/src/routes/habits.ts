@@ -223,4 +223,31 @@ router.get('/:id/entries', authenticateToken, async (req: AuthenticatedRequest, 
   }
 });
 
+// DELETE /api/habits/:id/entries/today - Eliminar entrada de hoy
+router.delete('/:id/entries/today', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: 'User not authenticated' });
+      return;
+    }
+
+    const { id } = req.params;
+    const deleted = await HabitService.deleteHabitEntry(id, req.user.id);
+
+    if (deleted) {
+      res.json({
+        message: 'Habit entry for today deleted successfully'
+      });
+    } else {
+      res.status(404).json({
+        message: 'No habit entry found for today'
+      });
+    }
+  } catch (error) {
+    console.error('Delete habit entry error:', error);
+    const message = error instanceof Error ? error.message : 'Failed to delete habit entry';
+    res.status(400).json({ message });
+  }
+});
+
 export default router;

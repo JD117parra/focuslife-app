@@ -102,9 +102,10 @@ export interface HabitEntryResponse {
 // Transaction types
 export interface CreateTransactionDto {
   amount: number;
-  description: string;
+  description?: string; // Ahora opcional
   type: 'INCOME' | 'EXPENSE';
   categoryId?: string;
+  category?: string; // Nuevo campo para categorías predeterminadas
   date?: string; // ISO string, default today
 }
 

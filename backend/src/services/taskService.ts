@@ -149,4 +149,55 @@ export class TaskService {
       }, {} as Record<string, number>)
     };
   }
+
+  // Obtener tareas vencidas para el widget de resumen
+  static async getOverdueTasks(userId: string): Promise<TaskResponse[]> {
+    const today = new Date();
+    today.setHours(23, 59, 59, 999); // Fin del día
+
+    const overdueTasks = await prisma.task.findMany({
+      where: {
+        userId,
+        status: {
+          not: 'COMPLETED'
+        },
+        dueDate: {
+          lte: today
+        }
+      },
+      orderBy: {
+        dueDate: 'asc'
+      },
+      include: {
+        category: {
+          select: {
+            id: true,
+            name: true,
+            color: true
+          }
+        }
+      }
+    });
+
+    return overdueTasks;
+  }
+
+  // Obtener tareas completadas recientes para logros
+  static async getRecentCompletedTasks(userId: string, days: number = 1): Promise<number> {
+    const targetDate = new Date();
+    targetDate.setDate(targetDate.getDate() - days);
+    targetDate.setHours(0, 0, 0, 0);
+
+    const completedCount = await prisma.task.count({
+      where: {
+        userId,
+        status: 'COMPLETED',
+        updatedAt: {
+          gte: targetDate
+        }
+      }
+    });
+
+    return completedCount;
+  }
 }

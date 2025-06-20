@@ -43,7 +43,38 @@ export class TransactionService {
       }
     });
 
-    return transactions;
+    // Mapeo inverso para inferir categoría desde descripción
+    const DESCRIPTION_TO_CATEGORY: { [key: string]: string } = {
+      // Gastos
+      'Alimentos': 'food',
+      'Gasolina': 'gas',
+      'Servicios (agua, luz, gas)': 'utilities',
+      'Arriendo/Hipoteca': 'rent',
+      'Transporte': 'transport',
+      'Salud/Medicina': 'health',
+      'Educación': 'education',
+      'Entretenimiento': 'entertainment',
+      'Compras': 'shopping',
+      'Otros gastos': 'other_expense',
+      // Ingresos
+      'Salario': 'salary',
+      'Freelance': 'freelance',
+      'Negocio': 'business',
+      'Inversiones': 'investments',
+      'Bonificación': 'bonus',
+      'Renta de propiedad': 'rental',
+      'Trabajo extra': 'side_hustle',
+      'Regalos/Dinero recibido': 'gifts',
+      'Otros ingresos': 'other_income'
+    };
+
+    // Agregar campo category inferido a cada transacción
+    const enrichedTransactions = transactions.map(transaction => ({
+      ...transaction,
+      category: DESCRIPTION_TO_CATEGORY[transaction.description] || 'other'
+    }));
+
+    return enrichedTransactions as any;
   }
 
   // Obtener una transacción específica por ID
@@ -69,7 +100,35 @@ export class TransactionService {
 
   // Crear nueva transacción
   static async createTransaction(userId: string, transactionData: CreateTransactionDto): Promise<TransactionResponse> {
-    const { amount, description, type, categoryId, date } = transactionData;
+    const { amount, description, type, categoryId, category, date } = transactionData;
+
+    // Mapeo de categorías predeterminadas a descripciones legibles
+    const CATEGORY_NAMES: { [key: string]: string } = {
+      // Gastos
+      'food': 'Alimentos',
+      'gas': 'Gasolina',
+      'utilities': 'Servicios (agua, luz, gas)',
+      'rent': 'Arriendo/Hipoteca',
+      'transport': 'Transporte',
+      'health': 'Salud/Medicina',
+      'education': 'Educación',
+      'entertainment': 'Entretenimiento',
+      'shopping': 'Compras',
+      'other_expense': 'Otros gastos',
+      // Ingresos
+      'salary': 'Salario',
+      'freelance': 'Freelance',
+      'business': 'Negocio',
+      'investments': 'Inversiones',
+      'bonus': 'Bonificación',
+      'rental': 'Renta de propiedad',
+      'side_hustle': 'Trabajo extra',
+      'gifts': 'Regalos/Dinero recibido',
+      'other_income': 'Otros ingresos'
+    };
+
+    // Generar descripción si no se proporciona
+    const finalDescription = description || (category ? CATEGORY_NAMES[category] || category : 'Transacción');
 
     // Para gastos, asegurar que el monto sea positivo (se maneja en el frontend)
     const finalAmount = type === 'EXPENSE' ? Math.abs(amount) : amount;
@@ -77,7 +136,7 @@ export class TransactionService {
     const transaction = await prisma.transaction.create({
       data: {
         amount: finalAmount,
-        description,
+        description: finalDescription,
         type,
         categoryId,
         userId,
@@ -94,7 +153,11 @@ export class TransactionService {
       }
     });
 
-    return transaction;
+    // Agregar el campo category a la respuesta para el frontend
+    return {
+      ...transaction,
+      category: category || null
+    } as any;
   }
 
   // Actualizar transacción
@@ -108,10 +171,42 @@ export class TransactionService {
       throw new Error('Transaction not found or you do not have permission to update it');
     }
 
+    // Mapeo de categorías predeterminadas a descripciones legibles
+    const CATEGORY_NAMES: { [key: string]: string } = {
+      // Gastos
+      'food': 'Alimentos',
+      'gas': 'Gasolina',
+      'utilities': 'Servicios (agua, luz, gas)',
+      'rent': 'Arriendo/Hipoteca',
+      'transport': 'Transporte',
+      'health': 'Salud/Medicina',
+      'education': 'Educación',
+      'entertainment': 'Entretenimiento',
+      'shopping': 'Compras',
+      'other_expense': 'Otros gastos',
+      // Ingresos
+      'salary': 'Salario',
+      'freelance': 'Freelance',
+      'business': 'Negocio',
+      'investments': 'Inversiones',
+      'bonus': 'Bonificación',
+      'rental': 'Renta de propiedad',
+      'side_hustle': 'Trabajo extra',
+      'gifts': 'Regalos/Dinero recibido',
+      'other_income': 'Otros ingresos'
+    };
+
+    // Extraer y procesar los datos de actualización
+    const { category, ...updateData } = transactionData as any;
+    
     // Procesar el monto si se está actualizando
-    const updateData: any = { ...transactionData };
     if (updateData.amount !== undefined && updateData.type) {
       updateData.amount = updateData.type === 'EXPENSE' ? Math.abs(updateData.amount) : updateData.amount;
+    }
+
+    // Si viene categoría pero no descripción, mapear categoría a descripción
+    if (category && !updateData.description) {
+      updateData.description = CATEGORY_NAMES[category] || category;
     }
 
     if (updateData.date) {
@@ -135,7 +230,36 @@ export class TransactionService {
       }
     });
 
-    return updatedTransaction;
+    // Mapeo inverso para inferir categoría desde descripción
+    const DESCRIPTION_TO_CATEGORY: { [key: string]: string } = {
+      // Gastos
+      'Alimentos': 'food',
+      'Gasolina': 'gas',
+      'Servicios (agua, luz, gas)': 'utilities',
+      'Arriendo/Hipoteca': 'rent',
+      'Transporte': 'transport',
+      'Salud/Medicina': 'health',
+      'Educación': 'education',
+      'Entretenimiento': 'entertainment',
+      'Compras': 'shopping',
+      'Otros gastos': 'other_expense',
+      // Ingresos
+      'Salario': 'salary',
+      'Freelance': 'freelance',
+      'Negocio': 'business',
+      'Inversiones': 'investments',
+      'Bonificación': 'bonus',
+      'Renta de propiedad': 'rental',
+      'Trabajo extra': 'side_hustle',
+      'Regalos/Dinero recibido': 'gifts',
+      'Otros ingresos': 'other_income'
+    };
+
+    // Agregar el campo category a la respuesta para el frontend
+    return {
+      ...updatedTransaction,
+      category: category || DESCRIPTION_TO_CATEGORY[updatedTransaction.description] || 'other'
+    } as any;
   }
 
   // Eliminar transacción
@@ -269,5 +393,87 @@ export class TransactionService {
         console.log(`Category ${category.name} might already exist`);
       }
     }
+  }
+
+  // Obtener resumen de gastos del día para el widget
+  static async getTodayExpensesSummary(userId: string) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    // Gastos de hoy
+    const todayExpenses = await prisma.transaction.aggregate({
+      where: {
+        userId,
+        type: 'EXPENSE',
+        date: {
+          gte: today,
+          lt: tomorrow
+        }
+      },
+      _sum: { amount: true },
+      _count: { id: true }
+    });
+
+    // Obtener las transacciones de gastos de hoy para detalles
+    const todayTransactions = await prisma.transaction.findMany({
+      where: {
+        userId,
+        type: 'EXPENSE',
+        date: {
+          gte: today,
+          lt: tomorrow
+        }
+      },
+      orderBy: { amount: 'desc' },
+      take: 3, // Los 3 gastos más grandes
+      include: {
+        category: {
+          select: {
+            name: true,
+            color: true
+          }
+        }
+      }
+    });
+
+    return {
+      totalSpent: todayExpenses._sum.amount || 0,
+      transactionCount: todayExpenses._count.id,
+      topExpenses: todayTransactions
+    };
+  }
+
+  // Obtener alertas de gastos altos
+  static async getHighExpenseAlerts(userId: string, threshold: number = 50000): Promise<any[]> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const highExpenses = await prisma.transaction.findMany({
+      where: {
+        userId,
+        type: 'EXPENSE',
+        amount: {
+          gte: threshold
+        },
+        date: {
+          gte: today,
+          lt: tomorrow
+        }
+      },
+      include: {
+        category: {
+          select: {
+            name: true,
+            color: true
+          }
+        }
+      }
+    });
+
+    return highExpenses;
   }
 }
