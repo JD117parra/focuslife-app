@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
-import SmartSummaryWidget from '@/components/SmartSummaryWidget'
 
 interface User {
   id: string
@@ -161,15 +160,15 @@ const loadFinanceStats = async () => {
 }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-blue-900/95 backdrop-blur-sm border-b border-blue-800 shadow-lg">
+      <div className="bg-white shadow">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-white">FocusLife Dashboard</h1>
+            <h1 className="text-2xl font-bold text-gray-900">FocusLife Dashboard</h1>
             <div className="flex items-center space-x-4">
-              <span className="text-blue-100">Hola <span className="font-medium text-white">{user?.name || user?.email || 'Usuario'}</span></span>
-              <Link href="/" className="text-blue-200 hover:text-white font-medium transition-colors">
+              <span className="text-gray-600">Hola <span className="font-medium text-gray-900">{user?.name || user?.email || 'Usuario'}</span></span>
+              <Link href="/" className="text-blue-600 hover:text-blue-800 font-medium">
                 Cerrar Sesión
               </Link>
             </div>
@@ -180,8 +179,8 @@ const loadFinanceStats = async () => {
       {/* Dashboard Content */}
       <div className="container mx-auto px-4 py-12">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-white mb-4">¿Qué quieres gestionar hoy?</h2>
-          <p className="text-blue-100 text-lg">Elige una sección para comenzar</p>
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">¿Qué quieres gestionar hoy?</h2>
+          <p className="text-gray-600 text-lg">Elige una sección para comenzar</p>
         </div>
 
         {/* Navigation Cards */}
@@ -189,17 +188,17 @@ const loadFinanceStats = async () => {
           {/* Tareas */}
           <Link 
             href="/tasks"
-            className="bg-white/10 backdrop-blur-md p-8 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer border border-white/20 hover:border-white/40 hover:bg-white/15"
+            className="bg-white p-8 rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer border-2 border-transparent hover:border-blue-500"
           >
             <div className="text-center">
               <div className="text-6xl mb-4">📋</div>
-              <h3 className="text-xl font-semibold text-white mb-2">
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
                 Gestión de Tareas
               </h3>
-              <p className="text-blue-100 mb-4">
+              <p className="text-gray-600">
                 Organiza y gestiona tus tareas diarias
               </p>
-              <div className="mt-4 inline-block bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg font-medium transition-colors backdrop-blur-sm">
+              <div className="mt-4 inline-block bg-blue-600 text-white px-4 py-2 rounded-lg font-medium">
                 Ir a Tareas →
               </div>
             </div>
@@ -208,17 +207,17 @@ const loadFinanceStats = async () => {
           {/* Hábitos */}
           <Link 
             href="/habits"
-            className="bg-white/10 backdrop-blur-md p-8 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer border border-white/20 hover:border-white/40 hover:bg-white/15"
+            className="bg-white p-8 rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer border-2 border-transparent hover:border-green-500"
           >
             <div className="text-center">
               <div className="text-6xl mb-4">🎯</div>
-              <h3 className="text-xl font-semibold text-white mb-2">
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
                 Seguimiento de Hábitos
               </h3>
-              <p className="text-blue-100 mb-4">
+              <p className="text-gray-600">
                 Construye y mantén hábitos positivos
               </p>
-              <div className="mt-4 inline-block bg-emerald-500/80 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+              <div className="mt-4 inline-block bg-green-600 text-white px-4 py-2 rounded-lg font-medium">
                 Ir a Hábitos →
               </div>
             </div>
@@ -227,27 +226,54 @@ const loadFinanceStats = async () => {
           {/* Finanzas */}
           <Link 
             href="/finances"
-            className="bg-white/10 backdrop-blur-md p-8 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer border border-white/20 hover:border-white/40 hover:bg-white/15"
+            className="bg-white p-8 rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer border-2 border-transparent hover:border-purple-500"
           >
             <div className="text-center">
               <div className="text-6xl mb-4">💰</div>
-              <h3 className="text-xl font-semibold text-white mb-2">
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
                 Finanzas Personales
               </h3>
-              <p className="text-blue-100 mb-4">
+              <p className="text-gray-600">
                 Controla tus ingresos y gastos
               </p>
-              <div className="mt-4 inline-block bg-blue-500/80 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+              <div className="mt-4 inline-block bg-purple-600 text-white px-4 py-2 rounded-lg font-medium">
                 Ir a Finanzas →
               </div>
             </div>
           </Link>
         </div>
 
-        {/* Widget de Resumen Inteligente */}
-        <div className="mt-16">
-          <SmartSummaryWidget loading={statsLoading} />
+        {/* Quick Stats (opcional - solo números) */}
+        <div className="mt-16 text-center">
+  <h3 className="text-lg font-semibold text-gray-700 mb-6">Resumen rápido</h3>
+  <div className="grid grid-cols-3 gap-8 max-w-2xl mx-auto">
+    {/* Tareas */}
+    <div className="bg-white p-4 rounded-lg shadow">
+      <div className="text-2xl font-bold text-blue-600">
+        {statsLoading ? '...' : (taskStats?.byStatus?.PENDING || 0)}
+      </div>
+      <div className="text-sm text-gray-600">Tareas pendientes</div>
+    </div>
+    
+    {/* Hábitos */}
+    <div className="bg-white p-4 rounded-lg shadow">
+      <div className="text-2xl font-bold text-green-600">
+        {statsLoading ? '...' : `${habitStats?.todayCompleted || 0}/${habitStats?.active || 0}`}
+      </div>
+      <div className="text-sm text-gray-600">Hábitos hoy</div>
+    </div>
+    
+    {/* Finanzas */}
+        <div className="bg-white p-4 rounded-lg shadow">
+          <div className={`text-2xl font-bold ${
+            (financeStats?.balance || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+          }`}>
+            {statsLoading ? '...' : `$${Math.abs(financeStats?.balance || 0).toLocaleString()}`}
+          </div>
+          <div className="text-sm text-gray-600">Balance mensual</div>
         </div>
+      </div>
+    </div>
       </div>
     </div>
   )

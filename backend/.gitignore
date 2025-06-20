@@ -1,27 +1,15 @@
-# ==============================================================================
-# BACKEND .GITIGNORE - Node.js/Express/Prisma
-# ==============================================================================
+node_modules
 
-# Dependencies
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# Environment Variables - CRÍTICO PARA SEGURIDAD
+# Keep environment variables out of version control
 .env
 .env.local
 .env.development
 .env.production
-.env.test
-# Allow .env.example (template file)
-!.env.example
+.env.*
 
-# Prisma
 /src/generated/prisma
 
-# Database Files - CRÍTICO
+# Database files - CRÍTICO
 *.db
 *.db-journal
 *.sqlite
@@ -29,40 +17,15 @@ yarn-error.log*
 prisma/dev.db*
 prisma/*.db*
 dev.db*
-test.db*
 
 # Logs
 *.log
-logs/
+npm-debug.log*
 
-# Build Outputs
+# Build outputs
 dist/
 build/
-coverage/
 
-# TypeScript
-*.tsbuildinfo
-
-# Testing
-.nyc_output/
-coverage/
-
-# OS Files
+# OS
 .DS_Store
 Thumbs.db
-
-# Backup Files
-*.bak
-*.backup
-*.old
-
-# Keys and Certificates - CRÍTICO
-*.pem
-*.key
-*.crt
-*.p12
-*.pfx
-
-# Local Configuration
-config.local.*
-.local
