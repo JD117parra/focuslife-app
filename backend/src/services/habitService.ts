@@ -203,6 +203,28 @@ export class HabitService {
     };
   }
 
+  // Eliminar entrada específica de hábito
+  static async deleteHabitEntry(entryId: string, userId: string): Promise<boolean> {
+    // Verificar que la entrada existe y pertenece al usuario
+    const existingEntry = await prisma.habitEntry.findFirst({
+      where: { 
+        id: entryId, 
+        userId 
+      }
+    });
+
+    if (!existingEntry) {
+      throw new Error('Habit entry not found or you do not have permission to delete it');
+    }
+
+    // Eliminar la entrada
+    await prisma.habitEntry.delete({
+      where: { id: entryId }
+    });
+
+    return true;
+  }
+
   // Alternar estado activo/inactivo de un hábito
   static async toggleHabitStatus(habitId: string, userId: string): Promise<HabitResponse | null> {
     const habit = await prisma.habit.findFirst({

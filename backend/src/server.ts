@@ -8,6 +8,13 @@ import taskRoutes from './routes/tasks';
 import habitRoutes from './routes/habits';
 import transactionRoutes from './routes/transactions';
 
+console.log('💻 All route modules imported:', {
+  auth: !!authRoutes,
+  tasks: !!taskRoutes, 
+  habits: !!habitRoutes,
+  transactions: !!transactionRoutes
+});
+
 
 // Load environment variables
 dotenv.config();
@@ -31,10 +38,21 @@ app.get('/health', (req, res) => {
 });
 
 // ============ ROUTES ============
+console.log('🚀 Registering routes...');
+
+console.log('🔐 Registering auth routes...');
 app.use('/api/auth', authRoutes);
+
+console.log('📋 Registering task routes...');
 app.use('/api/tasks', taskRoutes);
+
+console.log('🎯 Registering habit routes...');
 app.use('/api/habits', habitRoutes);
+
+console.log('💰 Registering transaction routes...');
 app.use('/api/transactions', transactionRoutes);
+
+console.log('✅ All routes registered successfully!');
 
 
 

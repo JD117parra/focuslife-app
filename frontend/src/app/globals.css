@@ -3,6 +3,44 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Custom Card Styles - Con !important para forzar que se apliquen */
+.card-glass {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 2px solid rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
+  transition: all 0.3s ease !important;
+  border-radius: 12px !important;
+}
+
+.card-glass:hover {
+  transform: scale(1.05) !important;
+  box-shadow: 0 16px 64px rgba(0, 0, 0, 0.2) !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+}
+
+.card-navigation {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 2px solid rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
+  transition: all 0.3s ease !important;
+  border-radius: 12px !important;
+  padding: 2rem !important;
+}
+
+.card-navigation:hover {
+  transform: scale(1.02) !important;
+  box-shadow: 0 16px 64px rgba(0, 0, 0, 0.2) !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+}
+
+.card-stats {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 2px solid rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
+  padding: 1rem !important;
+  border-radius: 12px !important;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
+import { useAuth } from '@/hooks/useAuth'
 
 interface User {
   id: string
@@ -34,51 +35,17 @@ interface FinanceStats {
 }
 
 export default function DashboardPage() {
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
   const [taskStats, setTaskStats] = useState<TaskStats | null>(null)
   const [habitStats, setHabitStats] = useState<HabitStats | null>(null)
   const [financeStats, setFinanceStats] = useState<FinanceStats | null>(null)
   const [statsLoading, setStatsLoading] = useState(true)
+  const { user, authenticatedFetch, isAuthenticated, isLoading: authLoading } = useAuth()
 
-useEffect(() => {
-  loadUserData()
-  loadAllStats()
-}, [])
-
-const loadUserData = async () => {
-  try {
-    const token = localStorage.getItem('authToken')
-    
-    if (!token) {
-      // Redirigir al login si no hay token
-      window.location.href = '/login'
-      return
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      loadAllStats()
     }
-
-    const response = await fetch('http://localhost:5000/api/auth/me', {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    })
-    
-    if (response.ok) {
-      const data = await response.json()
-      setUser(data.data)
-    } else {
-      // Token inválido, redirigir al login
-      localStorage.removeItem('authToken')
-      window.location.href = '/login'
-    }
-  } catch (error) {
-    console.error('Error loading user data:', error)
-    localStorage.removeItem('authToken')
-    window.location.href = '/login'
-  } finally {
-    setLoading(false)
-  }
-}
+  }, [authLoading, isAuthenticated])
 
 const loadAllStats = async () => {
   setStatsLoading(true)
@@ -98,15 +65,7 @@ const loadAllStats = async () => {
 
 const loadTaskStats = async () => {
   try {
-    const token = localStorage.getItem('authToken')
-    if (!token) return
-
-    const response = await fetch('http://localhost:5000/api/tasks/stats', {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    })
+    const response = await authenticatedFetch('http://localhost:5000/api/tasks/stats')
     
     if (response.ok) {
       const data = await response.json()
@@ -119,15 +78,7 @@ const loadTaskStats = async () => {
 
 const loadHabitStats = async () => {
   try {
-    const token = localStorage.getItem('authToken')
-    if (!token) return
-
-    const response = await fetch('http://localhost:5000/api/habits/stats', {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    })
+    const response = await authenticatedFetch('http://localhost:5000/api/habits/stats')
     
     if (response.ok) {
       const data = await response.json()
@@ -140,15 +91,7 @@ const loadHabitStats = async () => {
 
 const loadFinanceStats = async () => {
   try {
-    const token = localStorage.getItem('authToken')
-    if (!token) return
-
-    const response = await fetch('http://localhost:5000/api/transactions/summary', {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    })
+    const response = await authenticatedFetch('http://localhost:5000/api/transactions/summary')
     
     if (response.ok) {
       const data = await response.json()
@@ -159,16 +102,33 @@ const loadFinanceStats = async () => {
   }
 }
 
+  // Mostrar loading mientras se verifica autenticación
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-300 via-blue-400 to-indigo-500 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-2xl">📊</div>
+          <p className="text-white mt-2">Verificando autenticación...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Si no está autenticado, el hook ya redirige
+  if (!isAuthenticated) {
+    return null
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-300 via-blue-400 to-indigo-500">
       {/* Header */}
-      <div className="bg-white shadow">
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 shadow-lg">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900">FocusLife Dashboard</h1>
+            <h1 className="text-2xl font-bold text-white">FocusLife Dashboard</h1>
             <div className="flex items-center space-x-4">
-              <span className="text-gray-600">Hola <span className="font-medium text-gray-900">{user?.name || user?.email || 'Usuario'}</span></span>
-              <Link href="/" className="text-blue-600 hover:text-blue-800 font-medium">
+              <span className="text-blue-100">Hola <span className="font-medium text-white">{user?.name || user?.email || 'Usuario'}</span></span>
+              <Link href="/" className="text-blue-100 hover:text-white font-medium">
                 Cerrar Sesión
               </Link>
             </div>
@@ -186,61 +146,115 @@ const loadFinanceStats = async () => {
         {/* Navigation Cards */}
         <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
           {/* Tareas */}
-          <Link 
-            href="/tasks"
-            className="bg-white p-8 rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer border-2 border-transparent hover:border-blue-500"
+          <div 
+            style={{
+              background: 'rgba(255, 255, 255, 0.75)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+              borderRadius: '12px',
+              padding: '2rem',
+              transition: 'all 0.3s ease',
+              cursor: 'pointer'
+            }}
+            onClick={() => window.location.href = '/tasks'}
+            className="text-center border-2 border-transparent hover:border-blue-500"
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.02)'
+              e.currentTarget.style.boxShadow = '0 16px 64px rgba(0, 0, 0, 0.2)'
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.85)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)'
+              e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.12)'
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.75)'
+            }}
           >
-            <div className="text-center">
-              <div className="text-6xl mb-4">📋</div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                Gestión de Tareas
-              </h3>
-              <p className="text-gray-600">
-                Organiza y gestiona tus tareas diarias
-              </p>
-              <div className="mt-4 inline-block bg-blue-600 text-white px-4 py-2 rounded-lg font-medium">
-                Ir a Tareas →
-              </div>
+            <div className="text-6xl mb-4">📋</div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              Gestión de Tareas
+            </h3>
+            <p className="text-gray-600">
+              Organiza y gestiona tus tareas diarias
+            </p>
+            <div className="mt-4 inline-block bg-blue-600 text-white px-4 py-2 rounded-lg font-medium">
+              Ir a Tareas →
             </div>
-          </Link>
+          </div>
 
           {/* Hábitos */}
-          <Link 
-            href="/habits"
-            className="bg-white p-8 rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer border-2 border-transparent hover:border-green-500"
+          <div 
+            style={{
+              background: 'rgba(255, 255, 255, 0.75)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+              borderRadius: '12px',
+              padding: '2rem',
+              transition: 'all 0.3s ease',
+              cursor: 'pointer'
+            }}
+            onClick={() => window.location.href = '/habits'}
+            className="text-center border-2 border-transparent hover:border-green-500"
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.02)'
+              e.currentTarget.style.boxShadow = '0 16px 64px rgba(0, 0, 0, 0.2)'
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.85)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)'
+              e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.12)'
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.75)'
+            }}
           >
-            <div className="text-center">
-              <div className="text-6xl mb-4">🎯</div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                Seguimiento de Hábitos
-              </h3>
-              <p className="text-gray-600">
-                Construye y mantén hábitos positivos
-              </p>
-              <div className="mt-4 inline-block bg-green-600 text-white px-4 py-2 rounded-lg font-medium">
-                Ir a Hábitos →
-              </div>
+            <div className="text-6xl mb-4">🎯</div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              Seguimiento de Hábitos
+            </h3>
+            <p className="text-gray-600">
+              Construye y mantén hábitos positivos
+            </p>
+            <div className="mt-4 inline-block bg-green-600 text-white px-4 py-2 rounded-lg font-medium">
+              Ir a Hábitos →
             </div>
-          </Link>
+          </div>
 
           {/* Finanzas */}
-          <Link 
-            href="/finances"
-            className="bg-white p-8 rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer border-2 border-transparent hover:border-purple-500"
+          <div 
+            style={{
+              background: 'rgba(255, 255, 255, 0.75)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+              borderRadius: '12px',
+              padding: '2rem',
+              transition: 'all 0.3s ease',
+              cursor: 'pointer'
+            }}
+            onClick={() => window.location.href = '/finances'}
+            className="text-center border-2 border-transparent hover:border-purple-500"
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.02)'
+              e.currentTarget.style.boxShadow = '0 16px 64px rgba(0, 0, 0, 0.2)'
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.85)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)'
+              e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.12)'
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.75)'
+            }}
           >
-            <div className="text-center">
-              <div className="text-6xl mb-4">💰</div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                Finanzas Personales
-              </h3>
-              <p className="text-gray-600">
-                Controla tus ingresos y gastos
-              </p>
-              <div className="mt-4 inline-block bg-purple-600 text-white px-4 py-2 rounded-lg font-medium">
-                Ir a Finanzas →
-              </div>
+            <div className="text-6xl mb-4">💰</div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              Finanzas Personales
+            </h3>
+            <p className="text-gray-600">
+              Controla tus ingresos y gastos
+            </p>
+            <div className="mt-4 inline-block bg-purple-600 text-white px-4 py-2 rounded-lg font-medium">
+              Ir a Finanzas →
             </div>
-          </Link>
+          </div>
         </div>
 
         {/* Quick Stats (opcional - solo números) */}
@@ -248,7 +262,14 @@ const loadFinanceStats = async () => {
   <h3 className="text-lg font-semibold text-gray-700 mb-6">Resumen rápido</h3>
   <div className="grid grid-cols-3 gap-8 max-w-2xl mx-auto">
     {/* Tareas */}
-    <div className="bg-white p-4 rounded-lg shadow">
+    <div style={{
+      background: 'rgba(255, 255, 255, 0.75)',
+      backdropFilter: 'blur(10px)',
+      border: '1px solid rgba(255, 255, 255, 0.3)',
+      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+      borderRadius: '12px',
+      padding: '1rem'
+    }}>
       <div className="text-2xl font-bold text-blue-600">
         {statsLoading ? '...' : (taskStats?.byStatus?.PENDING || 0)}
       </div>
@@ -256,7 +277,14 @@ const loadFinanceStats = async () => {
     </div>
     
     {/* Hábitos */}
-    <div className="bg-white p-4 rounded-lg shadow">
+    <div style={{
+      background: 'rgba(255, 255, 255, 0.75)',
+      backdropFilter: 'blur(10px)',
+      border: '1px solid rgba(255, 255, 255, 0.3)',
+      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+      borderRadius: '12px',
+      padding: '1rem'
+    }}>
       <div className="text-2xl font-bold text-green-600">
         {statsLoading ? '...' : `${habitStats?.todayCompleted || 0}/${habitStats?.active || 0}`}
       </div>
@@ -264,15 +292,22 @@ const loadFinanceStats = async () => {
     </div>
     
     {/* Finanzas */}
-        <div className="bg-white p-4 rounded-lg shadow">
-          <div className={`text-2xl font-bold ${
-            (financeStats?.balance || 0) >= 0 ? 'text-green-600' : 'text-red-600'
-          }`}>
-            {statsLoading ? '...' : `$${Math.abs(financeStats?.balance || 0).toLocaleString()}`}
-          </div>
-          <div className="text-sm text-gray-600">Balance mensual</div>
-        </div>
+    <div style={{
+      background: 'rgba(255, 255, 255, 0.75)',
+      backdropFilter: 'blur(10px)',
+      border: '1px solid rgba(255, 255, 255, 0.3)',
+      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+      borderRadius: '12px',
+      padding: '1rem'
+    }}>
+      <div className={`text-2xl font-bold ${
+        (financeStats?.balance || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+      }`}>
+        {statsLoading ? '...' : `${Math.abs(financeStats?.balance || 0).toLocaleString()}`}
       </div>
+      <div className="text-sm text-gray-600">Balance mensual</div>
+    </div>
+  </div>
     </div>
       </div>
     </div>

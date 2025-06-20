@@ -2,6 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useAuth } from '@/hooks/useAuth'
+import { useToast } from '@/hooks/useToast'
+import { useConfirm } from '@/hooks/useConfirm'
+import { useEditModal } from '@/hooks/useEditModal'
 
 interface Transaction {
   id: string
@@ -18,116 +22,118 @@ export default function FinancesPage() {
   const [description, setDescription] = useState('')
   const [type, setType] = useState('EXPENSE')
   const [loading, setLoading] = useState(true)
+  const { authenticatedFetch, isAuthenticated, isLoading: authLoading } = useAuth()
+  const toast = useToast()
+  const confirm = useConfirm()
+  const editModal = useEditModal()
 
   useEffect(() => {
-    loadTransactions()
-  }, [])
+    if (!authLoading && isAuthenticated) {
+      loadTransactions()
+    } else if (!authLoading && !isAuthenticated) {
+      setLoading(false)
+    }
+  }, [authLoading, isAuthenticated])
 
   const loadTransactions = async () => {
-  try {
-    const token = localStorage.getItem('authToken')
-    
-    if (!token) {
-      console.error('No auth token found')
-      setTransactions([])
-      return
+    try {
+      const response = await authenticatedFetch('http://localhost:5000/api/transactions')
+      const data = await response.json()
+      
+      if (response.ok) {
+        setTransactions(data.data)
+      } else {
+        toast.error('Error cargando transacciones: ' + data.message)
+      }
+    } catch (error) {
+      console.error('Error loading transactions:', error)
+      toast.error('Error de conexión')
+    } finally {
+      setLoading(false)
     }
-
-    const response = await fetch('http://localhost:5000/api/transactions', {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    })
-    
-    const data = await response.json()
-    
-    if (response.ok) {
-      setTransactions(data.data)
-    } else {
-      console.error('Error loading transactions:', data.message)
-    }
-  } catch (error) {
-    console.error('Error loading transactions:', error)
-  } finally {
-    setLoading(false)
   }
-}
 
   const createTransaction = async (e: React.FormEvent) => {
-  e.preventDefault()
-  
-  if (!amount || !description) return
-
-  try {
-    const token = localStorage.getItem('authToken')
+    e.preventDefault()
     
-    if (!token) {
-      alert('No estás autenticado. Por favor inicia sesión.')
-      return
-    }
+    if (!amount || !description) return
 
-    const response = await fetch('http://localhost:5000/api/transactions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify({ 
-        amount: parseFloat(amount), 
-        description, 
-        type 
-      }),
-    })
-    
-    const data = await response.json()
-    
-    if (response.ok) {
-      setTransactions([data.data, ...transactions])
-      setAmount('')
-      setDescription('')
-      alert('Transacción registrada exitosamente!')
-    } else {
-      alert('Error: ' + data.message)
-    }
-  } catch (error) {
-    alert('Error de conexión con el servidor')
-  }
-}
-
-const deleteTransaction = async (transactionId: string) => {
-  if (!confirm('¿Estás seguro de que deseas eliminar esta transacción?')) {
-    return
-  }
-
-  try {
-    const token = localStorage.getItem('authToken')
-    
-    if (!token) {
-      alert('No estás autenticado. Por favor inicia sesión.')
-      return
-    }
-
-    const response = await fetch(`http://localhost:5000/api/transactions/${transactionId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    })
-    
-    if (response.ok) {
-      // Remover la transacción de la lista
-      setTransactions(transactions.filter(t => t.id !== transactionId))
-      alert('Transacción eliminada exitosamente!')
-    } else {
+    try {
+      const response = await authenticatedFetch('http://localhost:5000/api/transactions', {
+        method: 'POST',
+        body: JSON.stringify({ 
+          amount: parseFloat(amount), 
+          description, 
+          type 
+        }),
+      })
+      
       const data = await response.json()
-      alert('Error: ' + data.message)
+      
+      if (response.ok) {
+        setTransactions([data.data, ...transactions])
+        setAmount('')
+        setDescription('')
+        toast.success('¡Transacción registrada exitosamente!')
+      } else {
+        toast.error('Error: ' + data.message)
+      }
+    } catch (error) {
+      toast.error('Error de conexión con el servidor')
     }
-  } catch (error) {
-    alert('Error de conexión con el servidor')
   }
-}
+
+  const deleteTransaction = async (transactionId: string, transactionDescription: string) => {
+    const confirmed = await confirm.confirmDelete(transactionDescription)
+    if (!confirmed) {
+      return
+    }
+
+    try {
+      const response = await authenticatedFetch(`http://localhost:5000/api/transactions/${transactionId}`, {
+        method: 'DELETE',
+      })
+      
+      if (response.ok) {
+        setTransactions(transactions.filter(t => t.id !== transactionId))
+        toast.delete('¡Transacción eliminada exitosamente!')
+      } else {
+        const data = await response.json()
+        toast.error('Error: ' + data.message)
+      }
+    } catch (error) {
+      toast.error('Error de conexión con el servidor')
+    }
+  }
+
+  const editTransaction = async (transactionId: string, currentDescription: string) => {
+    const newDescription = await editModal.editTransaction(currentDescription)
+    if (!newDescription) {
+      return // Usuario canceló
+    }
+
+    try {
+      const response = await authenticatedFetch(`http://localhost:5000/api/transactions/${transactionId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ description: newDescription }),
+      })
+      
+      const data = await response.json()
+      
+      if (response.ok) {
+        setTransactions(transactions.map((transaction: Transaction) => 
+          transaction.id === transactionId 
+            ? { ...transaction, description: newDescription }
+            : transaction
+        ))
+        toast.success('¡Transacción editada exitosamente!')
+      } else {
+        toast.error('Error: ' + data.message)
+      }
+    } catch (error) {
+      toast.error('Error de conexión con el servidor')
+    }
+  }
 
   // Calcular totales
   const totalIncome = transactions
@@ -140,30 +146,45 @@ const deleteTransaction = async (transactionId: string) => {
   
   const balance = totalIncome - totalExpenses
 
-  if (loading) {
+  if (authLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-300 via-blue-400 to-indigo-500 flex items-center justify-center">
         <div className="text-center">
           <div className="text-2xl">💰</div>
-          <p className="text-gray-600 mt-2">Cargando finanzas...</p>
+          <p className="text-white mt-2">Verificando autenticación...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return null
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-300 via-blue-400 to-indigo-500 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-2xl">💰</div>
+          <p className="text-white mt-2">Cargando finanzas...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-300 via-blue-400 to-indigo-500">
       {/* Header */}
-      <div className="bg-white shadow">
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 shadow-lg">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Link href="/dashboard" className="text-blue-600 hover:text-blue-800">
+              <Link href="/dashboard" className="text-blue-100 hover:text-white">
                 ← Dashboard
               </Link>
-              <h1 className="text-2xl font-bold text-gray-900">💰 Finanzas Personales</h1>
+              <h1 className="text-2xl font-bold text-white">💰 Finanzas Personales</h1>
             </div>
-            <Link href="/" className="text-blue-600 hover:text-blue-800">
+            <Link href="/" className="text-blue-100 hover:text-white">
               Cerrar Sesión
             </Link>
           </div>
@@ -174,21 +195,21 @@ const deleteTransaction = async (transactionId: string) => {
       <div className="container mx-auto px-4 py-8">
         {/* Financial Summary */}
         <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-green-50 p-6 rounded-lg border border-green-200">
+          <div className="bg-green-50/80 backdrop-blur-sm shadow-xl ring-1 ring-green-100/20 p-6 rounded-lg border border-green-200">
             <h3 className="text-sm font-medium text-green-800 mb-2">Ingresos</h3>
             <p className="text-2xl font-bold text-green-600">
               +${totalIncome.toLocaleString()}
             </p>
           </div>
           
-          <div className="bg-red-50 p-6 rounded-lg border border-red-200">
+          <div className="bg-red-50/80 backdrop-blur-sm shadow-xl ring-1 ring-red-100/20 p-6 rounded-lg border border-red-200">
             <h3 className="text-sm font-medium text-red-800 mb-2">Gastos</h3>
             <p className="text-2xl font-bold text-red-600">
               -${totalExpenses.toLocaleString()}
             </p>
           </div>
           
-          <div className={`p-6 rounded-lg border ${balance >= 0 ? 'bg-blue-50 border-blue-200' : 'bg-orange-50 border-orange-200'}`}>
+          <div className={`p-6 rounded-lg border backdrop-blur-sm shadow-xl ring-1 ${balance >= 0 ? 'bg-blue-50/80 border-blue-200 ring-blue-100/20' : 'bg-orange-50/80 border-orange-200 ring-orange-100/20'}`}>
             <h3 className={`text-sm font-medium mb-2 ${balance >= 0 ? 'text-blue-800' : 'text-orange-800'}`}>
               Balance
             </h3>
@@ -199,7 +220,7 @@ const deleteTransaction = async (transactionId: string) => {
         </div>
 
         {/* Create Transaction Form */}
-        <div className="bg-white p-6 rounded-lg shadow mb-8">
+        <div className="bg-white/90 backdrop-blur-md shadow-2xl ring-1 ring-white/10 p-6 rounded-lg mb-8">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Registrar Nueva Transacción</h2>
           <form onSubmit={createTransaction} className="space-y-4">
             <div className="grid md:grid-cols-2 gap-4">
@@ -251,7 +272,7 @@ const deleteTransaction = async (transactionId: string) => {
         </div>
 
         {/* Transactions List */}
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-white/90 backdrop-blur-md shadow-2xl ring-1 ring-white/10 rounded-lg">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900">
               Transacciones Recientes ({transactions.length})
@@ -291,8 +312,19 @@ const deleteTransaction = async (transactionId: string) => {
                       }`}>
                         {transaction.type === 'INCOME' ? '+' : '-'}${Math.abs(transaction.amount).toLocaleString()}
                       </span>
-                      <button className="text-red-600 hover:text-red-800 text-sm"
-                        onClick={() => deleteTransaction(transaction.id)}> Eliminar</button>
+                      <button 
+                        className="text-blue-600 hover:text-white text-sm px-3 py-1.5 rounded-lg transition-all duration-200 hover:bg-blue-600 hover:shadow-md transform hover:scale-105"
+                        onClick={() => editTransaction(transaction.id, transaction.description)}
+                        title="Editar transacción"
+                      >
+                        Editar
+                      </button>
+                      <button 
+                        className="text-red-600 hover:text-white text-sm px-3 py-1.5 rounded-lg transition-all duration-200 hover:bg-red-600 hover:shadow-md transform hover:scale-105"
+                        onClick={() => deleteTransaction(transaction.id, transaction.description)}
+                      >
+                        Eliminar
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -301,6 +333,15 @@ const deleteTransaction = async (transactionId: string) => {
           </div>
         </div>
       </div>
+      
+      {/* Toast Container */}
+      <toast.ToastContainer />
+      
+      {/* Confirm Modal */}
+      <confirm.ConfirmModal />
+      
+      {/* Edit Modal */}
+      <editModal.EditModal />
     </div>
   )
 }

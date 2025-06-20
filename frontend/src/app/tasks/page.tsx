@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useToast } from '@/hooks/useToast'
-
+import { useAuth } from '@/hooks/useAuth'
+import { useConfirm } from '@/hooks/useConfirm'
+import { useEditModal } from '@/hooks/useEditModal'
 
 interface Task {
   id: string
@@ -16,78 +18,61 @@ export default function TasksPage() {
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [loading, setLoading] = useState(true)
   const toast = useToast()
-
+  const { authenticatedFetch, isAuthenticated, isLoading: authLoading } = useAuth()
+  const confirm = useConfirm()
+  const editModal = useEditModal()
 
   useEffect(() => {
-    loadTasks()
-  }, [])
+    if (!authLoading && isAuthenticated) {
+      loadTasks()
+    } else if (!authLoading && !isAuthenticated) {
+      // El hook ya maneja la redirección
+      setLoading(false)
+    }
+  }, [authLoading, isAuthenticated])
 
   const loadTasks = async () => {
-  try {
-    const token = localStorage.getItem('authToken')
-    
-    if (!token) {
-      console.error('No auth token found')
-      setTasks([])
-      return
+    try {
+      const response = await authenticatedFetch('http://localhost:5000/api/tasks')
+      const data = await response.json()
+      
+      if (response.ok) {
+        setTasks(data.data)
+      } else {
+        toast.error('Error cargando tareas: ' + data.message)
+      }
+    } catch (error) {
+      console.error('Error loading tasks:', error)
+      toast.error('Error de conexión')
+    } finally {
+      setLoading(false)
     }
-
-    const response = await fetch('http://localhost:5000/api/tasks', {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    })
-    
-    const data = await response.json()
-    
-    if (response.ok) {
-      setTasks(data.data)
-    } else {
-      console.error('Error loading tasks:', data.message)
-    }
-  } catch (error) {
-    console.error('Error loading tasks:', error)
-  } finally {
-    setLoading(false)
   }
-}
 
   const createTask = async (e: React.FormEvent) => {
-  e.preventDefault()
-  
-  if (!newTaskTitle.trim()) return
+    e.preventDefault()
+    
+    if (!newTaskTitle.trim()) return
 
-  try {
-    const token = localStorage.getItem('authToken')
-    
-    if (!token) {
-      alert('No estás autenticado. Por favor inicia sesión.')
-      return
+    try {
+      const response = await authenticatedFetch('http://localhost:5000/api/tasks', {
+        method: 'POST',
+        body: JSON.stringify({ title: newTaskTitle }),
+      })
+      
+      const data = await response.json()
+      
+      if (response.ok) {
+        setTasks([...tasks, data.data])
+        setNewTaskTitle('')
+        toast.success('¡Tarea creada exitosamente!')
+      } else {
+        toast.error('Error: ' + data.message)
+      }
+    } catch (error) {
+      toast.error('Error de conexión con el servidor')
     }
-
-    const response = await fetch('http://localhost:5000/api/tasks', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify({ title: newTaskTitle }),
-    })
-    
-    const data = await response.json()
-    
-    if (response.ok) {
-      setTasks([...tasks, data.data])
-      setNewTaskTitle('')
-      toast.success('¡Tarea creada exitosamente!')
-    } else {
-      toast.error('Error: ' + data.message)
-    }
-  } catch (error) {
-    toast.error('Error de conexión con el servidor')
   }
-}
 
   const toggleTask = (taskId: string, currentStatus: string) => {
     const newStatus = currentStatus === 'COMPLETED' ? 'PENDING' : 'COMPLETED'
@@ -101,52 +86,87 @@ export default function TasksPage() {
     console.log(`Task ${taskId} changed to ${newStatus}`)
   }
 
-  const deleteTask = async (taskId: string) => {
-  if (!confirm('¿Estás seguro de que deseas eliminar esta tarea?')) {
-    return
-  }
-
-  try {
-    const token = localStorage.getItem('authToken')
-    
-    if (!token) {
-      alert('No estás autenticado. Por favor inicia sesión.')
+  const deleteTask = async (taskId: string, taskTitle: string) => {
+    const confirmed = await confirm.confirmDelete(taskTitle)
+    if (!confirmed) {
       return
     }
 
-    const response = await fetch(`http://localhost:5000/api/tasks/${taskId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    })
-    
-    if (response.ok) {
-      // Remover la tarea de la lista
-      setTasks(tasks.filter(t => t.id !== taskId))
-      toast.delete('¡Tarea eliminada exitosamente!')
-    } else {
-      const data = await response.json()
-      toast.error('Error: ' + data.message)
+    try {
+      const response = await authenticatedFetch(`http://localhost:5000/api/tasks/${taskId}`, {
+        method: 'DELETE',
+      })
+      
+      if (response.ok) {
+        setTasks(tasks.filter(t => t.id !== taskId))
+        toast.delete('¡Tarea eliminada exitosamente!')
+      } else {
+        const data = await response.json()
+        toast.error('Error: ' + data.message)
+      }
+    } catch (error) {
+      toast.error('Error de conexión con el servidor')
     }
-  } catch (error) {
-    toast.error('Error de conexión con el servidor')
   }
-}
+
+  const editTask = async (taskId: string, currentTitle: string) => {
+    const newTitle = await editModal.editTask(currentTitle)
+    if (!newTitle) {
+      return // Usuario canceló
+    }
+
+    try {
+      const response = await authenticatedFetch(`http://localhost:5000/api/tasks/${taskId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ title: newTitle }),
+      })
+      
+      const data = await response.json()
+      
+      if (response.ok) {
+        setTasks(tasks.map((task: Task) => 
+          task.id === taskId 
+            ? { ...task, title: newTitle }
+            : task
+        ))
+        toast.success('¡Tarea editada exitosamente!')
+      } else {
+        toast.error('Error: ' + data.message)
+      }
+    } catch (error) {
+      toast.error('Error de conexión con el servidor')
+    }
+  }
+
+  // Mostrar loading mientras se verifica autenticación
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-300 via-blue-400 to-indigo-500 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-2xl">📋</div>
+          <p className="text-white mt-2">Verificando autenticación...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Si no está autenticado, el hook ya redirige
+  if (!isAuthenticated) {
+    return null
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow">
+    <div className="min-h-screen bg-gradient-to-br from-slate-300 via-blue-400 to-indigo-500">
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 shadow-lg">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Link href="/dashboard" className="text-blue-600 hover:text-blue-800">
+              <Link href="/dashboard" className="text-blue-100 hover:text-white">
                 ← Dashboard
               </Link>
-              <h1 className="text-2xl font-bold text-gray-900">📋 Gestión de Tareas</h1>
+              <h1 className="text-2xl font-bold text-white">📋 Gestión de Tareas</h1>
             </div>
-            <Link href="/" className="text-blue-600 hover:text-blue-800">
+            <Link href="/" className="text-blue-100 hover:text-white">
               Cerrar Sesión
             </Link>
           </div>
@@ -154,7 +174,7 @@ export default function TasksPage() {
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        <div className="bg-white p-6 rounded-lg shadow mb-8">
+        <div className="bg-white/90 backdrop-blur-md shadow-2xl ring-1 ring-white/10 p-6 rounded-lg mb-8">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Crear Nueva Tarea</h2>
           <form onSubmit={createTask} className="flex space-x-4">
             <input
@@ -174,7 +194,7 @@ export default function TasksPage() {
           </form>
         </div>
 
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-white/90 backdrop-blur-md shadow-2xl ring-1 ring-white/10 rounded-lg">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900">
               Mis Tareas ({tasks.length})
@@ -209,8 +229,19 @@ export default function TasksPage() {
                       }`}>
                         {task.status}
                       </span>
-                      <button className="text-red-600 hover:text-red-800 text-sm"
-                        onClick={() => deleteTask(task.id)}>Eliminar</button>
+                      <button 
+                        className="text-blue-600 hover:text-white text-sm px-3 py-1.5 rounded-lg transition-all duration-200 hover:bg-blue-600 hover:shadow-md transform hover:scale-105"
+                        onClick={() => editTask(task.id, task.title)}
+                        title="Editar tarea"
+                      >
+                        Editar
+                      </button>
+                      <button 
+                        className="text-red-600 hover:text-white text-sm px-3 py-1.5 rounded-lg transition-all duration-200 hover:bg-red-600 hover:shadow-md transform hover:scale-105"
+                        onClick={() => deleteTask(task.id, task.title)}
+                      >
+                        Eliminar
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -220,12 +251,14 @@ export default function TasksPage() {
         </div>
       </div>
        
-  <div className="min-h-screen bg-gray-50">
-    {/* ... todo el contenido existente ... */}
-    
-    {/* Toast Container */}
-    <toast.ToastContainer />
-  </div>
+      {/* Toast Container */}
+      <toast.ToastContainer />
+      
+      {/* Confirm Modal */}
+      <confirm.ConfirmModal />
+      
+      {/* Edit Modal */}
+      <editModal.EditModal />
     </div>
   )
 }

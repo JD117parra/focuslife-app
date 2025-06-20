@@ -3,7 +3,31 @@ import { HabitService } from '../services/habitService';
 import { CreateHabitDto, UpdateHabitDto, CreateHabitEntryDto } from '../types';
 import { authenticateToken, AuthenticatedRequest } from '../middleware/auth';
 
+console.log('🟡 Loading habits routes module...');
+
 const router = Router();
+
+console.log('🟢 Habits router created successfully');
+
+// Middleware de logging para debugging
+router.use((req, res, next) => {
+  console.log(`🔍 HABITS ROUTER - ${req.method} ${req.originalUrl}`);
+  console.log('📄 Params:', req.params);
+  console.log('🔗 Full path:', req.path);
+  next();
+});
+
+// TEST ENDPOINT - Para verificar que el router funciona
+router.get('/test-delete/:id', (req, res) => {
+  console.log('🧪 TEST ENDPOINT HIT:', req.params.id);
+  res.json({ message: 'Test endpoint works', id: req.params.id });
+});
+
+// ENDPOINT AUN MAS SIMPLE
+router.get('/simple-test', (req, res) => {
+  console.log('🔴 SIMPLE TEST HIT');
+  res.json({ status: 'Router works!' });
+});
 
 // GET /api/habits - Obtener todos los hábitos del usuario
 router.get('/', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
@@ -42,6 +66,33 @@ router.get('/stats', authenticateToken, async (req: AuthenticatedRequest, res: R
   } catch (error) {
     console.error('Get habit stats error:', error);
     res.status(500).json({ message: 'Failed to retrieve habit stats' });
+  }
+});
+
+// DELETE /api/habits/entries/:entryId - Eliminar entrada específica de hábito
+router.delete('/entries/:entryId', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  console.log('🔥 DELETE ENDPOINT HIT:', req.params.entryId); // DEBUG LOG
+  
+  try {
+    if (!req.user) {
+      console.log('❌ User not authenticated'); // DEBUG LOG
+      res.status(401).json({ message: 'User not authenticated' });
+      return;
+    }
+
+    const { entryId } = req.params;
+    console.log('👤 User ID:', req.user.id, 'Entry ID:', entryId); // DEBUG LOG
+    
+    await HabitService.deleteHabitEntry(entryId, req.user.id);
+
+    console.log('✅ Entry deleted successfully'); // DEBUG LOG
+    res.json({
+      message: 'Habit entry deleted successfully'
+    });
+  } catch (error) {
+    console.error('❌ Delete habit entry error:', error);
+    const message = error instanceof Error ? error.message : 'Failed to delete habit entry';
+    res.status(400).json({ message });
   }
 });
 
@@ -223,4 +274,6 @@ router.get('/:id/entries', authenticateToken, async (req: AuthenticatedRequest, 
   }
 });
 
+console.log('🔄 Exporting habits router...');
 export default router;
+console.log('✅ Habits router exported successfully!');
