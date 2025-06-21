@@ -48,10 +48,10 @@
 
 /* Widget específico para estadísticas del dashboard - sin !important */
 .widget-stat {
-  padding-left: 0.75rem;
-  padding-right: 0.75rem;
-  padding-top: 1rem;
-  padding-bottom: 1rem;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
 }
 
 /* Optimized blur replacement - maintains glass effect with better performance */

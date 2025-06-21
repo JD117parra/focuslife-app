@@ -610,131 +610,104 @@ export default function TasksPage() {
           </div>
         </div>
 
-        {/* Sección de Creación de Tareas - Formulario + Plantillas */}
+        {/* Plantillas de tareas comunes */}
         <div className="bg-white/15 backdrop-blur-md shadow-lg border border-white/30 p-6 rounded-lg mb-6">
-          <div className="text-center mb-6">
-            <h2 className="text-xl font-bold text-white mb-2" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
-              ✨ Crear Nueva Tarea
-            </h2>
-            <p className="text-white text-base font-medium" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
-              Crea una tarea personalizada o usa una plantilla rápida
-            </p>
-          </div>
+          <h2 className="text-xl font-bold text-white mb-4" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>✨ Plantillas Rápidas</h2>
+          <p className="text-white text-base font-medium mb-6" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>Click para autocompletar el formulario</p>
           
-          {/* Grid de 2 columnas: Formulario + Plantillas */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            
-            {/* Columna Izquierda: Formulario Personalizado Completo */}
-            <div id="task-form">
-              <h3 className="text-lg font-bold text-white mb-4" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
-                📝 Formulario Personalizado
-              </h3>
-              <form onSubmit={createTask} className="space-y-4">
-                {/* Título */}
-                <div>
-                  <label className="block text-sm font-bold text-white mb-1" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>Título *</label>
-                  <input
-                    type="text"
-                    value={newTaskTitle}
-                    onChange={(e) => setNewTaskTitle(e.target.value)}
-                    className="w-full p-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white placeholder-white/60"
-                    placeholder="Título de la tarea..."
-                    required
-                  />
+          <div className="grid grid-cols-6 md:grid-cols-12 gap-1">
+            {[
+              { title: 'Revisar emails', desc: 'Chequear y responder correos importantes', priority: 'MEDIUM', icon: '📧' },
+              { title: 'Llamar a un cliente', desc: 'Seguimiento de proyecto o consulta', priority: 'HIGH', icon: '📞' },
+              { title: 'Comprar víveres', desc: 'Lista de compras para la semana', priority: 'MEDIUM', icon: '🛒' },
+              { title: 'Revisar presupuesto', desc: 'Análisis mensual de finanzas', priority: 'MEDIUM', icon: '📊' },
+              { title: 'Preparar presentación', desc: 'Slides para reunión del próximo jueves', priority: 'HIGH', icon: '📊' },
+              { title: 'Renovar documentos', desc: 'Licencia, seguro o trámites pendientes', priority: 'MEDIUM', icon: '📝' },
+              { title: 'Hacer ejercicio', desc: 'Rutina de ejercicios o ir al gimnasio', priority: 'MEDIUM', icon: '💪' },
+              { title: 'Pagar facturas', desc: 'Servicios, tarjetas y pagos pendientes', priority: 'HIGH', icon: '💳' },
+              { title: 'Limpiar casa', desc: 'Tareas de limpieza y organización', priority: 'LOW', icon: '🧹' },
+              { title: 'Estudiar curso', desc: 'Revisar material de estudio o capacitación', priority: 'MEDIUM', icon: '📚' },
+              { title: 'Backup datos', desc: 'Respaldar archivos importantes', priority: 'LOW', icon: '💾' },
+              { title: 'Cita médica', desc: 'Agendar o asistir a consulta médica', priority: 'HIGH', icon: '🏥' }
+            ].map((template, index) => (
+              <div 
+                key={index}
+                onClick={() => useTemplate(template)}
+                className="px-0 py-1.5 rounded border transition-all duration-150 cursor-pointer bg-white/10 border-white/20 hover:bg-white/20 hover:border-white/40"
+              >
+                <div className="text-center">
+                  <div className="text-sm mb-0.5">{template.icon}</div>
+                  <div className="text-xs font-bold leading-tight text-white/90" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>{template.title}</div>
                 </div>
-                
-                {/* Fecha y Prioridad */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-bold text-white mb-1" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>Fecha límite</label>
-                    <input
-                      type="date"
-                      value={newTaskDueDate}
-                      onChange={(e) => setNewTaskDueDate(e.target.value)}
-                      className="w-full p-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-bold text-white mb-1" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>Prioridad</label>
-                    <select
-                      value={newTaskPriority}
-                      onChange={(e) => setNewTaskPriority(e.target.value as 'LOW' | 'MEDIUM' | 'HIGH')}
-                      className="w-full p-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white"
-                    >
-                      <option value="LOW" className="bg-gray-800 text-white">🟢 Baja</option>
-                      <option value="MEDIUM" className="bg-gray-800 text-white">🟡 Media</option>
-                      <option value="HIGH" className="bg-gray-800 text-white">🔴 Alta</option>
-                    </select>
-                  </div>
-                </div>
-                
-                {/* Descripción */}
-                <div>
-                  <label className="block text-sm font-bold text-white mb-1" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>Descripción</label>
-                  <textarea
-                    value={newTaskDescription}
-                    onChange={(e) => setNewTaskDescription(e.target.value)}
-                    className="w-full p-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white placeholder-white/60 resize-none"
-                    placeholder="Descripción opcional..."
-                    rows={3}
-                  />
-                </div>
-                
-                {/* Botón */}
-                <div>
-                  <button
-                    type="submit"
-                    className="w-full bg-blue-600/70 backdrop-blur-md text-white px-6 py-3 rounded-lg font-bold border border-blue-400/70 hover:bg-blue-700/80 transition-all duration-150 shadow-lg text-base transform hover:scale-105"
-                    style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}
-                  >
-                    ➕ Crear Tarea
-                  </button>
-                </div>
-              </form>
-            </div>
-            
-            {/* Columna Derecha: Todas las Plantillas */}
-            <div>
-              <h3 className="text-lg font-bold text-white mb-4" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
-                📝 Plantillas Rápidas
-              </h3>
-              {/* Espaciado para alinear con el primer input del formulario */}
-              <div className="mb-4">
-                <div className="text-sm font-bold text-white mb-1 opacity-0">Alineación</div>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {[
-                  { title: 'Revisar emails', desc: 'Chequear y responder correos importantes', priority: 'MEDIUM', icon: '📧' },
-                  { title: 'Llamar a un cliente', desc: 'Seguimiento de proyecto o consulta', priority: 'HIGH', icon: '📞' },
-                  { title: 'Comprar víveres', desc: 'Lista de compras para la semana', priority: 'MEDIUM', icon: '🛒' },
-                  { title: 'Revisar presupuesto', desc: 'Análisis mensual de finanzas', priority: 'MEDIUM', icon: '📊' },
-                  { title: 'Preparar presentación', desc: 'Slides para reunión del próximo jueves', priority: 'HIGH', icon: '📊' },
-                  { title: 'Renovar documentos', desc: 'Licencia, seguro o trámites pendientes', priority: 'MEDIUM', icon: '📝' },
-                  { title: 'Hacer ejercicio', desc: 'Rutina de ejercicios o ir al gimnasio', priority: 'MEDIUM', icon: '💪' },
-                  { title: 'Pagar facturas', desc: 'Servicios, tarjetas y pagos pendientes', priority: 'HIGH', icon: '💳' },
-                  { title: 'Limpiar casa', desc: 'Tareas de limpieza y organización', priority: 'LOW', icon: '🧹' },
-                  { title: 'Estudiar curso', desc: 'Revisar material de estudio o capacitación', priority: 'MEDIUM', icon: '📚' },
-                  { title: 'Backup datos', desc: 'Respaldar archivos importantes', priority: 'LOW', icon: '💾' },
-                  { title: 'Cita médica', desc: 'Agendar o asistir a consulta médica', priority: 'HIGH', icon: '🏥' }
-                ].map((template, index) => (
-                  <div 
-                    key={index}
-                    onClick={() => useTemplate(template)}
-                    className="p-3 rounded-lg border transition-all duration-150 cursor-pointer bg-white/10 border-white/20 hover:bg-white/20 hover:border-white/40 hover:scale-105 transform"
-                    title={`${template.title} - ${template.desc}`}
-                  >
-                    <div className="text-center">
-                      <div className="text-xl mb-2">{template.icon}</div>
-                      <div className="text-xs font-bold leading-tight text-white/90" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
-                        {template.title}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            ))}
           </div>
+        </div>
+        <div id="task-form" className="bg-white/15 backdrop-blur-md shadow-lg border border-white/30 p-6 rounded-lg mb-8">
+          <h2 className="text-xl font-bold text-white mb-4" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>Crear Tarea Personalizada</h2>
+          <p className="text-white text-base font-medium mb-6" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>¿No encontraste lo que buscabas arriba? Crea tu tarea personalizada con todos los detalles</p>
+          <form onSubmit={createTask} className="space-y-4">
+            {/* Primera fila: Título, Fecha límite y Prioridad */}
+            <div className="grid grid-cols-1 md:grid-cols-8 gap-4">
+              <div className="md:col-span-5">
+                <label className="block text-sm font-bold text-white mb-1" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>Título *</label>
+                <input
+                  type="text"
+                  value={newTaskTitle}
+                  onChange={(e) => setNewTaskTitle(e.target.value)}
+                  className="w-full p-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white placeholder-white/60"
+                  placeholder="Título de la tarea..."
+                  required
+                />
+              </div>
+              
+              <div className="md:col-span-2">
+                <label className="block text-sm font-bold text-white mb-1" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>Fecha límite</label>
+                <input
+                  type="date"
+                  value={newTaskDueDate}
+                  onChange={(e) => setNewTaskDueDate(e.target.value)}
+                  className="w-full p-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-bold text-white mb-1" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>Prioridad</label>
+                <select
+                  value={newTaskPriority}
+                  onChange={(e) => setNewTaskPriority(e.target.value as 'LOW' | 'MEDIUM' | 'HIGH')}
+                  className="w-full p-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white"
+                >
+                  <option value="LOW" className="bg-gray-800 text-white">🟢 Baja</option>
+                  <option value="MEDIUM" className="bg-gray-800 text-white">🟡 Media</option>
+                  <option value="HIGH" className="bg-gray-800 text-white">🔴 Alta</option>
+                </select>
+              </div>
+            </div>
+            
+            {/* Segunda fila: Descripción */}
+            <div>
+              <label className="block text-sm font-bold text-white mb-1" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>Descripción</label>
+              <textarea
+                value={newTaskDescription}
+                onChange={(e) => setNewTaskDescription(e.target.value)}
+                className="w-full p-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white placeholder-white/60 resize-none"
+                placeholder="Descripción opcional..."
+                rows={2}
+              />
+            </div>
+            
+            {/* Tercera fila: Botón */}
+            <div className="flex justify-center">
+              <button
+                type="submit"
+                className="bg-blue-600/70 backdrop-blur-md text-white px-8 py-3 rounded-lg font-bold border border-blue-400/70 hover:bg-blue-700/80 transition-all duration-150 shadow-lg text-base"
+                style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}
+              >
+                ➕ Crear Tarea
+              </button>
+            </div>
+          </form>
         </div>
 
         <div className="bg-white/15 backdrop-blur-md shadow-lg border border-white/30 rounded-lg">

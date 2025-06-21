@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:5000/api';
+import { apiUrls } from '@/config/api'
 
 interface AuthResponse {
   message: string;
@@ -30,7 +30,7 @@ export class AuthService {
 
   // Login
   static async login(email: string, password: string): Promise<AuthResponse> {
-    const response = await fetch(`${API_URL}/auth/login`, {
+    const response = await fetch(apiUrls.auth.login(), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -48,7 +48,7 @@ export class AuthService {
 
   // Register
   static async register(email: string, password: string, name?: string): Promise<AuthResponse> {
-    const response = await fetch(`${API_URL}/auth/register`, {
+    const response = await fetch(apiUrls.auth.register(), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

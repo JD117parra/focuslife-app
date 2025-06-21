@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { apiUrls } from '@/config/api'
 
 interface AuthUser {
   id: string
@@ -70,7 +71,7 @@ export const useAuth = (): UseAuthReturn => {
         return
       }
 
-      const response = await fetch('http://localhost:5000/api/auth/me', {
+      const response = await fetch(apiUrls.auth.me(), {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -94,7 +95,7 @@ export const useAuth = (): UseAuthReturn => {
   // Login
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      const response = await fetch(apiUrls.auth.login(), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

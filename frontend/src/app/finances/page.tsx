@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useToast } from '@/hooks/useToast'
 import { useConfirm } from '@/hooks/useConfirm'
 import { useEditModal } from '@/hooks/useEditModal'
+import { apiUrls } from '@/config/api'
 
 interface Transaction {
   id: string
@@ -54,7 +55,7 @@ export default function FinancesPage() {
 
   const loadTransactions = async () => {
     try {
-      const response = await authenticatedFetch('http://localhost:5000/api/transactions')
+      const response = await authenticatedFetch(apiUrls.transactions.list())
       const data = await response.json()
       
       if (response.ok) {
@@ -72,7 +73,7 @@ export default function FinancesPage() {
 
   const loadCategories = async () => {
     try {
-      const response = await authenticatedFetch('http://localhost:5000/api/transactions/categories/finance')
+      const response = await authenticatedFetch(apiUrls.transactions.categoriesFinance())
       const data = await response.json()
       
       if (response.ok) {
@@ -100,14 +101,14 @@ export default function FinancesPage() {
       console.log('🔄 Actualizando categorías...')
       toast.info('Actualizando categorías...')
       
-      const response = await authenticatedFetch('http://localhost:5000/api/transactions/categories/defaults', {
+      const response = await authenticatedFetch(apiUrls.transactions.categoriesDefaults(), {
         method: 'POST'
       })
       
       if (response.ok) {
         console.log('✅ Categorías actualizadas exitosamente')
         // Recargar categorías después de crear las por defecto
-        const reloadResponse = await authenticatedFetch('http://localhost:5000/api/transactions/categories/finance')
+        const reloadResponse = await authenticatedFetch(apiUrls.transactions.categoriesFinance())
         const reloadData = await reloadResponse.json()
         
         if (reloadResponse.ok && reloadData.data) {
@@ -186,7 +187,7 @@ export default function FinancesPage() {
     if (!amount || !description) return
 
     try {
-      const response = await authenticatedFetch('http://localhost:5000/api/transactions', {
+      const response = await authenticatedFetch(apiUrls.transactions.create(), {
         method: 'POST',
         body: JSON.stringify({ 
           amount: parseFloat(amount), 
@@ -219,7 +220,7 @@ export default function FinancesPage() {
     }
 
     try {
-      const response = await authenticatedFetch(`http://localhost:5000/api/transactions/${transactionId}`, {
+      const response = await authenticatedFetch(apiUrls.transactions.delete(transactionId), {
         method: 'DELETE',
       })
       
@@ -242,7 +243,7 @@ export default function FinancesPage() {
     }
 
     try {
-      const response = await authenticatedFetch(`http://localhost:5000/api/transactions/${transactionId}`, {
+      const response = await authenticatedFetch(apiUrls.transactions.update(transactionId), {
         method: 'PUT',
         body: JSON.stringify({ description: newDescription }),
       })
@@ -324,11 +325,11 @@ export default function FinancesPage() {
       <div className="container mx-auto px-4 py-8">
         {/* Create Transaction Form */}
         <div className="bg-white/15 backdrop-blur-md shadow-lg border border-white/30 p-6 rounded-lg mb-6">
-          <h2 className="text-lg font-semibold text-white mb-4" style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3)' }}>Registrar Nueva Transacción</h2>
+          <h2 className="text-xl font-bold text-white mb-4" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>💰 Registrar Nueva Transacción</h2>
           <form onSubmit={createTransaction} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <label className="block text-sm font-medium text-white/90 mb-1" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>Tipo</label>
+                <label className="block text-sm font-bold text-white mb-1" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>Tipo</label>
                 <select
                   value={type}
                   onChange={(e) => handleTypeChange(e.target.value)}
@@ -340,7 +341,7 @@ export default function FinancesPage() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-white/90 mb-1" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>Cantidad</label>
+                <label className="block text-sm font-bold text-white mb-1" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>Cantidad</label>
                 <input
                   type="number"
                   step="0.01"
@@ -353,7 +354,7 @@ export default function FinancesPage() {
               </div>
               
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-white/90 mb-1" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>Descripción</label>
+                <label className="block text-sm font-bold text-white mb-1" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>Descripción</label>
                 <input
                   type="text"
                   value={description}
@@ -367,7 +368,7 @@ export default function FinancesPage() {
             
             {/* Selector de Categoría */}
             <div>
-              <label className="block text-sm font-medium text-white/90 mb-3" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>
+              <label className="block text-sm font-bold text-white mb-3" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
                 Categoría {type === 'INCOME' ? 'de Ingreso' : 'de Gasto'} (opcional)
               </label>
               
@@ -380,9 +381,9 @@ export default function FinancesPage() {
                         key={category.id}
                         type="button"
                         onClick={() => handleCategoryToggle(category)}
-                        className={`px-0 py-1.5 rounded border transition-all duration-200 ${
+                        className={`px-0 py-1.5 rounded border transition-all duration-150 ${
                           categoryId === category.id
-                            ? 'bg-white/30 border-white/60 shadow-md transform scale-105'
+                            ? 'bg-white/30 border-white/60 shadow-md'
                             : 'bg-white/10 border-white/20 hover:bg-white/20 hover:border-white/40'
                         }`}
                         style={{
@@ -400,7 +401,7 @@ export default function FinancesPage() {
                             className={`text-xs font-bold leading-tight ${
                               categoryId === category.id ? 'text-white' : 'text-white/90'
                             }`} 
-                            style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.6)' }}
+                            style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
                           >
                             {category.name}
                           </div>
@@ -412,10 +413,10 @@ export default function FinancesPage() {
                   {/* Mostrar categoría seleccionada */}
                   {categoryId && (
                     <div className="mt-3 text-center">
-                      <span className="text-sm text-white/80" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>
+                      <span className="text-sm font-medium text-white" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
                         Seleccionado: <strong>{getFilteredCategories().find(c => c.id === categoryId)?.name}</strong>
                       </span>
-                      <p className="text-xs text-white/60 mt-1" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>
+                      <p className="text-sm text-white/80 mt-1 font-medium" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
                         Haz clic de nuevo para quitar
                       </p>
                     </div>
@@ -424,13 +425,13 @@ export default function FinancesPage() {
               ) : (
                 <div className="text-center py-8 bg-white/10 rounded-lg border border-white/20">
                   <div className="text-3xl mb-2">🔄</div>
-                  <p className="text-white/60 text-sm mb-2" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>
+                  <p className="text-white text-base font-medium mb-2" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
                     Configurando categorías {type === 'INCOME' ? 'de ingresos' : 'de gastos'}...
                   </p>
                   <div className="flex justify-center mt-4">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white/60"></div>
                   </div>
-                  <p className="text-xs text-white/50 mt-3" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>
+                  <p className="text-sm text-white/80 mt-3 font-medium" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
                     {type === 'INCOME' 
                       ? 'Preparando: Salario, Freelance, Bonos, Consultorías, y 20 más'
                       : 'Preparando: Alimentación, Transporte, Seguros, Gasolina, y 20 más'
@@ -443,8 +444,8 @@ export default function FinancesPage() {
             <div className="flex justify-center">
               <button
                 type="submit"
-                className="bg-purple-600/60 backdrop-blur-md text-white py-2 px-8 rounded-lg font-bold border border-purple-400/60 hover:bg-purple-700/70 transition-all duration-300 shadow-lg"
-                style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}
+                className="bg-purple-600/70 backdrop-blur-md text-white py-3 px-8 rounded-lg font-bold border border-purple-400/70 hover:bg-purple-700/80 transition-all duration-150 shadow-lg text-base"
+                style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}
               >
                 Registrar Transacción
               </button>
@@ -455,15 +456,15 @@ export default function FinancesPage() {
         {/* Financial Summary */}
         <div className="grid md:grid-cols-3 gap-4 mb-6">
           <div className="bg-green-500/40 backdrop-blur-md shadow-lg border-2 border-green-400/60 p-4 rounded-lg">
-            <h3 className="text-sm font-medium text-green-50 mb-1" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.6)' }}>Ingresos</h3>
-            <p className="text-xl font-bold text-white" style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.7)' }}>
+            <h3 className="text-sm font-bold text-green-100 mb-1" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>Ingresos</h3>
+            <p className="text-xl font-bold text-white" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
               +${totalIncome.toLocaleString()}
             </p>
           </div>
           
           <div className="bg-red-500/40 backdrop-blur-md shadow-lg border-2 border-red-400/60 p-4 rounded-lg">
-            <h3 className="text-sm font-medium text-red-50 mb-1" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.6)' }}>Gastos</h3>
-            <p className="text-xl font-bold text-white" style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.7)' }}>
+            <h3 className="text-sm font-bold text-red-100 mb-1" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>Gastos</h3>
+            <p className="text-xl font-bold text-white" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
               -${totalExpenses.toLocaleString()}
             </p>
           </div>
@@ -473,12 +474,12 @@ export default function FinancesPage() {
               ? 'bg-blue-500/40 border-blue-400/60' 
               : 'bg-orange-500/40 border-orange-400/60'
           }`}>
-            <h3 className={`text-sm font-medium mb-1 ${
-              balance >= 0 ? 'text-blue-50' : 'text-orange-50'
-            }`} style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.6)' }}>
+            <h3 className={`text-sm font-bold mb-1 ${
+              balance >= 0 ? 'text-blue-100' : 'text-orange-100'
+            }`} style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
               Balance
             </h3>
-            <p className={`text-xl font-bold text-white`} style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.7)' }}>
+            <p className={`text-xl font-bold text-white`} style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
               ${balance.toLocaleString()}
             </p>
           </div>
@@ -487,7 +488,7 @@ export default function FinancesPage() {
         {/* Transactions List */}
         <div className="bg-white/15 backdrop-blur-md shadow-lg border border-white/30 rounded-lg">
           <div className="p-6 border-b border-white/20">
-            <h2 className="text-lg font-semibold text-white" style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3)' }}>
+            <h2 className="text-xl font-bold text-white" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
               Transacciones Recientes ({transactions.length})
             </h2>
           </div>
@@ -496,8 +497,8 @@ export default function FinancesPage() {
             {transactions.length === 0 ? (
               <div className="text-center py-8">
                 <div className="text-4xl mb-4">💳</div>
-                <p className="text-white/90" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>No tienes transacciones registradas aún.</p>
-                <p className="text-white/70 text-sm" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>Registra tu primera transacción usando el formulario de arriba.</p>
+                <p className="text-white font-bold text-lg" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>No tienes transacciones registradas aún.</p>
+                <p className="text-white/90 text-base font-medium" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>Registra tu primera transacción usando el formulario de arriba.</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -514,9 +515,9 @@ export default function FinancesPage() {
                         </span>
                       </div>
                       <div>
-                        <h3 className="font-medium text-white" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>{transaction.description}</h3>
+                        <h3 className="font-bold text-white text-lg" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>{transaction.description}</h3>
                         <div className="flex items-center space-x-2">
-                          <p className="text-sm text-white/70" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>
+                          <p className="text-sm text-white/80 font-medium" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
                             {new Date(transaction.date).toLocaleDateString('es-ES')}
                           </p>
                           {transaction.category && (
@@ -527,7 +528,7 @@ export default function FinancesPage() {
                                 style={{ 
                                   backgroundColor: `${transaction.category.color}40`,
                                   borderColor: `${transaction.category.color}60`,
-                                  textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' 
+                                  textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' 
                                 }}
                               >
                                 {transaction.category.name}
@@ -539,23 +540,23 @@ export default function FinancesPage() {
                     </div>
                     
                     <div className="flex items-center space-x-4">
-                      <span className={`text-lg font-semibold ${
+                      <span className={`text-xl font-bold ${
                         transaction.type === 'INCOME' ? 'text-green-200' : 'text-red-200'
-                      }`} style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>
+                      }`} style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
                         {transaction.type === 'INCOME' ? '+' : '-'}${Math.abs(transaction.amount).toLocaleString()}
                       </span>
                       <button 
-                        className="text-white bg-blue-500/60 backdrop-blur-sm border border-blue-400/40 hover:bg-blue-600/70 text-sm px-3 py-1.5 rounded-lg transition-all duration-300 hover:shadow-md transform hover:scale-105"
+                        className="text-white bg-blue-500/70 backdrop-blur-md border border-blue-400/50 hover:bg-blue-600/80 text-sm font-bold px-4 py-2 rounded-lg transition-all duration-150 hover:shadow-md transform hover:scale-105"
                         onClick={() => editTransaction(transaction.id, transaction.description)}
                         title="Editar transacción"
-                        style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}
+                        style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}
                       >
                         Editar
                       </button>
                       <button 
-                        className="text-white bg-red-500/60 backdrop-blur-sm border border-red-400/40 hover:bg-red-600/70 text-sm px-3 py-1.5 rounded-lg transition-all duration-300 hover:shadow-md transform hover:scale-105"
+                        className="text-white bg-red-500/70 backdrop-blur-md border border-red-400/50 hover:bg-red-600/80 text-sm font-bold px-4 py-2 rounded-lg transition-all duration-150 hover:shadow-md transform hover:scale-105"
                         onClick={() => deleteTransaction(transaction.id, transaction.description)}
-                        style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}
+                        style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}
                       >
                         Eliminar
                       </button>

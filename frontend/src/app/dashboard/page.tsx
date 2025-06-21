@@ -1,8 +1,10 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
+import { apiUrls } from '@/config/api'
 
 interface User {
   id: string
@@ -40,6 +42,7 @@ interface FinanceStats {
 }
 
 export default function DashboardPage() {
+  const router = useRouter()
   const [taskStats, setTaskStats] = useState<TaskStats | null>(null)
   const [habitStats, setHabitStats] = useState<HabitStats | null>(null)
   const [financeStats, setFinanceStats] = useState<FinanceStats | null>(null)
@@ -70,7 +73,7 @@ const loadAllStats = async () => {
 
 const loadTaskStats = async () => {
   try {
-    const response = await authenticatedFetch('http://localhost:5000/api/tasks/stats')
+    const response = await authenticatedFetch(apiUrls.tasks.stats())
     
     if (response.ok) {
       const data = await response.json()
@@ -83,7 +86,7 @@ const loadTaskStats = async () => {
 
 const loadHabitStats = async () => {
   try {
-    const response = await authenticatedFetch('http://localhost:5000/api/habits/stats')
+    const response = await authenticatedFetch(apiUrls.habits.stats())
     
     if (response.ok) {
       const data = await response.json()
@@ -96,7 +99,7 @@ const loadHabitStats = async () => {
 
 const loadFinanceStats = async () => {
   try {
-    const response = await authenticatedFetch('http://localhost:5000/api/transactions/summary')
+    const response = await authenticatedFetch(apiUrls.transactions.summary())
     
     if (response.ok) {
       const data = await response.json()
@@ -153,7 +156,7 @@ const loadFinanceStats = async () => {
           {/* Tareas */}
           <div 
             className="glass-effect glass-effect-hover shadow-lg p-8 text-center cursor-pointer"
-            onClick={() => window.location.href = '/tasks'}
+            onClick={() => router.push('/tasks')}
           >
             <div className="text-6xl mb-4">📋</div>
             <h3 className="text-xl font-semibold text-white mb-2 text-shadow-medium">
@@ -170,7 +173,7 @@ const loadFinanceStats = async () => {
           {/* Hábitos */}
           <div 
             className="glass-effect glass-effect-hover shadow-lg p-8 text-center cursor-pointer"
-            onClick={() => window.location.href = '/habits'}
+            onClick={() => router.push('/habits')}
           >
             <div className="text-6xl mb-4">🎯</div>
             <h3 className="text-xl font-semibold text-white mb-2 text-shadow-medium">
@@ -187,7 +190,7 @@ const loadFinanceStats = async () => {
           {/* Finanzas */}
           <div 
             className="glass-effect glass-effect-hover shadow-lg p-8 text-center cursor-pointer"
-            onClick={() => window.location.href = '/finances'}
+            onClick={() => router.push('/finances')}
           >
             <div className="text-6xl mb-4">💰</div>
             <h3 className="text-xl font-semibold text-white mb-2 text-shadow-medium">
