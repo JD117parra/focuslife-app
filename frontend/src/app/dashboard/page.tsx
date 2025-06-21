@@ -110,7 +110,7 @@ const loadFinanceStats = async () => {
   // Mostrar loading mientras se verifica autenticación
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-300 via-blue-400 to-indigo-500 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-optimized flex items-center justify-center">
         <div className="text-center">
           <div className="text-2xl">📊</div>
           <p className="text-white mt-2">Verificando autenticación...</p>
@@ -125,7 +125,7 @@ const loadFinanceStats = async () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-300 via-blue-400 to-indigo-500">
+    <div className="min-h-screen bg-gradient-optimized">
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-700 shadow-lg">
         <div className="container mx-auto px-4 py-4">
@@ -144,72 +144,72 @@ const loadFinanceStats = async () => {
       {/* Dashboard Content */}
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-white mb-2" style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3)' }}>¿Qué quieres gestionar hoy?</h2>
-          <p className="text-white/90" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>Elige una sección para comenzar</p>
+          <h2 className="text-2xl font-bold text-white mb-2 text-shadow-medium">¿Qué quieres gestionar hoy?</h2>
+          <p className="text-white/90 text-shadow-light">Elige una sección para comenzar</p>
         </div>
 
         {/* Navigation Cards */}
         <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
           {/* Tareas */}
           <div 
-            className="bg-white/15 backdrop-blur-md border border-white/30 shadow-lg rounded-lg p-8 text-center cursor-pointer transition-all duration-300 hover:scale-105 hover:bg-white/20"
+            className="glass-effect glass-effect-hover shadow-lg p-8 text-center cursor-pointer"
             onClick={() => window.location.href = '/tasks'}
           >
             <div className="text-6xl mb-4">📋</div>
-            <h3 className="text-xl font-semibold text-white mb-2" style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3)' }}>
+            <h3 className="text-xl font-semibold text-white mb-2 text-shadow-medium">
               Gestión de Tareas
             </h3>
-            <p className="text-white/90" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>
+            <p className="text-white/90 text-shadow-light">
               Organiza y gestiona tus tareas diarias
             </p>
-            <div className="mt-4 inline-block bg-blue-600/60 backdrop-blur-sm text-white px-4 py-2 rounded-lg font-medium border border-blue-400/40 hover:bg-blue-700/70 transition-all duration-300" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>
+            <div className="mt-4 inline-block bg-blue-600/60 text-white px-4 py-2 rounded-lg font-medium border border-blue-400/40 hover:bg-blue-700/70 transition-colors duration-200 text-shadow-strong">
               Ir a Tareas →
             </div>
           </div>
 
           {/* Hábitos */}
           <div 
-            className="bg-white/15 backdrop-blur-md border border-white/30 shadow-lg rounded-lg p-8 text-center cursor-pointer transition-all duration-300 hover:scale-105 hover:bg-white/20"
+            className="glass-effect glass-effect-hover shadow-lg p-8 text-center cursor-pointer"
             onClick={() => window.location.href = '/habits'}
           >
             <div className="text-6xl mb-4">🎯</div>
-            <h3 className="text-xl font-semibold text-white mb-2" style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3)' }}>
+            <h3 className="text-xl font-semibold text-white mb-2 text-shadow-medium">
               Seguimiento de Hábitos
             </h3>
-            <p className="text-white/90" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>
+            <p className="text-white/90 text-shadow-light">
               Construye y mantén hábitos positivos
             </p>
-            <div className="mt-4 inline-block bg-green-600/60 backdrop-blur-sm text-white px-4 py-2 rounded-lg font-medium border border-green-400/40 hover:bg-green-700/70 transition-all duration-300" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>
+            <div className="mt-4 inline-block bg-green-600/60 text-white px-4 py-2 rounded-lg font-medium border border-green-400/40 hover:bg-green-700/70 transition-colors duration-200 text-shadow-strong">
               Ir a Hábitos →
             </div>
           </div>
 
           {/* Finanzas */}
           <div 
-            className="bg-white/15 backdrop-blur-md border border-white/30 shadow-lg rounded-lg p-8 text-center cursor-pointer transition-all duration-300 hover:scale-105 hover:bg-white/20"
+            className="glass-effect glass-effect-hover shadow-lg p-8 text-center cursor-pointer"
             onClick={() => window.location.href = '/finances'}
           >
             <div className="text-6xl mb-4">💰</div>
-            <h3 className="text-xl font-semibold text-white mb-2" style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3)' }}>
+            <h3 className="text-xl font-semibold text-white mb-2 text-shadow-medium">
               Finanzas Personales
             </h3>
-            <p className="text-white/90" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>
+            <p className="text-white/90 text-shadow-light">
               Controla tus ingresos y gastos
             </p>
-            <div className="mt-4 inline-block bg-purple-600/60 backdrop-blur-sm text-white px-4 py-2 rounded-lg font-medium border border-purple-400/40 hover:bg-purple-700/70 transition-all duration-300" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>
+            <div className="mt-4 inline-block bg-purple-600/60 text-white px-4 py-2 rounded-lg font-medium border border-purple-400/40 hover:bg-purple-700/70 transition-colors duration-200 text-shadow-strong">
               Ir a Finanzas →
             </div>
           </div>
         </div>
 
         {/* Widget de Resumen General */}
-        <div className="bg-white/15 backdrop-blur-md shadow-lg border border-white/30 p-6 rounded-lg mt-12">
+        <div className="glass-effect shadow-lg p-6 mt-12 max-w-5xl mx-auto">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-bold text-white" style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3)' }}>📊 Resumen General</h2>
-              <p className="text-white/90" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>Tu productividad de un vistazo</p>
+              <h2 className="text-2xl font-bold text-white text-shadow-medium">📊 Resumen General</h2>
+              <p className="text-white/90 text-shadow-light">Tu productividad de un vistazo</p>
             </div>
-            <div className="text-sm text-white/80" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>
+            <div className="text-sm text-white/80 text-shadow-light">
               📅 {new Date().toLocaleDateString('es-ES', { 
                 weekday: 'long', 
                 year: 'numeric', 
@@ -220,7 +220,7 @@ const loadFinanceStats = async () => {
           </div>
 
           {statsLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-5xl mx-auto">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="animate-pulse">
                   <div className="bg-gray-200 rounded-lg p-4">
@@ -232,26 +232,26 @@ const loadFinanceStats = async () => {
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-5xl mx-auto">
               {/* Widget de Tareas */}
-              <div className="bg-blue-500/20 backdrop-blur-sm border border-blue-400/30 rounded-lg p-4">
+              <div className="bg-blue-500/40 backdrop-blur-md shadow-lg border-2 border-blue-300/70 rounded-lg widget-stat">
                 <div className="mb-3">
-                  <h3 className="font-semibold text-white flex items-center" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>
+                  <h3 className="font-semibold text-blue-50 flex items-center text-shadow-strong">
                     📋 Tareas
                   </h3>
                 </div>
                 
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-white/90" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>Pendientes</span>
-                    <span className="font-bold text-blue-200 text-lg" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>
+                    <span className="text-sm text-blue-50 text-shadow-light">Pendientes</span>
+                    <span className="font-bold text-white text-lg text-shadow-strong">
                       {taskStats?.byStatus?.PENDING || 0}
                     </span>
                   </div>
                   
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-white/90" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>Completadas</span>
-                    <span className="font-medium text-green-200" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>
+                    <span className="text-sm text-blue-50 text-shadow-light">Completadas</span>
+                    <span className="font-medium text-white text-shadow-strong">
                       {taskStats?.byStatus?.COMPLETED || 0}
                     </span>
                   </div>
@@ -259,18 +259,18 @@ const loadFinanceStats = async () => {
                   {taskStats?.byDate && (
                     <>
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-white/90" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>Para hoy</span>
-                        <span className="font-medium text-blue-200" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>
+                        <span className="text-sm text-blue-50 text-shadow-light">Para hoy</span>
+                        <span className="font-medium text-white text-shadow-strong">
                           {taskStats.byDate.today || 0}
                         </span>
                       </div>
                       
                       {taskStats.byDate.overdue > 0 && (
                         <div className="flex justify-between items-center">
-                          <span className="text-sm text-red-200 flex items-center" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>
+                          <span className="text-sm text-red-200 flex items-center text-shadow-light">
                             ⚠️ Vencidas
                           </span>
-                          <span className="font-bold text-red-200" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>
+                          <span className="font-bold text-red-200 text-shadow-strong">
                             {taskStats.byDate.overdue}
                           </span>
                         </div>
@@ -281,32 +281,32 @@ const loadFinanceStats = async () => {
               </div>
 
               {/* Widget de Hábitos */}
-              <div className="bg-green-500/20 backdrop-blur-sm border border-green-400/30 rounded-lg p-4">
+              <div className="bg-green-500/40 backdrop-blur-md shadow-lg border-2 border-green-400/60 rounded-lg widget-stat">
                 <div className="mb-3">
-                  <h3 className="font-semibold text-white flex items-center" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>
+                  <h3 className="font-semibold text-green-50 flex items-center text-shadow-strong">
                     🎯 Hábitos
                   </h3>
                 </div>
                 
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-white/90" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>Total activos</span>
-                    <span className="font-bold text-green-200 text-lg" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>
+                    <span className="text-sm text-green-50 text-shadow-light">Total activos</span>
+                    <span className="font-bold text-white text-lg text-shadow-strong">
                       {habitStats?.active || 0}
                     </span>
                   </div>
                   
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-white/90" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>Completados hoy</span>
-                    <span className="font-medium text-green-200" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>
+                    <span className="text-sm text-green-50 text-shadow-light">Completados hoy</span>
+                    <span className="font-medium text-white text-shadow-strong">
                       {habitStats?.todayCompleted || 0}
                     </span>
                   </div>
                   
                   {habitStats && habitStats.dailyTarget > 0 && (
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-white/90" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>Meta diaria</span>
-                      <span className="font-medium text-green-200" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>
+                      <span className="text-sm text-green-50 text-shadow-light">Meta diaria</span>
+                      <span className="font-medium text-white text-shadow-strong">
                         {habitStats.todayCompleted}/{habitStats.dailyTarget}
                       </span>
                     </div>
@@ -315,40 +315,40 @@ const loadFinanceStats = async () => {
               </div>
 
               {/* Widget de Finanzas */}
-              <div className="bg-purple-500/20 backdrop-blur-sm border border-purple-400/30 rounded-lg p-4">
+              <div className="bg-purple-500/40 backdrop-blur-md shadow-lg border-2 border-purple-400/60 rounded-lg widget-stat">
                 <div className="mb-3">
-                  <h3 className="font-semibold text-white flex items-center" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>
+                  <h3 className="font-semibold text-white flex items-center text-shadow-strong">
                     💰 Finanzas
                   </h3>
                 </div>
                 
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-white/90" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>Balance</span>
-                    <span className={`font-bold text-lg ${
+                    <span className="text-sm text-white/90 text-shadow-light">Balance</span>
+                    <span className={`font-bold text-lg text-shadow-strong ${
                       (financeStats?.balance || 0) >= 0 ? 'text-green-200' : 'text-red-200'
-                    }`} style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>
+                    }`}>
                       ${(financeStats?.balance || 0).toLocaleString()}
                     </span>
                   </div>
                   
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-white/90" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>Ingresos</span>
-                    <span className="font-medium text-green-200" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>
+                    <span className="text-sm text-white/90 text-shadow-light">Ingresos</span>
+                    <span className="font-medium text-green-200 text-shadow-strong">
                       +${(financeStats?.totalIncome || 0).toLocaleString()}
                     </span>
                   </div>
                   
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-white/90" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>Gastos</span>
-                    <span className="font-medium text-red-200" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>
+                    <span className="text-sm text-white/90 text-shadow-light">Gastos</span>
+                    <span className="font-medium text-red-200 text-shadow-strong">
                       -${(financeStats?.totalExpenses || 0).toLocaleString()}
                     </span>
                   </div>
                   
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-white/90" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>Transacciones</span>
-                    <span className="font-medium text-purple-200" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>
+                    <span className="text-sm text-white/90 text-shadow-light">Transacciones</span>
+                    <span className="font-medium text-purple-200 text-shadow-strong">
                       {financeStats?.totalTransactions || 0}
                     </span>
                   </div>

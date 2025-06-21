@@ -82,19 +82,21 @@ export default function ConfirmModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop con blur */}
+    <div className="fixed inset-0 z-[9999] overflow-hidden">
+      {/* Backdrop con blur - cubre toda la pantalla */}
       <div 
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onCancel}
       />
       
-      {/* Modal */}
-      <div 
-        ref={modalRef}
-        className="relative bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 p-6 transform transition-all duration-300 ease-out scale-100 opacity-100"
-        onClick={(e) => e.stopPropagation()}
-      >
+      {/* Contenedor centrado para el modal */}
+      <div className="absolute inset-0 flex items-center justify-center p-4">
+        {/* Modal */}
+        <div 
+          ref={modalRef}
+          className="relative bg-white rounded-xl shadow-2xl max-w-md w-full p-6 transform transition-all duration-300 ease-out scale-100 opacity-100"
+          onClick={(e) => e.stopPropagation()}
+        >
         {/* Header */}
         <div className="flex items-center mb-4">
           <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-xl mr-3">
@@ -129,6 +131,7 @@ export default function ConfirmModal({
           >
             {confirmText}
           </button>
+        </div>
         </div>
       </div>
     </div>

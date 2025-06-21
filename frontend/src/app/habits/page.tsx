@@ -499,7 +499,6 @@ export default function HabitsPage() {
               day: 'numeric' 
             })}
           </h2>
-          <p className="text-white/80 text-sm" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>Haz click en el botón ➕ para marcar como completado, o en el ✓ para desmarcar</p>
         </div>
 
         {/* Predefined Habits Section */}
@@ -507,7 +506,7 @@ export default function HabitsPage() {
           <h2 className="text-lg font-semibold text-white mb-4" style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3)' }}>🌟 Hábitos Populares</h2>
           <p className="text-white/80 text-sm mb-6" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>Elige de nuestra selección de hábitos más comunes para empezar rápidamente</p>
           
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+          <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-12 gap-2">
             {predefinedHabits.map((habit, index) => {
               const isAdded = habits.some(h => h.name.toLowerCase() === habit.name.toLowerCase())
               
@@ -515,7 +514,7 @@ export default function HabitsPage() {
                 <div 
                   key={index} 
                   onClick={() => !isAdded && addPredefinedHabit(habit.name)}
-                  className={`backdrop-blur-sm border rounded-lg p-3 transition-all duration-300 ${
+                  className={`backdrop-blur-sm border rounded-lg p-2 transition-all duration-300 ${
                     isAdded 
                       ? 'border-green-400/40 bg-green-500/20 cursor-not-allowed' 
                       : 'border-white/30 bg-white/20 hover:bg-white/30 hover:border-green-400/40 cursor-pointer hover:scale-105'

@@ -3,17 +3,19 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Custom Card Styles - Con !important para forzar que se apliquen */
+/* Optimized Card Styles - Better performance while maintaining aesthetics */
 .card-glass {
   background: rgba(255, 255, 255, 0.9) !important;
   border: 2px solid rgba(255, 255, 255, 0.3) !important;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
-  transition: all 0.3s ease !important;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease !important;
   border-radius: 12px !important;
+  transform: translateZ(0) !important; /* Force GPU compositing */
+  will-change: transform !important;
 }
 
 .card-glass:hover {
-  transform: scale(1.05) !important;
+  transform: translateZ(0) scale(1.05) !important;
   box-shadow: 0 16px 64px rgba(0, 0, 0, 0.2) !important;
   background: rgba(255, 255, 255, 0.95) !important;
 }
@@ -22,13 +24,15 @@
   background: rgba(255, 255, 255, 0.9) !important;
   border: 2px solid rgba(255, 255, 255, 0.3) !important;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
-  transition: all 0.3s ease !important;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease !important;
   border-radius: 12px !important;
   padding: 2rem !important;
+  transform: translateZ(0) !important; /* Force GPU compositing */
+  will-change: transform !important;
 }
 
 .card-navigation:hover {
-  transform: scale(1.02) !important;
+  transform: translateZ(0) scale(1.02) !important;
   box-shadow: 0 16px 64px rgba(0, 0, 0, 0.2) !important;
   background: rgba(255, 255, 255, 0.95) !important;
 }
@@ -39,6 +43,51 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
   padding: 1rem !important;
   border-radius: 12px !important;
+  transform: translateZ(0) !important; /* Force GPU compositing */
+}
+
+/* Widget específico para estadísticas del dashboard - sin !important */
+.widget-stat {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+/* Optimized blur replacement - maintains glass effect with better performance */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+  border-radius: 0.5rem !important;
+  transform: translateZ(0) !important;
+}
+
+.glass-effect-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+  will-change: transform !important;
+}
+
+.glass-effect-hover:hover {
+  transform: translateZ(0) scale(1.02) !important;
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Optimized text shadows */
+.text-shadow-light {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+
+.text-shadow-medium {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+}
+
+.text-shadow-strong {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
 }
 
 @theme inline {
@@ -156,5 +205,40 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Optimize scrolling performance */
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    /* Additional performance optimizations */
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+  
+  /* Optimize rendering for better scroll performance */
+  .container {
+    contain: layout style;
+  }
+  
+  /* Optimize grid and flexbox performance */
+  .grid {
+    contain: layout;
+    will-change: auto;
+  }
+  
+  /* Force hardware acceleration for smoother animations */
+  .cursor-pointer {
+    transform: translateZ(0);
+    will-change: transform;
+  }
+  
+  /* Reduce paint complexity - Optimized background */
+  .bg-gradient-optimized {
+    background: #60a5fa;
+    background-image: 
+      linear-gradient(135deg, rgba(203, 213, 225, 0.3) 0%, transparent 50%),
+      linear-gradient(45deg, rgba(99, 102, 241, 0.3) 50%, transparent 100%);
+    background-attachment: local;
+    will-change: auto;
+    transform: translateZ(0);
   }
 }

@@ -1,6 +1,7 @@
 import { prisma } from '../config/database';
 import { CreateUserDto, LoginDto, UserResponse } from '../types';
 import { AuthUtils, validateEmail } from '../utils/auth';
+import { TransactionService } from './transactionService';
 
 export class AuthService {
   static async register(userData: CreateUserDto): Promise<{ user: UserResponse; token: string }> {
@@ -41,6 +42,15 @@ export class AuthService {
         createdAt: true
       }
     });
+
+    // Crear categorías por defecto para el nuevo usuario
+    try {
+      await TransactionService.createDefaultCategories();
+      console.log(`✅ Categorías creadas automáticamente para usuario: ${user.email}`);
+    } catch (error) {
+      console.error('⚠️ Error creando categorías por defecto:', error);
+      // No fallar el registro si las categorías no se pueden crear
+    }
 
     // Generar token
     const token = AuthUtils.generateToken(user.id, user.email);

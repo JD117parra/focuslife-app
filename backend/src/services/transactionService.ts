@@ -244,13 +244,34 @@ export class TransactionService {
   // Crear categorías por defecto para un usuario (llamar al registrarse)
   static async createDefaultCategories(): Promise<void> {
     const defaultCategories = [
-      // Categorías de ingresos
+      // Categorías de ingresos - EXPANDIDAS (24 opciones)
       { name: 'Salario', type: 'FINANCE', color: '#10b981', icon: '💰' },
       { name: 'Freelance', type: 'FINANCE', color: '#3b82f6', icon: '💻' },
       { name: 'Inversiones', type: 'FINANCE', color: '#8b5cf6', icon: '📈' },
+      { name: 'Bonos', type: 'FINANCE', color: '#f59e0b', icon: '🎁' },
+      { name: 'Comisiones', type: 'FINANCE', color: '#ef4444', icon: '💼' },
+      { name: 'Ventas', type: 'FINANCE', color: '#84cc16', icon: '🛒' },
+      { name: 'Alquiler', type: 'FINANCE', color: '#6366f1', icon: '🏠' },
+      { name: 'Dividendos', type: 'FINANCE', color: '#8b5cf6', icon: '📊' },
+      { name: 'Regalos', type: 'FINANCE', color: '#ec4899', icon: '🎁' },
+      { name: 'Propinas', type: 'FINANCE', color: '#f97316', icon: '💵' },
+      { name: 'Reembolsos', type: 'FINANCE', color: '#06b6d4', icon: '💳' },
+      { name: 'Negocios', type: 'FINANCE', color: '#10b981', icon: '🏢' },
+      { name: 'Pensión', type: 'FINANCE', color: '#64748b', icon: '👴' },
+      { name: 'Becas', type: 'FINANCE', color: '#3b82f6', icon: '🎓' },
+      { name: 'Trabajo extra', type: 'FINANCE', color: '#f59e0b', icon: '⏰' },
       { name: 'Otros ingresos', type: 'FINANCE', color: '#06b6d4', icon: '💎' },
+      // NUEVAS CATEGORÍAS DE INGRESOS
+      { name: 'Consultorías', type: 'FINANCE', color: '#16a34a', icon: '🤝' },
+      { name: 'Cashback', type: 'FINANCE', color: '#0ea5e9', icon: '💸' },
+      { name: 'Rifas', type: 'FINANCE', color: '#d946ef', icon: '🎲' },
+      { name: 'Intereses', type: 'FINANCE', color: '#7c3aed', icon: '🏦' },
+      { name: 'Seguros', type: 'FINANCE', color: '#dc2626', icon: '🛡️' },
+      { name: 'Herencias', type: 'FINANCE', color: '#65a30d', icon: '👴' },
+      { name: 'Préstamos', type: 'FINANCE', color: '#ea580c', icon: '💰' },
+      { name: 'Agricultura', type: 'FINANCE', color: '#84cc16', icon: '🌾' },
       
-      // Categorías de gastos
+      // Categorías de gastos - EXPANDIDAS (27 opciones)
       { name: 'Alimentación', type: 'FINANCE', color: '#f59e0b', icon: '🍽️' },
       { name: 'Transporte', type: 'FINANCE', color: '#ef4444', icon: '🚗' },
       { name: 'Entretenimiento', type: 'FINANCE', color: '#ec4899', icon: '🎬' },
@@ -258,15 +279,47 @@ export class TransactionService {
       { name: 'Educación', type: 'FINANCE', color: '#6366f1', icon: '📚' },
       { name: 'Hogar', type: 'FINANCE', color: '#8b5cf6', icon: '🏠' },
       { name: 'Ropa', type: 'FINANCE', color: '#d946ef', icon: '👕' },
-      { name: 'Otros gastos', type: 'FINANCE', color: '#64748b', icon: '📦' }
+      { name: 'Servicios', type: 'FINANCE', color: '#06b6d4', icon: '🔌' },
+      { name: 'Seguros', type: 'FINANCE', color: '#64748b', icon: '🛡️' },
+      { name: 'Impuestos', type: 'FINANCE', color: '#dc2626', icon: '📋' },
+      { name: 'Belleza', type: 'FINANCE', color: '#f97316', icon: '💄' },
+      { name: 'Mascotas', type: 'FINANCE', color: '#10b981', icon: '🐕' },
+      { name: 'Regalos', type: 'FINANCE', color: '#ec4899', icon: '🎁' },
+      { name: 'Viajes', type: 'FINANCE', color: '#8b5cf6', icon: '✈️' },
+      { name: 'Suscripciones', type: 'FINANCE', color: '#6366f1', icon: '📱' },
+      { name: 'Trabajo', type: 'FINANCE', color: '#64748b', icon: '💼' },
+      { name: 'Préstamos', type: 'FINANCE', color: '#ef4444', icon: '💳' },
+      { name: 'Otros gastos', type: 'FINANCE', color: '#64748b', icon: '📦' },
+      // NUEVAS CATEGORÍAS DE GASTOS
+      { name: 'Gasolina', type: 'FINANCE', color: '#dc2626', icon: '⛽' },
+      { name: 'Farmacia', type: 'FINANCE', color: '#16a34a', icon: '💊' },
+      { name: 'Gimnasio', type: 'FINANCE', color: '#0ea5e9', icon: '💪' },
+      { name: 'Café', type: 'FINANCE', color: '#92400e', icon: '☕' },
+      { name: 'Libros', type: 'FINANCE', color: '#7c3aed', icon: '📖' },
+      { name: 'Tecnología', type: 'FINANCE', color: '#1f2937', icon: '💻' },
+      { name: 'Streaming', type: 'FINANCE', color: '#db2777', icon: '📺' },
+      { name: 'Donaciones', type: 'FINANCE', color: '#059669', icon: '🤲' },
+      { name: 'Multas', type: 'FINANCE', color: '#dc2626', icon: '🚫' }
     ];
 
     for (const category of defaultCategories) {
       try {
-        await prisma.category.create({ data: category });
+        // Verificar si la categoría ya existe antes de crearla
+        const existingCategory = await prisma.category.findFirst({
+          where: {
+            name: category.name,
+            type: 'FINANCE'
+          }
+        });
+
+        if (!existingCategory) {
+          await prisma.category.create({ data: category });
+          console.log(`✅ Categoría creada: ${category.name}`);
+        } else {
+          console.log(`ℹ️ Categoría ya existe: ${category.name}`);
+        }
       } catch (error) {
-        // Ignorar errores de duplicado
-        console.log(`Category ${category.name} might already exist`);
+        console.log(`⚠️ Error creando categoría ${category.name}:`, error);
       }
     }
   }

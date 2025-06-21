@@ -14,13 +14,29 @@ interface Transaction {
   type: 'INCOME' | 'EXPENSE'
   date: string
   categoryId?: string
+  category?: {
+    id: string
+    name: string
+    color: string
+    icon?: string
+  }
+}
+
+interface Category {
+  id: string
+  name: string
+  color: string
+  icon?: string
+  type: string
 }
 
 export default function FinancesPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
   const [type, setType] = useState('EXPENSE')
+  const [categoryId, setCategoryId] = useState('')
   const [loading, setLoading] = useState(true)
   const { authenticatedFetch, isAuthenticated, isLoading: authLoading } = useAuth()
   const toast = useToast()
@@ -30,6 +46,7 @@ export default function FinancesPage() {
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
       loadTransactions()
+      loadCategories()
     } else if (!authLoading && !isAuthenticated) {
       setLoading(false)
     }
@@ -53,6 +70,116 @@ export default function FinancesPage() {
     }
   }
 
+  const loadCategories = async () => {
+    try {
+      const response = await authenticatedFetch('http://localhost:5000/api/transactions/categories/finance')
+      const data = await response.json()
+      
+      if (response.ok) {
+        if (data.data && data.data.length > 0) {
+          setCategories(data.data)
+          console.log('Categorías cargadas:', data.data.length, 'categorías')
+        } else {
+          // Si no hay categorías, crear las por defecto automáticamente
+          console.log('No hay categorías, creando automáticamente...')
+          await createDefaultCategories()
+        }
+      } else {
+        console.log('Error en respuesta, creando categorías automáticamente...')
+        await createDefaultCategories()
+      }
+    } catch (error) {
+      console.error('Error loading categories:', error)
+      console.log('Error de conexión, creando categorías automáticamente...')
+      await createDefaultCategories()
+    }
+  }
+
+  const createDefaultCategories = async () => {
+    try {
+      console.log('🔄 Actualizando categorías...')
+      toast.info('Actualizando categorías...')
+      
+      const response = await authenticatedFetch('http://localhost:5000/api/transactions/categories/defaults', {
+        method: 'POST'
+      })
+      
+      if (response.ok) {
+        console.log('✅ Categorías actualizadas exitosamente')
+        // Recargar categorías después de crear las por defecto
+        const reloadResponse = await authenticatedFetch('http://localhost:5000/api/transactions/categories/finance')
+        const reloadData = await reloadResponse.json()
+        
+        if (reloadResponse.ok && reloadData.data) {
+          setCategories(reloadData.data)
+          console.log(`📄 Categorías totales cargadas: ${reloadData.data.length}`)
+          
+          // Contar categorías por tipo para mostrar feedback
+          const incomeCategories = ['Salario', 'Freelance', 'Inversiones', 'Bonos', 'Comisiones', 'Ventas', 'Alquiler', 'Dividendos', 'Regalos', 'Propinas', 'Reembolsos', 'Negocios', 'Pensión', 'Becas', 'Trabajo extra', 'Otros ingresos', 'Consultorías', 'Cashback', 'Rifas', 'Intereses', 'Seguros', 'Herencias', 'Préstamos', 'Agricultura']
+          const ingresos = reloadData.data.filter(cat => incomeCategories.includes(cat.name)).length
+          const gastos = reloadData.data.filter(cat => !incomeCategories.includes(cat.name)).length
+          
+          toast.success(`✅ Categorías actualizadas: ${ingresos} ingresos + ${gastos} gastos`)
+        }
+      } else {
+        console.error('⚠️ Error actualizando categorías')
+        const errorData = await response.json()
+        console.error('Error details:', errorData)
+        toast.error('Error actualizando categorías')
+      }
+    } catch (error) {
+      console.error('Error creating default categories:', error)
+      toast.error('Error de conexión')
+    }
+  }
+
+  // Filtrar categorías según el tipo de transacción
+  const getFilteredCategories = () => {
+    // Verificar que categories sea un array válido
+    if (!categories || !Array.isArray(categories)) {
+      return []
+    }
+    
+    // Categorías a excluir temporalmente
+    const excludedCategories = ['Deportes', 'Internet', 'Mantenimiento']
+    
+    // Categorías de ingresos - EXPANDIDAS para incluir todas las nuevas opciones (24 total)
+    const incomeCategories = [
+      'Salario', 'Freelance', 'Inversiones', 'Bonos', 'Comisiones', 
+      'Ventas', 'Alquiler', 'Dividendos', 'Regalos', 'Propinas', 
+      'Reembolsos', 'Negocios', 'Pensión', 'Becas', 'Trabajo extra', 
+      'Otros ingresos', 'Consultorías', 'Cashback', 'Rifas', 'Intereses',
+      'Seguros', 'Herencias', 'Préstamos', 'Agricultura'
+    ]
+    
+    let filteredCategories;
+    if (type === 'INCOME') {
+      filteredCategories = categories.filter(cat => incomeCategories.includes(cat.name))
+    } else {
+      filteredCategories = categories.filter(cat => !incomeCategories.includes(cat.name))
+    }
+    
+    // Excluir las categorías temporalmente ocultas
+    return filteredCategories.filter(cat => !excludedCategories.includes(cat.name))
+  }
+
+  // Manejar selección/deseleción de categoría (toggle)
+  const handleCategoryToggle = (category: Category) => {
+    if (categoryId === category.id) {
+      // Si ya está seleccionada, la quitamos
+      setCategoryId('')
+    } else {
+      // Si no está seleccionada, la seleccionamos
+      setCategoryId(category.id)
+    }
+  }
+
+  // Resetear categoría cuando cambie el tipo
+  const handleTypeChange = (newType: string) => {
+    setType(newType)
+    setCategoryId('') // Limpiar selección de categoría
+  }
+
   const createTransaction = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -64,7 +191,8 @@ export default function FinancesPage() {
         body: JSON.stringify({ 
           amount: parseFloat(amount), 
           description, 
-          type 
+          type,
+          categoryId: categoryId || undefined // Incluir categoría si se seleccionó
         }),
       })
       
@@ -74,6 +202,7 @@ export default function FinancesPage() {
         setTransactions([data.data, ...transactions])
         setAmount('')
         setDescription('')
+        setCategoryId('') // Limpiar selección de categoría
         toast.success('¡Transacción registrada exitosamente!')
       } else {
         toast.error('Error: ' + data.message)
@@ -193,50 +322,16 @@ export default function FinancesPage() {
 
       {/* Content */}
       <div className="container mx-auto px-4 py-8">
-        {/* Financial Summary */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-green-500/20 backdrop-blur-md shadow-lg border border-green-400/30 p-6 rounded-lg">
-            <h3 className="text-sm font-medium text-green-100 mb-2" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>Ingresos</h3>
-            <p className="text-2xl font-bold text-green-200" style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.5)' }}>
-              +${totalIncome.toLocaleString()}
-            </p>
-          </div>
-          
-          <div className="bg-red-500/20 backdrop-blur-md shadow-lg border border-red-400/30 p-6 rounded-lg">
-            <h3 className="text-sm font-medium text-red-100 mb-2" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>Gastos</h3>
-            <p className="text-2xl font-bold text-red-200" style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.5)' }}>
-              -${totalExpenses.toLocaleString()}
-            </p>
-          </div>
-          
-          <div className={`p-6 rounded-lg border backdrop-blur-md shadow-lg ${
-            balance >= 0 
-              ? 'bg-blue-500/20 border-blue-400/30' 
-              : 'bg-orange-500/20 border-orange-400/30'
-          }`}>
-            <h3 className={`text-sm font-medium mb-2 ${
-              balance >= 0 ? 'text-blue-100' : 'text-orange-100'
-            }`} style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>
-              Balance
-            </h3>
-            <p className={`text-2xl font-bold ${
-              balance >= 0 ? 'text-blue-200' : 'text-orange-200'
-            }`} style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.5)' }}>
-              ${balance.toLocaleString()}
-            </p>
-          </div>
-        </div>
-
         {/* Create Transaction Form */}
-        <div className="bg-white/15 backdrop-blur-md shadow-lg border border-white/30 p-6 rounded-lg mb-8">
+        <div className="bg-white/15 backdrop-blur-md shadow-lg border border-white/30 p-6 rounded-lg mb-6">
           <h2 className="text-lg font-semibold text-white mb-4" style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3)' }}>Registrar Nueva Transacción</h2>
           <form onSubmit={createTransaction} className="space-y-4">
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <label className="block text-sm font-medium text-white/90 mb-1" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>Tipo</label>
                 <select
                   value={type}
-                  onChange={(e) => setType(e.target.value)}
+                  onChange={(e) => handleTypeChange(e.target.value)}
                   className="w-full p-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white"
                 >
                   <option value="EXPENSE" className="bg-gray-800 text-white">💸 Gasto</option>
@@ -256,28 +351,137 @@ export default function FinancesPage() {
                   required
                 />
               </div>
+              
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-white/90 mb-1" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>Descripción</label>
+                <input
+                  type="text"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="w-full p-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white placeholder-white/60"
+                  placeholder="Ej: Supermercado, Salario, Gasolina..."
+                  required
+                />
+              </div>
             </div>
             
+            {/* Selector de Categoría */}
             <div>
-              <label className="block text-sm font-medium text-white/90 mb-1" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>Descripción</label>
-              <input
-                type="text"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full p-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white placeholder-white/60"
-                placeholder="Ej: Supermercado, Salario, Gasolina..."
-                required
-              />
+              <label className="block text-sm font-medium text-white/90 mb-3" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>
+                Categoría {type === 'INCOME' ? 'de Ingreso' : 'de Gasto'} (opcional)
+              </label>
+              
+              {getFilteredCategories().length > 0 ? (
+                <>
+                  {/* Grid de categorías */}
+                  <div className="grid grid-cols-6 md:grid-cols-12 gap-1">
+                    {getFilteredCategories().map((category) => (
+                      <button
+                        key={category.id}
+                        type="button"
+                        onClick={() => handleCategoryToggle(category)}
+                        className={`px-0 py-1.5 rounded border transition-all duration-200 ${
+                          categoryId === category.id
+                            ? 'bg-white/30 border-white/60 shadow-md transform scale-105'
+                            : 'bg-white/10 border-white/20 hover:bg-white/20 hover:border-white/40'
+                        }`}
+                        style={{
+                          backgroundColor: categoryId === category.id 
+                            ? `${category.color}40` 
+                            : undefined,
+                          borderColor: categoryId === category.id 
+                            ? `${category.color}80` 
+                            : undefined
+                        }}
+                      >
+                        <div className="text-center">
+                          <div className="text-sm mb-0.5">{category.icon || '📋'}</div>
+                          <div 
+                            className={`text-xs font-bold leading-tight ${
+                              categoryId === category.id ? 'text-white' : 'text-white/90'
+                            }`} 
+                            style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.6)' }}
+                          >
+                            {category.name}
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                  
+                  {/* Mostrar categoría seleccionada */}
+                  {categoryId && (
+                    <div className="mt-3 text-center">
+                      <span className="text-sm text-white/80" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>
+                        Seleccionado: <strong>{getFilteredCategories().find(c => c.id === categoryId)?.name}</strong>
+                      </span>
+                      <p className="text-xs text-white/60 mt-1" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>
+                        Haz clic de nuevo para quitar
+                      </p>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-8 bg-white/10 rounded-lg border border-white/20">
+                  <div className="text-3xl mb-2">🔄</div>
+                  <p className="text-white/60 text-sm mb-2" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>
+                    Configurando categorías {type === 'INCOME' ? 'de ingresos' : 'de gastos'}...
+                  </p>
+                  <div className="flex justify-center mt-4">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white/60"></div>
+                  </div>
+                  <p className="text-xs text-white/50 mt-3" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>
+                    {type === 'INCOME' 
+                      ? 'Preparando: Salario, Freelance, Bonos, Consultorías, y 20 más'
+                      : 'Preparando: Alimentación, Transporte, Seguros, Gasolina, y 20 más'
+                    }
+                  </p>
+                </div>
+              )}
             </div>
             
-            <button
-              type="submit"
-              className="w-full bg-purple-600/60 backdrop-blur-md text-white py-3 rounded-lg font-bold border border-purple-400/60 hover:bg-purple-700/70 transition-all duration-300 shadow-lg"
-              style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}
-            >
-              Registrar Transacción
-            </button>
+            <div className="flex justify-center">
+              <button
+                type="submit"
+                className="bg-purple-600/60 backdrop-blur-md text-white py-2 px-8 rounded-lg font-bold border border-purple-400/60 hover:bg-purple-700/70 transition-all duration-300 shadow-lg"
+                style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}
+              >
+                Registrar Transacción
+              </button>
+            </div>
           </form>
+        </div>
+
+        {/* Financial Summary */}
+        <div className="grid md:grid-cols-3 gap-4 mb-6">
+          <div className="bg-green-500/40 backdrop-blur-md shadow-lg border-2 border-green-400/60 p-4 rounded-lg">
+            <h3 className="text-sm font-medium text-green-50 mb-1" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.6)' }}>Ingresos</h3>
+            <p className="text-xl font-bold text-white" style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.7)' }}>
+              +${totalIncome.toLocaleString()}
+            </p>
+          </div>
+          
+          <div className="bg-red-500/40 backdrop-blur-md shadow-lg border-2 border-red-400/60 p-4 rounded-lg">
+            <h3 className="text-sm font-medium text-red-50 mb-1" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.6)' }}>Gastos</h3>
+            <p className="text-xl font-bold text-white" style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.7)' }}>
+              -${totalExpenses.toLocaleString()}
+            </p>
+          </div>
+          
+          <div className={`p-4 rounded-lg border-2 backdrop-blur-md shadow-lg ${
+            balance >= 0 
+              ? 'bg-blue-500/40 border-blue-400/60' 
+              : 'bg-orange-500/40 border-orange-400/60'
+          }`}>
+            <h3 className={`text-sm font-medium mb-1 ${
+              balance >= 0 ? 'text-blue-50' : 'text-orange-50'
+            }`} style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.6)' }}>
+              Balance
+            </h3>
+            <p className={`text-xl font-bold text-white`} style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.7)' }}>
+              ${balance.toLocaleString()}
+            </p>
+          </div>
         </div>
 
         {/* Transactions List */}
@@ -306,14 +510,31 @@ export default function FinancesPage() {
                           : 'bg-red-500/60 border-red-400/40'
                       } shadow-lg`}>
                         <span className="text-xl">
-                          {transaction.type === 'INCOME' ? '💵' : '💸'}
+                          {transaction.category?.icon || (transaction.type === 'INCOME' ? '💵' : '💸')}
                         </span>
                       </div>
                       <div>
                         <h3 className="font-medium text-white" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' }}>{transaction.description}</h3>
-                        <p className="text-sm text-white/70" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>
-                          {new Date(transaction.date).toLocaleDateString('es-ES')}
-                        </p>
+                        <div className="flex items-center space-x-2">
+                          <p className="text-sm text-white/70" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>
+                            {new Date(transaction.date).toLocaleDateString('es-ES')}
+                          </p>
+                          {transaction.category && (
+                            <>
+                              <span className="text-white/50">•</span>
+                              <span 
+                                className="text-xs px-2 py-1 rounded-full text-white/80 border" 
+                                style={{ 
+                                  backgroundColor: `${transaction.category.color}40`,
+                                  borderColor: `${transaction.category.color}60`,
+                                  textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)' 
+                                }}
+                              >
+                                {transaction.category.name}
+                              </span>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
                     
