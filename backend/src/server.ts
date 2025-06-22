@@ -8,7 +8,6 @@ import taskRoutes from './routes/tasks';
 import habitRoutes from './routes/habits';
 import transactionRoutes from './routes/transactions';
 
-
 // Load environment variables
 dotenv.config();
 
@@ -23,10 +22,10 @@ app.use(morgan('combined'));
 
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ 
-    message: 'FocusLife Backend API is running!', 
+  res.json({
+    message: 'FocusLife Backend API is running!',
     timestamp: new Date().toISOString(),
-    version: '2.0.0'
+    version: '2.0.0',
   });
 });
 
@@ -36,17 +35,17 @@ app.use('/api/tasks', taskRoutes);
 app.use('/api/habits', habitRoutes);
 app.use('/api/transactions', transactionRoutes);
 
-
-
-
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
   console.log(`🔐 Auth endpoints: /api/auth/register, /api/auth/login`);
   console.log(`📋 Task endpoints: /api/tasks (GET, POST, PUT, DELETE)`);
-  console.log(`🎯 Habit endpoints: /api/habits (GET, POST, PUT, DELETE, entries)`);
-  console.log(`💰 Transaction endpoints: /api/transactions (GET, POST, PUT, DELETE, stats, categories)`);
-
+  console.log(
+    `🎯 Habit endpoints: /api/habits (GET, POST, PUT, DELETE, entries)`
+  );
+  console.log(
+    `💰 Transaction endpoints: /api/transactions (GET, POST, PUT, DELETE, stats, categories)`
+  );
 });
 
 export default app;

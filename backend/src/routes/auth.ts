@@ -21,12 +21,13 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
       message: 'User registered successfully',
       data: {
         user: result.user,
-        token: result.token
-      }
+        token: result.token,
+      },
     });
   } catch (error) {
     console.error('Registration error:', error);
-    const message = error instanceof Error ? error.message : 'Registration failed';
+    const message =
+      error instanceof Error ? error.message : 'Registration failed';
     res.status(400).json({ message });
   }
 });
@@ -47,8 +48,8 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
       message: 'Login successful',
       data: {
         user: result.user,
-        token: result.token
-      }
+        token: result.token,
+      },
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -58,28 +59,32 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
 });
 
 // GET /api/auth/me
-router.get('/me', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  try {
-    if (!req.user) {
-      res.status(401).json({ message: 'User not authenticated' });
-      return;
-    }
+router.get(
+  '/me',
+  authenticateToken,
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      if (!req.user) {
+        res.status(401).json({ message: 'User not authenticated' });
+        return;
+      }
 
-    const user = await AuthService.getUserById(req.user.id);
-    
-    if (!user) {
-      res.status(404).json({ message: 'User not found' });
-      return;
-    }
+      const user = await AuthService.getUserById(req.user.id);
 
-    res.json({
-      message: 'User profile retrieved successfully',
-      data: user
-    });
-  } catch (error) {
-    console.error('Get profile error:', error);
-    res.status(500).json({ message: 'Failed to get user profile' });
+      if (!user) {
+        res.status(404).json({ message: 'User not found' });
+        return;
+      }
+
+      res.json({
+        message: 'User profile retrieved successfully',
+        data: user,
+      });
+    } catch (error) {
+      console.error('Get profile error:', error);
+      res.status(500).json({ message: 'Failed to get user profile' });
+    }
   }
-});
+);
 
 export default router;

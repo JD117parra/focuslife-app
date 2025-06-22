@@ -1,22 +1,22 @@
-'use client'
+'use client';
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react';
 
 interface HabitData {
-  id?: string
-  name: string
-  description?: string
-  frequency: 'DAILY' | 'WEEKLY' | 'MONTHLY'
-  target: number
-  isActive: boolean
+  id?: string;
+  name: string;
+  description?: string;
+  frequency: 'DAILY' | 'WEEKLY' | 'MONTHLY';
+  target: number;
+  isActive: boolean;
 }
 
 interface EditHabitModalProps {
-  isOpen: boolean
-  habit: HabitData | null
-  isEditing: boolean
-  onConfirm: (habitData: Partial<HabitData>) => void
-  onCancel: () => void
+  isOpen: boolean;
+  habit: HabitData | null;
+  isEditing: boolean;
+  onConfirm: (habitData: Partial<HabitData>) => void;
+  onCancel: () => void;
 }
 
 export default function EditHabitModal({
@@ -24,119 +24,128 @@ export default function EditHabitModal({
   habit,
   isEditing,
   onConfirm,
-  onCancel
+  onCancel,
 }: EditHabitModalProps) {
-  const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
-  const [frequency, setFrequency] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY'>('DAILY')
-  const [target, setTarget] = useState(1)
-  const [isActive, setIsActive] = useState(true)
-  
-  const modalRef = useRef<HTMLDivElement>(null)
-  const nameInputRef = useRef<HTMLInputElement>(null)
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [frequency, setFrequency] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY'>(
+    'DAILY'
+  );
+  const [target, setTarget] = useState(1);
+  const [isActive, setIsActive] = useState(true);
+
+  const modalRef = useRef<HTMLDivElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   // Cargar datos del hábito cuando se abra el modal
   useEffect(() => {
     if (habit && isOpen) {
-      setName(habit.name || '')
-      setDescription(habit.description || '')
-      setFrequency(habit.frequency || 'DAILY')
-      setTarget(habit.target || 1)
-      setIsActive(habit.isActive !== false)
+      setName(habit.name || '');
+      setDescription(habit.description || '');
+      setFrequency(habit.frequency || 'DAILY');
+      setTarget(habit.target || 1);
+      setIsActive(habit.isActive !== false);
     } else if (isOpen && !isEditing) {
       // Resetear para crear nuevo hábito
-      setName('')
-      setDescription('')
-      setFrequency('DAILY')
-      setTarget(1)
-      setIsActive(true)
+      setName('');
+      setDescription('');
+      setFrequency('DAILY');
+      setTarget(1);
+      setIsActive(true);
     }
-  }, [habit, isOpen, isEditing])
+  }, [habit, isOpen, isEditing]);
 
   // Manejar tecla ESC
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
-        onCancel()
+        onCancel();
       }
-    }
+    };
 
     if (isOpen) {
-      document.addEventListener('keydown', handleEsc)
+      document.addEventListener('keydown', handleEsc);
       // Focus en el input del nombre cuando se abre
       setTimeout(() => {
-        nameInputRef.current?.focus()
+        nameInputRef.current?.focus();
         if (isEditing) {
-          nameInputRef.current?.select()
+          nameInputRef.current?.select();
         }
-      }, 100)
+      }, 100);
     }
 
     return () => {
-      document.removeEventListener('keydown', handleEsc)
-    }
-  }, [isOpen, onCancel, isEditing])
+      document.removeEventListener('keydown', handleEsc);
+    };
+  }, [isOpen, onCancel, isEditing]);
 
   // Prevenir scroll del body cuando está abierto
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden'
+      document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = 'unset'
+      document.body.style.overflow = 'unset';
     }
 
     return () => {
-      document.body.style.overflow = 'unset'
-    }
-  }, [isOpen])
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (name.trim()) {
       const habitData: Partial<HabitData> = {
         name: name.trim(),
         description: description.trim() || undefined,
         frequency,
         target,
-        isActive
-      }
-      onConfirm(habitData)
+        isActive,
+      };
+      onConfirm(habitData);
     }
-  }
+  };
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   const getFrequencyIcon = (freq: string) => {
     switch (freq) {
-      case 'DAILY': return '📅'
-      case 'WEEKLY': return '📊'
-      case 'MONTHLY': return '🗓️'
-      default: return '📅'
+      case 'DAILY':
+        return '📅';
+      case 'WEEKLY':
+        return '📊';
+      case 'MONTHLY':
+        return '🗓️';
+      default:
+        return '📅';
     }
-  }
+  };
 
   return (
     <div className="fixed inset-0 z-[9999] overflow-hidden">
       {/* Backdrop con blur glassmorphism */}
-      <div 
+      <div
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
         onClick={onCancel}
       />
-      
+
       {/* Contenedor centrado para el modal */}
       <div className="absolute inset-0 flex items-center justify-center p-4">
         {/* Modal con glassmorphism */}
-        <div 
+        <div
           ref={modalRef}
           className="relative bg-white/25 backdrop-blur-md shadow-lg border border-white/45 rounded-lg max-w-2xl w-full p-6 transform transition-all duration-300 ease-out scale-100 opacity-100 max-h-[90vh] overflow-y-auto"
-          onClick={(e) => e.stopPropagation()}
+          onClick={e => e.stopPropagation()}
         >
           {/* Header */}
           <div className="flex items-center mb-6">
             <div className="flex-shrink-0 w-12 h-12 bg-white/30 backdrop-blur-md border border-white/45 rounded-full flex items-center justify-center text-xl mr-4 shadow-lg">
               🎯
             </div>
-            <h3 className="text-lg font-bold text-white" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
+            <h3
+              className="text-lg font-bold text-white"
+              style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
+            >
               {isEditing ? 'Editar Hábito' : 'Crear Nuevo Hábito'}
             </h3>
           </div>
@@ -145,14 +154,17 @@ export default function EditHabitModal({
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Nombre */}
             <div>
-              <label className="block text-sm font-medium text-white/90 mb-2" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
+              <label
+                className="block text-sm font-medium text-white/90 mb-2"
+                style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}
+              >
                 Nombre del Hábito *
               </label>
               <input
                 ref={nameInputRef}
                 type="text"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={e => setName(e.target.value)}
                 placeholder="Ej: Hacer ejercicio, Leer, Meditar..."
                 className="w-full px-4 py-3 bg-white/80 backdrop-blur-sm border border-white/50 rounded-lg focus:ring-2 focus:ring-blue-400/70 focus:border-blue-400/70 text-gray-900 shadow-sm transition-all duration-200 placeholder:text-gray-600"
                 required
@@ -162,12 +174,15 @@ export default function EditHabitModal({
 
             {/* Descripción */}
             <div>
-              <label className="block text-sm font-medium text-white/90 mb-2" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
+              <label
+                className="block text-sm font-medium text-white/90 mb-2"
+                style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}
+              >
                 Descripción (Opcional)
               </label>
               <textarea
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={e => setDescription(e.target.value)}
                 placeholder="Describe tu hábito, metas específicas, recordatorios..."
                 rows={3}
                 className="w-full px-4 py-3 bg-white/80 backdrop-blur-sm border border-white/50 rounded-lg focus:ring-2 focus:ring-blue-400/70 focus:border-blue-400/70 text-gray-900 resize-none shadow-sm transition-all duration-200 placeholder:text-gray-600"
@@ -179,19 +194,35 @@ export default function EditHabitModal({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Frecuencia */}
               <div>
-                <label className="block text-sm font-medium text-white/90 mb-2" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
+                <label
+                  className="block text-sm font-medium text-white/90 mb-2"
+                  style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}
+                >
                   Frecuencia
                 </label>
                 <select
                   value={frequency}
-                  onChange={(e) => setFrequency(e.target.value as 'DAILY' | 'WEEKLY' | 'MONTHLY')}
+                  onChange={e =>
+                    setFrequency(
+                      e.target.value as 'DAILY' | 'WEEKLY' | 'MONTHLY'
+                    )
+                  }
                   className="w-full px-4 py-3 bg-white/80 backdrop-blur-sm border border-white/50 rounded-lg focus:ring-2 focus:ring-blue-400/70 focus:border-blue-400/70 text-gray-900 shadow-sm transition-all duration-200"
                 >
-                  <option value="DAILY">{getFrequencyIcon('DAILY')} Diario</option>
-                  <option value="WEEKLY">{getFrequencyIcon('WEEKLY')} Semanal</option>
-                  <option value="MONTHLY">{getFrequencyIcon('MONTHLY')} Mensual</option>
+                  <option value="DAILY">
+                    {getFrequencyIcon('DAILY')} Diario
+                  </option>
+                  <option value="WEEKLY">
+                    {getFrequencyIcon('WEEKLY')} Semanal
+                  </option>
+                  <option value="MONTHLY">
+                    {getFrequencyIcon('MONTHLY')} Mensual
+                  </option>
                 </select>
-                <p className="text-white/80 text-xs mt-1" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}>
+                <p
+                  className="text-white/80 text-xs mt-1"
+                  style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}
+                >
                   {frequency === 'DAILY' && 'Se realiza todos los días'}
                   {frequency === 'WEEKLY' && 'Se realiza cada semana'}
                   {frequency === 'MONTHLY' && 'Se realiza cada mes'}
@@ -200,18 +231,26 @@ export default function EditHabitModal({
 
               {/* Meta/Target */}
               <div>
-                <label className="block text-sm font-medium text-white/90 mb-2" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
+                <label
+                  className="block text-sm font-medium text-white/90 mb-2"
+                  style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}
+                >
                   Meta por Día
                 </label>
                 <input
                   type="number"
                   value={target}
-                  onChange={(e) => setTarget(Math.max(1, parseInt(e.target.value) || 1))}
+                  onChange={e =>
+                    setTarget(Math.max(1, parseInt(e.target.value) || 1))
+                  }
                   min="1"
                   max="50"
                   className="w-full px-4 py-3 bg-white/80 backdrop-blur-sm border border-white/50 rounded-lg focus:ring-2 focus:ring-blue-400/70 focus:border-blue-400/70 text-gray-900 shadow-sm transition-all duration-200"
                 />
-                <p className="text-white/80 text-xs mt-1" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}>
+                <p
+                  className="text-white/80 text-xs mt-1"
+                  style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}
+                >
                   Número de veces a realizar por día
                 </p>
               </div>
@@ -220,19 +259,27 @@ export default function EditHabitModal({
             {/* Estado Activo */}
             <div className="flex items-center justify-between bg-white/20 backdrop-blur-sm border border-white/40 rounded-lg p-4">
               <div>
-                <label className="text-sm font-medium text-white/90" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
+                <label
+                  className="text-sm font-medium text-white/90"
+                  style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}
+                >
                   Estado del Hábito
                 </label>
-                <p className="text-white/80 text-xs mt-1" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}>
-                  {isActive ? 'Hábito activo y visible en el dashboard' : 'Hábito pausado (no aparece en tracking diario)'}
+                <p
+                  className="text-white/80 text-xs mt-1"
+                  style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}
+                >
+                  {isActive
+                    ? 'Hábito activo y visible en el dashboard'
+                    : 'Hábito pausado (no aparece en tracking diario)'}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsActive(!isActive)}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400/70 ${
-                  isActive 
-                    ? 'bg-green-500/80 border border-green-400/50' 
+                  isActive
+                    ? 'bg-green-500/80 border border-green-400/50'
                     : 'bg-white/30 border border-white/50'
                 } backdrop-blur-sm shadow-sm`}
               >
@@ -265,5 +312,5 @@ export default function EditHabitModal({
         </div>
       </div>
     </div>
-  )
+  );
 }

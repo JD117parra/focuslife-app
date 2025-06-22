@@ -1,14 +1,23 @@
 import { prisma } from '../config/database';
-import { CreateTransactionDto, UpdateTransactionDto, TransactionResponse, CreateCategoryDto, CategoryResponse } from '../types';
+import {
+  CreateTransactionDto,
+  UpdateTransactionDto,
+  TransactionResponse,
+  CreateCategoryDto,
+  CategoryResponse,
+} from '../types';
 
 export class TransactionService {
   // Obtener todas las transacciones de un usuario
-  static async getUserTransactions(userId: string, filters?: {
-    type?: 'INCOME' | 'EXPENSE';
-    categoryId?: string;
-    startDate?: string;
-    endDate?: string;
-  }): Promise<TransactionResponse[]> {
+  static async getUserTransactions(
+    userId: string,
+    filters?: {
+      type?: 'INCOME' | 'EXPENSE';
+      categoryId?: string;
+      startDate?: string;
+      endDate?: string;
+    }
+  ): Promise<TransactionResponse[]> {
     const whereClause: any = { userId };
 
     // Aplicar filtros
@@ -28,47 +37,50 @@ export class TransactionService {
 
     const transactions = await prisma.transaction.findMany({
       where: whereClause,
-      orderBy: [
-        { date: 'desc' },
-        { createdAt: 'desc' }
-      ],
+      orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
       include: {
         category: {
           select: {
             id: true,
             name: true,
-            color: true
-          }
-        }
-      }
+            color: true,
+          },
+        },
+      },
     });
 
     return transactions;
   }
 
   // Obtener una transacción específica por ID
-  static async getTransactionById(transactionId: string, userId: string): Promise<TransactionResponse | null> {
+  static async getTransactionById(
+    transactionId: string,
+    userId: string
+  ): Promise<TransactionResponse | null> {
     const transaction = await prisma.transaction.findFirst({
-      where: { 
+      where: {
         id: transactionId,
-        userId 
+        userId,
       },
       include: {
         category: {
           select: {
             id: true,
             name: true,
-            color: true
-          }
-        }
-      }
+            color: true,
+          },
+        },
+      },
     });
 
     return transaction;
   }
 
   // Crear nueva transacción
-  static async createTransaction(userId: string, transactionData: CreateTransactionDto): Promise<TransactionResponse> {
+  static async createTransaction(
+    userId: string,
+    transactionData: CreateTransactionDto
+  ): Promise<TransactionResponse> {
     const { amount, description, type, categoryId, date } = transactionData;
 
     // Para gastos, asegurar que el monto sea positivo (se maneja en el frontend)
@@ -81,37 +93,46 @@ export class TransactionService {
         type,
         categoryId,
         userId,
-        date: date ? new Date(date) : new Date()
+        date: date ? new Date(date) : new Date(),
       },
       include: {
         category: {
           select: {
             id: true,
             name: true,
-            color: true
-          }
-        }
-      }
+            color: true,
+          },
+        },
+      },
     });
 
     return transaction;
   }
 
   // Actualizar transacción
-  static async updateTransaction(transactionId: string, userId: string, transactionData: UpdateTransactionDto): Promise<TransactionResponse | null> {
+  static async updateTransaction(
+    transactionId: string,
+    userId: string,
+    transactionData: UpdateTransactionDto
+  ): Promise<TransactionResponse | null> {
     // Verificar que la transacción existe y pertenece al usuario
     const existingTransaction = await prisma.transaction.findFirst({
-      where: { id: transactionId, userId }
+      where: { id: transactionId, userId },
     });
 
     if (!existingTransaction) {
-      throw new Error('Transaction not found or you do not have permission to update it');
+      throw new Error(
+        'Transaction not found or you do not have permission to update it'
+      );
     }
 
     // Procesar el monto si se está actualizando
     const updateData: any = { ...transactionData };
     if (updateData.amount !== undefined && updateData.type) {
-      updateData.amount = updateData.type === 'EXPENSE' ? Math.abs(updateData.amount) : updateData.amount;
+      updateData.amount =
+        updateData.type === 'EXPENSE'
+          ? Math.abs(updateData.amount)
+          : updateData.amount;
     }
 
     if (updateData.date) {
@@ -122,45 +143,53 @@ export class TransactionService {
       where: { id: transactionId },
       data: {
         ...updateData,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       },
       include: {
         category: {
           select: {
             id: true,
             name: true,
-            color: true
-          }
-        }
-      }
+            color: true,
+          },
+        },
+      },
     });
 
     return updatedTransaction;
   }
 
   // Eliminar transacción
-  static async deleteTransaction(transactionId: string, userId: string): Promise<boolean> {
+  static async deleteTransaction(
+    transactionId: string,
+    userId: string
+  ): Promise<boolean> {
     // Verificar que la transacción existe y pertenece al usuario
     const existingTransaction = await prisma.transaction.findFirst({
-      where: { id: transactionId, userId }
+      where: { id: transactionId, userId },
     });
 
     if (!existingTransaction) {
-      throw new Error('Transaction not found or you do not have permission to delete it');
+      throw new Error(
+        'Transaction not found or you do not have permission to delete it'
+      );
     }
 
     await prisma.transaction.delete({
-      where: { id: transactionId }
+      where: { id: transactionId },
     });
 
     return true;
   }
 
   // Obtener estadísticas financieras del usuario
-  static async getFinancialStats(userId: string, period?: {
-    startDate?: string;
-    endDate?: string;
-  }) {
+  static async getFinancialStats(
+    userId: string,
+    period?: {
+      startDate?: string;
+      endDate?: string;
+    }
+  ) {
     const whereClause: any = { userId };
 
     if (period?.startDate || period?.endDate) {
@@ -173,13 +202,13 @@ export class TransactionService {
     const incomeStats = await prisma.transaction.aggregate({
       where: { ...whereClause, type: 'INCOME' },
       _sum: { amount: true },
-      _count: { id: true }
+      _count: { id: true },
     });
 
     const expenseStats = await prisma.transaction.aggregate({
       where: { ...whereClause, type: 'EXPENSE' },
       _sum: { amount: true },
-      _count: { id: true }
+      _count: { id: true },
     });
 
     const totalIncome = incomeStats._sum.amount || 0;
@@ -191,7 +220,7 @@ export class TransactionService {
       by: ['categoryId'],
       where: { ...whereClause, type: 'EXPENSE' },
       _sum: { amount: true },
-      _count: { id: true }
+      _count: { id: true },
     });
 
     return {
@@ -201,7 +230,7 @@ export class TransactionService {
       incomeTransactions: incomeStats._count.id,
       expenseTransactions: expenseStats._count.id,
       totalTransactions: incomeStats._count.id + expenseStats._count.id,
-      expensesByCategory
+      expensesByCategory,
     };
   }
 
@@ -213,7 +242,7 @@ export class TransactionService {
 
     return this.getFinancialStats(userId, {
       startDate: startOfMonth.toISOString(),
-      endDate: endOfMonth.toISOString()
+      endDate: endOfMonth.toISOString(),
     });
   }
 
@@ -223,19 +252,21 @@ export class TransactionService {
   static async getFinanceCategories(): Promise<CategoryResponse[]> {
     const categories = await prisma.category.findMany({
       where: { type: 'FINANCE' },
-      orderBy: { name: 'asc' }
+      orderBy: { name: 'asc' },
     });
 
     return categories;
   }
 
   // Crear nueva categoría de finanzas
-  static async createCategory(categoryData: CreateCategoryDto): Promise<CategoryResponse> {
+  static async createCategory(
+    categoryData: CreateCategoryDto
+  ): Promise<CategoryResponse> {
     const category = await prisma.category.create({
       data: {
         ...categoryData,
-        type: 'FINANCE'
-      }
+        type: 'FINANCE',
+      },
     });
 
     return category;
@@ -270,11 +301,16 @@ export class TransactionService {
       { name: 'Herencias', type: 'FINANCE', color: '#65a30d', icon: '👴' },
       { name: 'Préstamos', type: 'FINANCE', color: '#ea580c', icon: '💰' },
       { name: 'Agricultura', type: 'FINANCE', color: '#84cc16', icon: '🌾' },
-      
+
       // Categorías de gastos - EXPANDIDAS (27 opciones)
       { name: 'Alimentación', type: 'FINANCE', color: '#f59e0b', icon: '🍽️' },
       { name: 'Transporte', type: 'FINANCE', color: '#ef4444', icon: '🚗' },
-      { name: 'Entretenimiento', type: 'FINANCE', color: '#ec4899', icon: '🎬' },
+      {
+        name: 'Entretenimiento',
+        type: 'FINANCE',
+        color: '#ec4899',
+        icon: '🎬',
+      },
       { name: 'Salud', type: 'FINANCE', color: '#84cc16', icon: '🏥' },
       { name: 'Educación', type: 'FINANCE', color: '#6366f1', icon: '📚' },
       { name: 'Hogar', type: 'FINANCE', color: '#8b5cf6', icon: '🏠' },
@@ -299,7 +335,7 @@ export class TransactionService {
       { name: 'Tecnología', type: 'FINANCE', color: '#1f2937', icon: '💻' },
       { name: 'Streaming', type: 'FINANCE', color: '#db2777', icon: '📺' },
       { name: 'Donaciones', type: 'FINANCE', color: '#059669', icon: '🤲' },
-      { name: 'Multas', type: 'FINANCE', color: '#dc2626', icon: '🚫' }
+      { name: 'Multas', type: 'FINANCE', color: '#dc2626', icon: '🚫' },
     ];
 
     for (const category of defaultCategories) {
@@ -308,8 +344,8 @@ export class TransactionService {
         const existingCategory = await prisma.category.findFirst({
           where: {
             name: category.name,
-            type: 'FINANCE'
-          }
+            type: 'FINANCE',
+          },
         });
 
         if (!existingCategory) {

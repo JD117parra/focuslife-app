@@ -1,4 +1,4 @@
-import { apiUrls } from '@/config/api'
+import { apiUrls } from '@/config/api';
 
 interface AuthResponse {
   message: string;
@@ -47,7 +47,11 @@ export class AuthService {
   }
 
   // Register
-  static async register(email: string, password: string, name?: string): Promise<AuthResponse> {
+  static async register(
+    email: string,
+    password: string,
+    name?: string
+  ): Promise<AuthResponse> {
     const response = await fetch(apiUrls.auth.register(), {
       method: 'POST',
       headers: {

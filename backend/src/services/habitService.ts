@@ -1,5 +1,11 @@
 import { prisma } from '../config/database';
-import { CreateHabitDto, UpdateHabitDto, HabitResponse, CreateHabitEntryDto, HabitEntryResponse } from '../types';
+import {
+  CreateHabitDto,
+  UpdateHabitDto,
+  HabitResponse,
+  CreateHabitEntryDto,
+  HabitEntryResponse,
+} from '../types';
 
 export class HabitService {
   // Obtener todos los hábitos de un usuario
@@ -8,27 +14,33 @@ export class HabitService {
       where: { userId },
       orderBy: [
         { isActive: 'desc' }, // Activos primero
-        { createdAt: 'desc' }
-      ]
+        { createdAt: 'desc' },
+      ],
     });
 
     return habits;
   }
 
   // Obtener un hábito específico por ID
-  static async getHabitById(habitId: string, userId: string): Promise<HabitResponse | null> {
+  static async getHabitById(
+    habitId: string,
+    userId: string
+  ): Promise<HabitResponse | null> {
     const habit = await prisma.habit.findFirst({
-      where: { 
+      where: {
         id: habitId,
-        userId 
-      }
+        userId,
+      },
     });
 
     return habit;
   }
 
   // Crear nuevo hábito
-  static async createHabit(userId: string, habitData: CreateHabitDto): Promise<HabitResponse> {
+  static async createHabit(
+    userId: string,
+    habitData: CreateHabitDto
+  ): Promise<HabitResponse> {
     const { name, description, frequency = 'DAILY', target = 1 } = habitData;
 
     const habit = await prisma.habit.create({
@@ -38,30 +50,36 @@ export class HabitService {
         frequency,
         target,
         userId,
-        isActive: true
-      }
+        isActive: true,
+      },
     });
 
     return habit;
   }
 
   // Actualizar hábito
-  static async updateHabit(habitId: string, userId: string, habitData: UpdateHabitDto): Promise<HabitResponse | null> {
+  static async updateHabit(
+    habitId: string,
+    userId: string,
+    habitData: UpdateHabitDto
+  ): Promise<HabitResponse | null> {
     // Verificar que el hábito existe y pertenece al usuario
     const existingHabit = await prisma.habit.findFirst({
-      where: { id: habitId, userId }
+      where: { id: habitId, userId },
     });
 
     if (!existingHabit) {
-      throw new Error('Habit not found or you do not have permission to update it');
+      throw new Error(
+        'Habit not found or you do not have permission to update it'
+      );
     }
 
     const updatedHabit = await prisma.habit.update({
       where: { id: habitId },
       data: {
         ...habitData,
-        updatedAt: new Date()
-      }
+        updatedAt: new Date(),
+      },
     });
 
     return updatedHabit;
@@ -71,37 +89,44 @@ export class HabitService {
   static async deleteHabit(habitId: string, userId: string): Promise<boolean> {
     // Verificar que el hábito existe y pertenece al usuario
     const existingHabit = await prisma.habit.findFirst({
-      where: { id: habitId, userId }
+      where: { id: habitId, userId },
     });
 
     if (!existingHabit) {
-      throw new Error('Habit not found or you do not have permission to delete it');
+      throw new Error(
+        'Habit not found or you do not have permission to delete it'
+      );
     }
 
     // Eliminar primero las entradas del hábito
     await prisma.habitEntry.deleteMany({
-      where: { habitId }
+      where: { habitId },
     });
 
     // Luego eliminar el hábito
     await prisma.habit.delete({
-      where: { id: habitId }
+      where: { id: habitId },
     });
 
     return true;
   }
 
   // Marcar hábito como completado para una fecha específica
-  static async addHabitEntry(userId: string, entryData: CreateHabitEntryDto): Promise<HabitEntryResponse> {
+  static async addHabitEntry(
+    userId: string,
+    entryData: CreateHabitEntryDto
+  ): Promise<HabitEntryResponse> {
     const { habitId, date, count = 1, notes } = entryData;
 
     // Verificar que el hábito existe y pertenece al usuario
     const habit = await prisma.habit.findFirst({
-      where: { id: habitId, userId }
+      where: { id: habitId, userId },
     });
 
     if (!habit) {
-      throw new Error('Habit not found or you do not have permission to add entries');
+      throw new Error(
+        'Habit not found or you do not have permission to add entries'
+      );
     }
 
     // Verificar si ya existe una entrada para esta fecha
@@ -110,9 +135,9 @@ export class HabitService {
         habitId_userId_date: {
           habitId,
           userId,
-          date: new Date(date)
-        }
-      }
+          date: new Date(date),
+        },
+      },
     });
 
     if (existingEntry) {
@@ -121,8 +146,8 @@ export class HabitService {
         where: { id: existingEntry.id },
         data: {
           count: existingEntry.count + count,
-          notes: notes || existingEntry.notes
-        }
+          notes: notes || existingEntry.notes,
+        },
       });
       return updatedEntry;
     } else {
@@ -133,18 +158,23 @@ export class HabitService {
           userId,
           date: new Date(date),
           count,
-          notes
-        }
+          notes,
+        },
       });
       return newEntry;
     }
   }
 
   // Obtener entradas de un hábito en un rango de fechas
-  static async getHabitEntries(habitId: string, userId: string, startDate?: string, endDate?: string): Promise<HabitEntryResponse[]> {
+  static async getHabitEntries(
+    habitId: string,
+    userId: string,
+    startDate?: string,
+    endDate?: string
+  ): Promise<HabitEntryResponse[]> {
     const whereClause: any = {
       habitId,
-      userId
+      userId,
     };
 
     if (startDate || endDate) {
@@ -155,7 +185,7 @@ export class HabitService {
 
     const entries = await prisma.habitEntry.findMany({
       where: whereClause,
-      orderBy: { date: 'desc' }
+      orderBy: { date: 'desc' },
     });
 
     return entries;
@@ -164,11 +194,11 @@ export class HabitService {
   // Obtener estadísticas de hábitos del usuario
   static async getHabitStats(userId: string) {
     const totalHabits = await prisma.habit.count({
-      where: { userId }
+      where: { userId },
     });
 
     const activeHabits = await prisma.habit.count({
-      where: { userId, isActive: true }
+      where: { userId, isActive: true },
     });
 
     // Obtener entradas de hoy
@@ -180,9 +210,9 @@ export class HabitService {
         userId,
         date: {
           gte: today,
-          lt: new Date(today.getTime() + 24 * 60 * 60 * 1000)
-        }
-      }
+          lt: new Date(today.getTime() + 24 * 60 * 60 * 1000),
+        },
+      },
     });
 
     // Obtener hábitos diarios activos para calcular progreso de hoy
@@ -190,8 +220,8 @@ export class HabitService {
       where: {
         userId,
         isActive: true,
-        frequency: 'DAILY'
-      }
+        frequency: 'DAILY',
+      },
     });
 
     return {
@@ -199,50 +229,66 @@ export class HabitService {
       active: activeHabits,
       todayCompleted: todayEntries,
       dailyTarget: dailyHabits,
-      todayProgress: dailyHabits > 0 ? Math.round((todayEntries / dailyHabits) * 100) : 0
+      todayProgress:
+        dailyHabits > 0 ? Math.round((todayEntries / dailyHabits) * 100) : 0,
     };
   }
 
   // Eliminar entrada específica de hábito por ID
-  static async deleteHabitEntry(entryId: string, userId: string): Promise<boolean> {
+  static async deleteHabitEntry(
+    entryId: string,
+    userId: string
+  ): Promise<boolean> {
     // Verificar que la entrada existe y pertenece al usuario
     const existingEntry = await prisma.habitEntry.findFirst({
-      where: { 
-        id: entryId, 
-        userId 
-      }
+      where: {
+        id: entryId,
+        userId,
+      },
     });
 
     if (!existingEntry) {
-      throw new Error('Habit entry not found or you do not have permission to delete it');
+      throw new Error(
+        'Habit entry not found or you do not have permission to delete it'
+      );
     }
 
     // Eliminar la entrada
     await prisma.habitEntry.delete({
-      where: { id: entryId }
+      where: { id: entryId },
     });
 
     return true;
   }
 
   // Desmarcar hábito para una fecha específica (más intuitivo para el frontend)
-  static async unmarkHabitForDate(habitId: string, userId: string, date: string): Promise<boolean> {
-    console.log(`🔍 Attempting to unmark habit ${habitId} for user ${userId} on date ${date}`);
-    
+  static async unmarkHabitForDate(
+    habitId: string,
+    userId: string,
+    date: string
+  ): Promise<boolean> {
+    console.log(
+      `🔍 Attempting to unmark habit ${habitId} for user ${userId} on date ${date}`
+    );
+
     // Verificar que el hábito existe y pertenece al usuario
     const habit = await prisma.habit.findFirst({
-      where: { id: habitId, userId }
+      where: { id: habitId, userId },
     });
 
     if (!habit) {
-      throw new Error('Habit not found or you do not have permission to modify it');
+      throw new Error(
+        'Habit not found or you do not have permission to modify it'
+      );
     }
 
     // Normalizar la fecha (solo fecha, sin hora)
     const targetDate = new Date(date);
     targetDate.setHours(0, 0, 0, 0);
-    
-    console.log(`🔍 Looking for entry with normalized date: ${targetDate.toISOString()}`);
+
+    console.log(
+      `🔍 Looking for entry with normalized date: ${targetDate.toISOString()}`
+    );
 
     // Buscar la entrada específica para esta fecha
     const existingEntry = await prisma.habitEntry.findFirst({
@@ -251,9 +297,9 @@ export class HabitService {
         userId,
         date: {
           gte: targetDate,
-          lt: new Date(targetDate.getTime() + 24 * 60 * 60 * 1000) // Siguiente día
-        }
-      }
+          lt: new Date(targetDate.getTime() + 24 * 60 * 60 * 1000), // Siguiente día
+        },
+      },
     });
 
     if (!existingEntry) {
@@ -262,10 +308,10 @@ export class HabitService {
     }
 
     console.log(`✅ Found entry ${existingEntry.id}, deleting...`);
-    
+
     // Eliminar la entrada
     await prisma.habitEntry.delete({
-      where: { id: existingEntry.id }
+      where: { id: existingEntry.id },
     });
 
     console.log(`✅ Successfully unmarked habit ${habitId} for date ${date}`);
@@ -273,9 +319,12 @@ export class HabitService {
   }
 
   // Alternar estado activo/inactivo de un hábito
-  static async toggleHabitStatus(habitId: string, userId: string): Promise<HabitResponse | null> {
+  static async toggleHabitStatus(
+    habitId: string,
+    userId: string
+  ): Promise<HabitResponse | null> {
     const habit = await prisma.habit.findFirst({
-      where: { id: habitId, userId }
+      where: { id: habitId, userId },
     });
 
     if (!habit) {
@@ -286,8 +335,8 @@ export class HabitService {
       where: { id: habitId },
       data: {
         isActive: !habit.isActive,
-        updatedAt: new Date()
-      }
+        updatedAt: new Date(),
+      },
     });
 
     return updatedHabit;

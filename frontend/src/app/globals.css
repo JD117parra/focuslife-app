@@ -1,14 +1,76 @@
-@import "tailwindcss";
-@import "tw-animate-css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
+
+/* ===== GLASS COMPONENTS PERSONALIZADOS ===== */
+
+/* 🪟 Componente glassmorphism básico */
+.glass-card {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+  border-radius: 12px !important;
+  backdrop-filter: blur(16px) !important;
+  transform: translateZ(0) !important;
+}
+
+/* 🎯 Widget de estadísticas glassmorphism */
+.widget-glass {
+  backdrop-filter: blur(16px) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1) !important;
+  border-radius: 12px !important;
+  border-width: 2px !important;
+  border-style: solid !important;
+  padding: 1.5rem !important;
+}
+
+/* 🎪 Efectos hover para glassmorphism */
+.glass-hover {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease !important;
+  will-change: transform !important;
+}
+
+.glass-hover:hover {
+  transform: translateZ(0) scale(1.02) !important;
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+}
+
+/* 🎨 Botones glassmorphism */
+.btn-glass {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 8px !important;
+  padding: 0.5rem 1rem !important;
+  color: white !important;
+  font-weight: 500 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-glass:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* ===== CLASES EXISTENTES ===== */
 
 /* Optimized Card Styles - Better performance while maintaining aesthetics */
 .card-glass {
   background: rgba(255, 255, 255, 0.9) !important;
   border: 2px solid rgba(255, 255, 255, 0.3) !important;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
-  transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease !important;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease,
+    background-color 0.3s ease !important;
   border-radius: 12px !important;
   transform: translateZ(0) !important; /* Force GPU compositing */
   will-change: transform !important;
@@ -24,7 +86,10 @@
   background: rgba(255, 255, 255, 0.9) !important;
   border: 2px solid rgba(255, 255, 255, 0.3) !important;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
-  transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease !important;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease,
+    background-color 0.3s ease !important;
   border-radius: 12px !important;
   padding: 2rem !important;
   transform: translateZ(0) !important; /* Force GPU compositing */
@@ -58,7 +123,7 @@
 .glass-effect {
   background: rgba(255, 255, 255, 0.15) !important;
   border: 1px solid rgba(255, 255, 255, 0.3) !important;
-  box-shadow: 
+  box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
   border-radius: 0.5rem !important;
@@ -66,13 +131,15 @@
 }
 
 .glass-effect-hover {
-  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease !important;
   will-change: transform !important;
 }
 
 .glass-effect-hover:hover {
   transform: translateZ(0) scale(1.02) !important;
-  box-shadow: 
+  box-shadow:
     0 12px 40px rgba(0, 0, 0, 0.15),
     inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
 }
@@ -83,7 +150,9 @@
 }
 
 .text-shadow-medium {
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+  text-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.5),
+    0 1px 2px rgba(0, 0, 0, 0.3) !important;
 }
 
 .text-shadow-strong {
@@ -213,28 +282,28 @@
     /* backface-visibility: hidden; */
     /* perspective: 1000px; */
   }
-  
+
   /* Optimize rendering for better scroll performance */
   .container {
     contain: layout style;
   }
-  
+
   /* Optimize grid and flexbox performance */
   .grid {
     contain: layout;
     will-change: auto;
   }
-  
+
   /* Force hardware acceleration for smoother animations */
   .cursor-pointer {
     transform: translateZ(0);
     will-change: transform;
   }
-  
+
   /* Reduce paint complexity - Optimized background */
   .bg-gradient-optimized {
     background: #60a5fa;
-    background-image: 
+    background-image:
       linear-gradient(135deg, rgba(203, 213, 225, 0.3) 0%, transparent 50%),
       linear-gradient(45deg, rgba(99, 102, 241, 0.3) 50%, transparent 100%);
     background-attachment: local;

@@ -6,7 +6,12 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "lint:strict": "next lint --max-warnings 0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "code-quality": "npm run lint:fix && npm run format"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",
@@ -16,7 +21,6 @@
     "date-fns": "^4.1.0",
     "lucide-react": "^0.517.0",
     "next": "15.3.3",
-    "next-auth": "^4.24.11",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.58.1",
@@ -31,6 +35,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.3.3",
+    "prettier": "^3.4.2",
     "tailwindcss": "^4",
     "tw-animate-css": "^1.3.4",
     "typescript": "^5"

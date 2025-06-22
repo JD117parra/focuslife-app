@@ -30,7 +30,7 @@ export const authenticateToken = async (
     // Verificar que el usuario existe en la base de datos
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
-      select: { id: true, email: true, name: true }
+      select: { id: true, email: true, name: true },
     });
 
     if (!user) {

@@ -8,58 +8,72 @@ export class TaskService {
       where: { userId },
       orderBy: [
         { dueDate: 'asc' }, // Fechas más próximas primero (null values van al final en SQLite)
-        { priority: 'desc' }, // Prioridad alta primero  
-        { createdAt: 'desc' } // Más recientes primero
+        { priority: 'desc' }, // Prioridad alta primero
+        { createdAt: 'desc' }, // Más recientes primero
       ],
       include: {
         category: {
           select: {
             id: true,
             name: true,
-            color: true
-          }
-        }
-      }
+            color: true,
+          },
+        },
+      },
     });
 
     return tasks;
   }
 
   // Obtener una tarea específica por ID
-  static async getTaskById(taskId: string, userId: string): Promise<TaskResponse | null> {
+  static async getTaskById(
+    taskId: string,
+    userId: string
+  ): Promise<TaskResponse | null> {
     const task = await prisma.task.findFirst({
-      where: { 
+      where: {
         id: taskId,
-        userId 
+        userId,
       },
       include: {
         category: {
           select: {
             id: true,
             name: true,
-            color: true
-          }
-        }
-      }
+            color: true,
+          },
+        },
+      },
     });
 
     return task;
   }
 
   // Crear nueva tarea con validación de fecha mejorada
-  static async createTask(userId: string, taskData: CreateTaskDto): Promise<TaskResponse> {
-    const { title, description, dueDate, priority = 'MEDIUM', categoryId } = taskData;
+  static async createTask(
+    userId: string,
+    taskData: CreateTaskDto
+  ): Promise<TaskResponse> {
+    const {
+      title,
+      description,
+      dueDate,
+      priority = 'MEDIUM',
+      categoryId,
+    } = taskData;
 
     // Validar fecha de vencimiento
     let parsedDueDate: Date | null = null;
     if (dueDate) {
       parsedDueDate = new Date(dueDate);
-      
+
       // Verificar que la fecha sea válida
       if (isNaN(parsedDueDate.getTime())) {
-        throw new Error('Invalid due date format. Please use ISO format (YYYY-MM-DD)');
+        throw new Error(
+          'Invalid due date format. Please use ISO format (YYYY-MM-DD)'
+        );
       }
-      
+
       // Verificar que la fecha no sea en el pasado (opcional - comentar si no quieres esta validación)
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -77,32 +91,40 @@ export class TaskService {
         priority,
         categoryId,
         userId,
-        status: 'PENDING'
+        status: 'PENDING',
       },
       include: {
         category: {
           select: {
             id: true,
             name: true,
-            color: true
-          }
-        }
-      }
+            color: true,
+          },
+        },
+      },
     });
 
-    console.log(`✅ Task created: "${title}" ${dueDate ? `(due: ${dueDate})` : '(no due date)'}`);
+    console.log(
+      `✅ Task created: "${title}" ${dueDate ? `(due: ${dueDate})` : '(no due date)'}`
+    );
     return task;
   }
 
   // Actualizar tarea con validación de fecha mejorada
-  static async updateTask(taskId: string, userId: string, taskData: UpdateTaskDto): Promise<TaskResponse | null> {
+  static async updateTask(
+    taskId: string,
+    userId: string,
+    taskData: UpdateTaskDto
+  ): Promise<TaskResponse | null> {
     // Verificar que la tarea existe y pertenece al usuario
     const existingTask = await prisma.task.findFirst({
-      where: { id: taskId, userId }
+      where: { id: taskId, userId },
     });
 
     if (!existingTask) {
-      throw new Error('Task not found or you do not have permission to update it');
+      throw new Error(
+        'Task not found or you do not have permission to update it'
+      );
     }
 
     // Validar fecha de vencimiento si se proporciona
@@ -112,10 +134,12 @@ export class TaskService {
         parsedDueDate = undefined; // Remover fecha
       } else {
         parsedDueDate = new Date(taskData.dueDate);
-        
+
         // Verificar que la fecha sea válida
         if (isNaN(parsedDueDate.getTime())) {
-          throw new Error('Invalid due date format. Please use ISO format (YYYY-MM-DD)');
+          throw new Error(
+            'Invalid due date format. Please use ISO format (YYYY-MM-DD)'
+          );
         }
       }
     }
@@ -125,17 +149,17 @@ export class TaskService {
       data: {
         ...taskData,
         dueDate: parsedDueDate,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       },
       include: {
         category: {
           select: {
             id: true,
             name: true,
-            color: true
-          }
-        }
-      }
+            color: true,
+          },
+        },
+      },
     });
 
     return updatedTask;
@@ -145,22 +169,27 @@ export class TaskService {
   static async deleteTask(taskId: string, userId: string): Promise<boolean> {
     // Verificar que la tarea existe y pertenece al usuario
     const existingTask = await prisma.task.findFirst({
-      where: { id: taskId, userId }
+      where: { id: taskId, userId },
     });
 
     if (!existingTask) {
-      throw new Error('Task not found or you do not have permission to delete it');
+      throw new Error(
+        'Task not found or you do not have permission to delete it'
+      );
     }
 
     await prisma.task.delete({
-      where: { id: taskId }
+      where: { id: taskId },
     });
 
     return true;
   }
 
   // Marcar tarea como completada
-  static async completeTask(taskId: string, userId: string): Promise<TaskResponse | null> {
+  static async completeTask(
+    taskId: string,
+    userId: string
+  ): Promise<TaskResponse | null> {
     return this.updateTask(taskId, userId, { status: 'COMPLETED' });
   }
 
@@ -170,12 +199,12 @@ export class TaskService {
       by: ['status'],
       where: { userId },
       _count: {
-        id: true
-      }
+        id: true,
+      },
     });
 
     const totalTasks = await prisma.task.count({
-      where: { userId }
+      where: { userId },
     });
 
     // Estadísticas adicionales por fecha
@@ -185,45 +214,48 @@ export class TaskService {
     tomorrow.setDate(tomorrow.getDate() + 1);
 
     const todayTasks = await prisma.task.count({
-      where: { 
-        userId, 
+      where: {
+        userId,
         dueDate: {
           gte: today,
-          lt: tomorrow
-        }
-      }
+          lt: tomorrow,
+        },
+      },
     });
 
     const overdueTasks = await prisma.task.count({
-      where: { 
-        userId, 
+      where: {
+        userId,
         dueDate: {
-          lt: today
+          lt: today,
         },
         status: {
-          not: 'COMPLETED'
-        }
-      }
+          not: 'COMPLETED',
+        },
+      },
     });
 
     const noDateTasks = await prisma.task.count({
-      where: { 
+      where: {
         userId,
-        dueDate: null
-      }
+        dueDate: null,
+      },
     });
 
     return {
       total: totalTasks,
-      byStatus: stats.reduce((acc, stat) => {
-        acc[stat.status] = stat._count.id;
-        return acc;
-      }, {} as Record<string, number>),
+      byStatus: stats.reduce(
+        (acc, stat) => {
+          acc[stat.status] = stat._count.id;
+          return acc;
+        },
+        {} as Record<string, number>
+      ),
       byDate: {
         today: todayTasks,
         overdue: overdueTasks,
-        noDate: noDateTasks
-      }
+        noDate: noDateTasks,
+      },
     };
   }
 
@@ -237,26 +269,23 @@ export class TaskService {
     tomorrow.setDate(tomorrow.getDate() + 1);
 
     const tasks = await prisma.task.findMany({
-      where: { 
+      where: {
         userId,
         dueDate: {
           gte: today,
-          lt: tomorrow
-        }
+          lt: tomorrow,
+        },
       },
-      orderBy: [
-        { priority: 'desc' },
-        { createdAt: 'desc' }
-      ],
+      orderBy: [{ priority: 'desc' }, { createdAt: 'desc' }],
       include: {
         category: {
           select: {
             id: true,
             name: true,
-            color: true
-          }
-        }
-      }
+            color: true,
+          },
+        },
+      },
     });
 
     console.log(`📅 Found ${tasks.length} tasks for today`);
@@ -269,28 +298,28 @@ export class TaskService {
     today.setHours(0, 0, 0, 0);
 
     const tasks = await prisma.task.findMany({
-      where: { 
+      where: {
         userId,
         dueDate: {
-          lt: today
+          lt: today,
         },
         status: {
-          not: 'COMPLETED'
-        }
+          not: 'COMPLETED',
+        },
       },
       orderBy: [
         { dueDate: 'desc' }, // Más recientes primero
-        { priority: 'desc' }
+        { priority: 'desc' },
       ],
       include: {
         category: {
           select: {
             id: true,
             name: true,
-            color: true
-          }
-        }
-      }
+            color: true,
+          },
+        },
+      },
     });
 
     console.log(`⚠️ Found ${tasks.length} overdue tasks`);
@@ -301,38 +330,35 @@ export class TaskService {
   static async getThisWeekTasks(userId: string): Promise<TaskResponse[]> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     // Calcular inicio de la semana (lunes)
     const startOfWeek = new Date(today);
     const day = startOfWeek.getDay();
     const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1); // Ajustar para que lunes sea día 1
     startOfWeek.setDate(diff);
-    
+
     // Calcular fin de la semana (domingo)
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(startOfWeek.getDate() + 7);
 
     const tasks = await prisma.task.findMany({
-      where: { 
+      where: {
         userId,
         dueDate: {
           gte: startOfWeek,
-          lt: endOfWeek
-        }
+          lt: endOfWeek,
+        },
       },
-      orderBy: [
-        { dueDate: 'asc' },
-        { priority: 'desc' }
-      ],
+      orderBy: [{ dueDate: 'asc' }, { priority: 'desc' }],
       include: {
         category: {
           select: {
             id: true,
             name: true,
-            color: true
-          }
-        }
-      }
+            color: true,
+          },
+        },
+      },
     });
 
     console.log(`📆 Found ${tasks.length} tasks for this week`);
@@ -342,23 +368,20 @@ export class TaskService {
   // Obtener tareas sin fecha de vencimiento
   static async getTasksWithoutDate(userId: string): Promise<TaskResponse[]> {
     const tasks = await prisma.task.findMany({
-      where: { 
+      where: {
         userId,
-        dueDate: null
+        dueDate: null,
       },
-      orderBy: [
-        { priority: 'desc' },
-        { createdAt: 'desc' }
-      ],
+      orderBy: [{ priority: 'desc' }, { createdAt: 'desc' }],
       include: {
         category: {
           select: {
             id: true,
             name: true,
-            color: true
-          }
-        }
-      }
+            color: true,
+          },
+        },
+      },
     });
 
     console.log(`📝 Found ${tasks.length} tasks without due date`);
@@ -366,15 +389,19 @@ export class TaskService {
   }
 
   // Obtener tareas por rango de fechas
-  static async getTasksByDateRange(userId: string, startDate: string, endDate: string): Promise<TaskResponse[]> {
+  static async getTasksByDateRange(
+    userId: string,
+    startDate: string,
+    endDate: string
+  ): Promise<TaskResponse[]> {
     const start = new Date(startDate);
     const end = new Date(endDate);
-    
+
     // Validar fechas
     if (isNaN(start.getTime()) || isNaN(end.getTime())) {
       throw new Error('Invalid date range. Please use ISO format (YYYY-MM-DD)');
     }
-    
+
     if (start > end) {
       throw new Error('Start date must be before or equal to end date');
     }
@@ -383,29 +410,28 @@ export class TaskService {
     end.setHours(23, 59, 59, 999);
 
     const tasks = await prisma.task.findMany({
-      where: { 
+      where: {
         userId,
         dueDate: {
           gte: start,
-          lte: end
-        }
+          lte: end,
+        },
       },
-      orderBy: [
-        { dueDate: 'asc' },
-        { priority: 'desc' }
-      ],
+      orderBy: [{ dueDate: 'asc' }, { priority: 'desc' }],
       include: {
         category: {
           select: {
             id: true,
             name: true,
-            color: true
-          }
-        }
-      }
+            color: true,
+          },
+        },
+      },
     });
 
-    console.log(`📊 Found ${tasks.length} tasks between ${startDate} and ${endDate}`);
+    console.log(
+      `📊 Found ${tasks.length} tasks between ${startDate} and ${endDate}`
+    );
     return tasks;
   }
 }

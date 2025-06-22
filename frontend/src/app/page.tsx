@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import Link from 'next/link';
 
 export default function HomePage() {
   return (
@@ -9,17 +9,18 @@ export default function HomePage() {
             🎯 FocusLife
           </h1>
           <p className="text-lg md:text-xl text-white/90 mb-8 max-w-2xl mx-auto leading-relaxed">
-            Tu aplicación todo-en-uno para gestionar hábitos, tareas y finanzas personales
+            Tu aplicación todo-en-uno para gestionar hábitos, tareas y finanzas
+            personales
           </p>
-          
+
           <div className="space-y-4 sm:space-y-0 sm:space-x-4 sm:flex sm:justify-center">
-            <Link 
+            <Link
               href="/login"
               className="inline-block bg-white/20 backdrop-blur-md text-white px-8 py-3 rounded-lg font-semibold hover:bg-white/30 transition-all duration-300 border border-white/30 shadow-lg"
             >
               🔐 Iniciar Sesión
             </Link>
-            <Link 
+            <Link
               href="/register"
               className="inline-block bg-white/20 backdrop-blur-md text-white px-8 py-3 rounded-lg font-semibold border border-white/30 hover:bg-white/30 transition-all duration-300 shadow-lg"
             >
@@ -37,7 +38,7 @@ export default function HomePage() {
               Organiza tu día con listas de tareas inteligentes.
             </p>
           </div>
-          
+
           <div className="backdrop-blur-md bg-white/15 border border-white/30 shadow-lg p-6 rounded-lg hover:scale-105 hover:bg-white/20 transition-all duration-300">
             <h3 className="text-xl font-semibold text-white mb-3">
               🎯 Seguimiento de Hábitos
@@ -46,7 +47,7 @@ export default function HomePage() {
               Construye hábitos positivos con seguimiento diario.
             </p>
           </div>
-          
+
           <div className="backdrop-blur-md bg-white/15 border border-white/30 shadow-lg p-6 rounded-lg hover:scale-105 hover:bg-white/20 transition-all duration-300">
             <h3 className="text-xl font-semibold text-white mb-3">
               💰 Finanzas Personales
@@ -58,5 +59,5 @@ export default function HomePage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

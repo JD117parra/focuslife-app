@@ -1,5 +1,30 @@
-# STATUS.md - Documento interno para ubicación en conversaciones
+# ============================================
+# DOCUMENTOS INTERNOS Y CONFIGURACIÓN LOCAL
+# ============================================
+
+# Documentos internos para ubicación en conversaciones
 STATUS.md
+ROADMAP.md
+
+# Directorio de archivos eliminados/backup
+_to_delete/
+*/_to_delete/
+
+# Historial local del editor
+.history/
+*/.history/
+
+# Archivos de configuración personal
+.vscode/settings.json
+.idea/workspace.xml
+
+# ============================================
+# DEPENDENCIAS Y BUILD OUTPUTS
+# ============================================
+
+# ============================================
+# LOGGING Y DEBUGGING
+# ============================================
 
 # Logs
 logs
@@ -74,3 +99,75 @@ dist/
 
 # Prisma
 prisma/dev.db*
+prisma/*.db
+prisma/*.sqlite*
+
+# ============================================
+# ARCHIVOS TEMPORALES Y CACHE
+# ============================================
+
+# Archivos temporales
+*.tmp
+*.temp
+*~
+
+# Cache de herramientas
+.npm/
+.yarn/
+.pnpm/
+*/.turbo/
+.eslintcache
+
+# Cache de Next.js
+.next/cache/
+
+# ============================================
+# ARCHIVOS DE BACKUP Y VERSIONES
+# ============================================
+
+# Archivos de backup
+*.backup
+*.bak
+*.old
+*_backup.*
+*_old.*
+page_backup.*
+page_old.*
+
+# Archivos de versiones
+*.v1
+*.v2
+*.orig
+
+# ============================================
+# TESTING Y COVERAGE
+# ============================================
+
+# Coverage reports
+coverage/
+*.lcov
+.nyc_output/
+
+# Test results
+.jest/
+test-results/
+junit.xml
+
+# ============================================
+# DEPLOYMENT Y CONFIGURACIÓN DE PRODUCCIÓN
+# ============================================
+
+# Certificados y keys
+*.pem
+*.key
+*.cert
+*.crt
+
+# Archivos de deployment
+.vercel/
+.netlify/
+docker-compose.override.yml
+
+# Variables de entorno específicas
+.env.production
+.env.staging

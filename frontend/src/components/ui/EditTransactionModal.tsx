@@ -1,22 +1,22 @@
-'use client'
+'use client';
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react';
 
 interface TransactionData {
-  id?: string
-  amount?: number
-  description: string
-  type: 'INCOME' | 'EXPENSE'
-  date?: string
-  category?: string
+  id?: string;
+  amount?: number;
+  description: string;
+  type: 'INCOME' | 'EXPENSE';
+  date?: string;
+  category?: string;
 }
 
 interface EditTransactionModalProps {
-  isOpen: boolean
-  transaction: TransactionData | null
-  isEditing: boolean // true para editar, false para crear
-  onConfirm: (transactionData: Partial<TransactionData>) => void
-  onCancel: () => void
+  isOpen: boolean;
+  transaction: TransactionData | null;
+  isEditing: boolean; // true para editar, false para crear
+  onConfirm: (transactionData: Partial<TransactionData>) => void;
+  onCancel: () => void;
 }
 
 export default function EditTransactionModal({
@@ -24,115 +24,118 @@ export default function EditTransactionModal({
   transaction,
   isEditing,
   onConfirm,
-  onCancel
+  onCancel,
 }: EditTransactionModalProps) {
-  const [amount, setAmount] = useState('')
-  const [description, setDescription] = useState('')
-  const [type, setType] = useState<'INCOME' | 'EXPENSE'>('EXPENSE')
-  const [category, setCategory] = useState('')
-  
-  const modalRef = useRef<HTMLDivElement>(null)
-  const amountInputRef = useRef<HTMLInputElement>(null)
+  const [amount, setAmount] = useState('');
+  const [description, setDescription] = useState('');
+  const [type, setType] = useState<'INCOME' | 'EXPENSE'>('EXPENSE');
+  const [category, setCategory] = useState('');
+
+  const modalRef = useRef<HTMLDivElement>(null);
+  const amountInputRef = useRef<HTMLInputElement>(null);
 
   // Cargar datos de la transacción cuando se abra el modal
   useEffect(() => {
     if (isOpen) {
       if (transaction && isEditing) {
         // Modo edición: cargar datos existentes
-        setAmount(transaction.amount?.toString() || '')
-        setDescription(transaction.description || '')
-        setType(transaction.type || 'EXPENSE')
-        setCategory(transaction.category || '')
+        setAmount(transaction.amount?.toString() || '');
+        setDescription(transaction.description || '');
+        setType(transaction.type || 'EXPENSE');
+        setCategory(transaction.category || '');
       } else if (transaction && !isEditing) {
         // Modo creación con plantilla: usar datos de plantilla
-        setAmount('') // Dejar vacío para que usuario escriba el monto
-        setDescription(transaction.description || '')
-        setType(transaction.type || 'EXPENSE')
-        setCategory(transaction.category || '') // Usar la categoría de la plantilla
+        setAmount(''); // Dejar vacío para que usuario escriba el monto
+        setDescription(transaction.description || '');
+        setType(transaction.type || 'EXPENSE');
+        setCategory(transaction.category || ''); // Usar la categoría de la plantilla
       } else if (!transaction && !isEditing) {
         // Modo creación limpia: resetear todo
-        setAmount('')
-        setDescription('')
-        setType('EXPENSE')
-        setCategory('')
+        setAmount('');
+        setDescription('');
+        setType('EXPENSE');
+        setCategory('');
       }
     }
-  }, [transaction, isOpen, isEditing])
+  }, [transaction, isOpen, isEditing]);
 
   // Manejar tecla ESC
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
-        onCancel()
+        onCancel();
       }
-    }
+    };
 
     if (isOpen) {
-      document.addEventListener('keydown', handleEsc)
+      document.addEventListener('keydown', handleEsc);
       // Focus en el input del monto cuando se abre
       setTimeout(() => {
-        amountInputRef.current?.focus()
+        amountInputRef.current?.focus();
         if (isEditing) {
-          amountInputRef.current?.select()
+          amountInputRef.current?.select();
         }
-      }, 100)
+      }, 100);
     }
 
     return () => {
-      document.removeEventListener('keydown', handleEsc)
-    }
-  }, [isOpen, onCancel, isEditing])
+      document.removeEventListener('keydown', handleEsc);
+    };
+  }, [isOpen, onCancel, isEditing]);
 
   // Prevenir scroll del body cuando está abierto
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden'
+      document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = 'unset'
+      document.body.style.overflow = 'unset';
     }
 
     return () => {
-      document.body.style.overflow = 'unset'
-    }
-  }, [isOpen])
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (amount && description.trim()) {
       const transactionData: Partial<TransactionData> = {
         amount: parseFloat(amount),
         description: description.trim(),
         type,
-        category: category.trim() || undefined
-      }
-      onConfirm(transactionData)
+        category: category.trim() || undefined,
+      };
+      onConfirm(transactionData);
     }
-  }
+  };
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[9999] overflow-hidden">
       {/* Backdrop con blur glassmorphism */}
-      <div 
+      <div
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
         onClick={onCancel}
       />
-      
+
       {/* Contenedor centrado para el modal */}
       <div className="absolute inset-0 flex items-center justify-center p-4">
         {/* Modal con glassmorphism */}
-        <div 
+        <div
           ref={modalRef}
           className="relative bg-white/25 backdrop-blur-md shadow-lg border border-white/45 rounded-lg max-w-lg w-full p-6 transform transition-all duration-300 ease-out scale-100 opacity-100"
-          onClick={(e) => e.stopPropagation()}
+          onClick={e => e.stopPropagation()}
         >
           {/* Header */}
           <div className="flex items-center mb-6">
             <div className="flex-shrink-0 w-12 h-12 bg-white/30 backdrop-blur-md border border-white/45 rounded-full flex items-center justify-center text-xl mr-4 shadow-lg">
               💰
             </div>
-            <h3 className="text-lg font-bold text-white" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
+            <h3
+              className="text-lg font-bold text-white"
+              style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
+            >
               {isEditing ? 'Editar Transacción' : 'Nueva Transacción'}
             </h3>
           </div>
@@ -141,12 +144,15 @@ export default function EditTransactionModal({
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Tipo */}
             <div>
-              <label className="block text-sm font-medium text-white/90 mb-2" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
+              <label
+                className="block text-sm font-medium text-white/90 mb-2"
+                style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}
+              >
                 Tipo *
               </label>
               <select
                 value={type}
-                onChange={(e) => setType(e.target.value as 'INCOME' | 'EXPENSE')}
+                onChange={e => setType(e.target.value as 'INCOME' | 'EXPENSE')}
                 className="w-full px-4 py-3 bg-white/80 backdrop-blur-sm border border-white/50 rounded-lg focus:ring-2 focus:ring-blue-400/70 focus:border-blue-400/70 text-gray-900 shadow-sm transition-all duration-200"
               >
                 <option value="EXPENSE">💸 Gasto</option>
@@ -156,7 +162,10 @@ export default function EditTransactionModal({
 
             {/* Monto */}
             <div>
-              <label className="block text-sm font-medium text-white/90 mb-2" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
+              <label
+                className="block text-sm font-medium text-white/90 mb-2"
+                style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}
+              >
                 Monto *
               </label>
               <input
@@ -164,7 +173,7 @@ export default function EditTransactionModal({
                 type="number"
                 step="0.01"
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                onChange={e => setAmount(e.target.value)}
                 placeholder="0.00"
                 className="w-full px-4 py-3 bg-white/80 backdrop-blur-sm border border-white/50 rounded-lg focus:ring-2 focus:ring-blue-400/70 focus:border-blue-400/70 text-gray-900 shadow-sm transition-all duration-200 placeholder:text-gray-600"
                 required
@@ -173,13 +182,16 @@ export default function EditTransactionModal({
 
             {/* Descripción */}
             <div>
-              <label className="block text-sm font-medium text-white/90 mb-2" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
+              <label
+                className="block text-sm font-medium text-white/90 mb-2"
+                style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}
+              >
                 Descripción *
               </label>
               <input
                 type="text"
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={e => setDescription(e.target.value)}
                 placeholder="Ej: Supermercado, Salario, Gasolina..."
                 className="w-full px-4 py-3 bg-white/80 backdrop-blur-sm border border-white/50 rounded-lg focus:ring-2 focus:ring-blue-400/70 focus:border-blue-400/70 text-gray-900 shadow-sm transition-all duration-200 placeholder:text-gray-600"
                 required
@@ -188,13 +200,16 @@ export default function EditTransactionModal({
 
             {/* Categoría */}
             <div>
-              <label className="block text-sm font-medium text-white/90 mb-2" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
+              <label
+                className="block text-sm font-medium text-white/90 mb-2"
+                style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}
+              >
                 Categoría (opcional)
               </label>
               <input
                 type="text"
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                onChange={e => setCategory(e.target.value)}
                 placeholder="Ej: Alimentación, Salario, Transporte..."
                 className="w-full px-4 py-3 bg-white/80 backdrop-blur-sm border border-white/50 rounded-lg focus:ring-2 focus:ring-blue-400/70 focus:border-blue-400/70 text-gray-900 shadow-sm transition-all duration-200 placeholder:text-gray-600"
               />
@@ -221,5 +236,5 @@ export default function EditTransactionModal({
         </div>
       </div>
     </div>
-  )
+  );
 }

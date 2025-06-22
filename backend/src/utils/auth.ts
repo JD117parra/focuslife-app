@@ -12,20 +12,23 @@ export class AuthUtils {
     return await bcrypt.hash(password, saltRounds);
   }
 
-  static async comparePassword(password: string, hashedPassword: string): Promise<boolean> {
+  static async comparePassword(
+    password: string,
+    hashedPassword: string
+  ): Promise<boolean> {
     return await bcrypt.compare(password, hashedPassword);
   }
 
   static generateToken(userId: string, email: string): string {
     const secret = process.env.JWT_SECRET || 'fallback-secret';
     const payload = { userId, email };
-    
+
     return jwt.sign(payload, secret, { expiresIn: '7d' });
   }
 
   static verifyToken(token: string): JwtPayload {
     const secret = process.env.JWT_SECRET || 'fallback-secret';
-    
+
     try {
       return jwt.verify(token, secret) as JwtPayload;
     } catch (error) {

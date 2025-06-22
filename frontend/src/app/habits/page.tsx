@@ -1,161 +1,384 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { useAuth } from '@/hooks/useAuth'
-import { useToast } from '@/hooks/useToast'
-import { useConfirm } from '@/hooks/useConfirm'
-import { useEditModal } from '@/hooks/useEditModal'
-import { EditHabitModal } from '@/components/ui'
-import { apiUrls } from '@/config/api'
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/useToast';
+import { useConfirm } from '@/hooks/useConfirm';
+import { useEditModal } from '@/hooks/useEditModal';
+import { EditHabitModal } from '@/components/ui';
+import { apiUrls } from '@/config/api';
 
 interface Habit {
-  id: string
-  name: string
-  description?: string
-  frequency: string
-  target: number
-  isActive: boolean
+  id: string;
+  name: string;
+  description?: string;
+  frequency: string;
+  target: number;
+  isActive: boolean;
 }
 
 interface HabitEntry {
-  id: string
-  habitId: string
-  date: string
-  count: number
-  notes?: string
+  id: string;
+  habitId: string;
+  date: string;
+  count: number;
+  notes?: string;
 }
 
 export default function HabitsPage() {
-  const [habits, setHabits] = useState<Habit[]>([])
-  const [habitEntries, setHabitEntries] = useState<HabitEntry[]>([])
-  const [loading, setLoading] = useState(true)
-  
+  const [habits, setHabits] = useState<Habit[]>([]);
+  const [habitEntries, setHabitEntries] = useState<HabitEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+
   // Estado para el modal de hábitos
-  const [isHabitModalOpen, setIsHabitModalOpen] = useState(false)
-  const [editingHabit, setEditingHabit] = useState<Habit | null>(null)
-  const [isEditingMode, setIsEditingMode] = useState(false)
-  const { authenticatedFetch, isAuthenticated, isLoading: authLoading } = useAuth()
-  const toast = useToast()
-  const confirm = useConfirm()
-  const editModal = useEditModal()
+  const [isHabitModalOpen, setIsHabitModalOpen] = useState(false);
+  const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
+  const [isEditingMode, setIsEditingMode] = useState(false);
+  const {
+    authenticatedFetch,
+    isAuthenticated,
+    isLoading: authLoading,
+  } = useAuth();
+  const toast = useToast();
+  const confirm = useConfirm();
+  const editModal = useEditModal();
 
   // Función para obtener el icono de un hábito basado en su nombre
   const getHabitIcon = (habitName: string) => {
-    const name = habitName.toLowerCase()
-    
+    const name = habitName.toLowerCase();
+
     // Iconos predefinidos
-    if (name.includes('ejercicio') || name.includes('ejercitar') || name.includes('gym') || name.includes('deporte')) return '🏃‍♂️'
-    if (name.includes('leer') || name.includes('lectura') || name.includes('libro')) return '📚'
-    if (name.includes('meditar') || name.includes('meditación') || name.includes('mindfulness')) return '🧘‍♀️'
-    if (name.includes('agua') || name.includes('beber') || name.includes('hidrat')) return '💧'
-    if (name.includes('levantarse') || name.includes('despertar') || name.includes('temprano') || name.includes('madruga')) return '🌅'
-    if (name.includes('estudiar') || name.includes('aprender') || name.includes('curso') || name.includes('estudio')) return '📝'
-    if (name.includes('gratitud') || name.includes('agradecer') || name.includes('agradecido')) return '🙏'
-    
+    if (
+      name.includes('ejercicio') ||
+      name.includes('ejercitar') ||
+      name.includes('gym') ||
+      name.includes('deporte')
+    )
+      return '🏃‍♂️';
+    if (
+      name.includes('leer') ||
+      name.includes('lectura') ||
+      name.includes('libro')
+    )
+      return '📚';
+    if (
+      name.includes('meditar') ||
+      name.includes('meditación') ||
+      name.includes('mindfulness')
+    )
+      return '🧘‍♀️';
+    if (
+      name.includes('agua') ||
+      name.includes('beber') ||
+      name.includes('hidrat')
+    )
+      return '💧';
+    if (
+      name.includes('levantarse') ||
+      name.includes('despertar') ||
+      name.includes('temprano') ||
+      name.includes('madruga')
+    )
+      return '🌅';
+    if (
+      name.includes('estudiar') ||
+      name.includes('aprender') ||
+      name.includes('curso') ||
+      name.includes('estudio')
+    )
+      return '📝';
+    if (
+      name.includes('gratitud') ||
+      name.includes('agradecer') ||
+      name.includes('agradecido')
+    )
+      return '🙏';
+
     // Nuevos hábitos
-    if (name.includes('diario') || name.includes('escribir') || name.includes('journal')) return '📔'
-    if (name.includes('aire libre') || name.includes('exterior') || name.includes('naturaleza') || name.includes('outdoor')) return '🌿'
-    if (name.includes('desconexión') || name.includes('digital') || name.includes('pantalla') || name.includes('teléfono') || name.includes('movil')) return '📵'
-    if (name.includes('organizar') || name.includes('ordenar') || name.includes('limpiar') || name.includes('limpieza')) return '🧹'
-    if (name.includes('creativo') || name.includes('creatividad') || name.includes('crear') || name.includes('arte') || name.includes('dibujar')) return '🎨'
-    
+    if (
+      name.includes('diario') ||
+      name.includes('escribir') ||
+      name.includes('journal')
+    )
+      return '📔';
+    if (
+      name.includes('aire libre') ||
+      name.includes('exterior') ||
+      name.includes('naturaleza') ||
+      name.includes('outdoor')
+    )
+      return '🌿';
+    if (
+      name.includes('desconexión') ||
+      name.includes('digital') ||
+      name.includes('pantalla') ||
+      name.includes('teléfono') ||
+      name.includes('movil')
+    )
+      return '📵';
+    if (
+      name.includes('organizar') ||
+      name.includes('ordenar') ||
+      name.includes('limpiar') ||
+      name.includes('limpieza')
+    )
+      return '🧹';
+    if (
+      name.includes('creativo') ||
+      name.includes('creatividad') ||
+      name.includes('crear') ||
+      name.includes('arte') ||
+      name.includes('dibujar')
+    )
+      return '🎨';
+
     // Iconos adicionales para otros hábitos comunes
-    if (name.includes('cocinar') || name.includes('cocina')) return '👨‍🍳'
-    if (name.includes('trabajo') || name.includes('productiv') || name.includes('enfocar')) return '💼'
-    if (name.includes('dinero') || name.includes('ahorro') || name.includes('finanzas')) return '💰'
-    if (name.includes('social') || name.includes('amigos') || name.includes('socializar')) return '👥'
-    if (name.includes('jardín') || name.includes('plantas') || name.includes('jardinería')) return '🌱'
-    if (name.includes('mascota') || name.includes('perro') || name.includes('gato')) return '🐕'
-    if (name.includes('vitamina') || name.includes('medicament') || name.includes('supplement')) return '💊'
-    if (name.includes('yoga') || name.includes('estir') || name.includes('flexibilidad')) return '🧘‍♀️'
-    if (name.includes('caminar') || name.includes('paso') || name.includes('andar')) return '🚶‍♂️'
-    if (name.includes('dormir') || name.includes('sueño') || name.includes('descansar')) return '😴'
-    if (name.includes('comer') || name.includes('saludable') || name.includes('dieta') || name.includes('vegetal') || name.includes('fruta')) return '🥗'
-    if (name.includes('familia') || name.includes('llamar') || name.includes('contactar')) return '📞'
-    if (name.includes('instrumento') || name.includes('música') || name.includes('tocar') || name.includes('piano') || name.includes('guitarra')) return '🎸'
-    
+    if (name.includes('cocinar') || name.includes('cocina')) return '👨‍🍳';
+    if (
+      name.includes('trabajo') ||
+      name.includes('productiv') ||
+      name.includes('enfocar')
+    )
+      return '💼';
+    if (
+      name.includes('dinero') ||
+      name.includes('ahorro') ||
+      name.includes('finanzas')
+    )
+      return '💰';
+    if (
+      name.includes('social') ||
+      name.includes('amigos') ||
+      name.includes('socializar')
+    )
+      return '👥';
+    if (
+      name.includes('jardín') ||
+      name.includes('plantas') ||
+      name.includes('jardinería')
+    )
+      return '🌱';
+    if (
+      name.includes('mascota') ||
+      name.includes('perro') ||
+      name.includes('gato')
+    )
+      return '🐕';
+    if (
+      name.includes('vitamina') ||
+      name.includes('medicament') ||
+      name.includes('supplement')
+    )
+      return '💊';
+    if (
+      name.includes('yoga') ||
+      name.includes('estir') ||
+      name.includes('flexibilidad')
+    )
+      return '🧘‍♀️';
+    if (
+      name.includes('caminar') ||
+      name.includes('paso') ||
+      name.includes('andar')
+    )
+      return '🚶‍♂️';
+    if (
+      name.includes('dormir') ||
+      name.includes('sueño') ||
+      name.includes('descansar')
+    )
+      return '😴';
+    if (
+      name.includes('comer') ||
+      name.includes('saludable') ||
+      name.includes('dieta') ||
+      name.includes('vegetal') ||
+      name.includes('fruta')
+    )
+      return '🥗';
+    if (
+      name.includes('familia') ||
+      name.includes('llamar') ||
+      name.includes('contactar')
+    )
+      return '📞';
+    if (
+      name.includes('instrumento') ||
+      name.includes('música') ||
+      name.includes('tocar') ||
+      name.includes('piano') ||
+      name.includes('guitarra')
+    )
+      return '🎸';
+
     // Icono por defecto para hábitos personalizados
-    return '⭐'
-  }
+    return '⭐';
+  };
   const predefinedHabits = [
-    { name: 'Hacer ejercicio', icon: '🏃‍♂️', description: '30 minutos de actividad física' },
+    {
+      name: 'Hacer ejercicio',
+      icon: '🏃‍♂️',
+      description: '30 minutos de actividad física',
+    },
     { name: 'Leer', icon: '📚', description: 'Leer al menos 20 minutos' },
     { name: 'Meditar', icon: '🧘‍♀️', description: 'Meditación o mindfulness' },
-    { name: 'Beber agua', icon: '💧', description: 'Tomar 8 vasos de agua al día' },
-    { name: 'Levantarse temprano', icon: '🌅', description: 'Despertar antes de las 7 AM' },
-    { name: 'Estudiar', icon: '📝', description: 'Dedicar tiempo al aprendizaje' },
-    { name: 'Gratitud', icon: '🙏', description: 'Escribir 3 cosas por las que estás agradecido' },
-    { name: 'Diario personal', icon: '📔', description: 'Escribir en tu diario personal' },
-    { name: 'Tiempo al aire libre', icon: '🌿', description: 'Salir y respirar aire fresco' },
-    { name: 'Desconexión digital', icon: '📵', description: 'Tiempo sin pantallas o dispositivos' },
-    { name: 'Organizar espacio', icon: '🧹', description: 'Mantener el entorno ordenado' },
-    { name: 'Tiempo creativo', icon: '🎨', description: 'Cualquier actividad creativa' },
+    {
+      name: 'Beber agua',
+      icon: '💧',
+      description: 'Tomar 8 vasos de agua al día',
+    },
+    {
+      name: 'Levantarse temprano',
+      icon: '🌅',
+      description: 'Despertar antes de las 7 AM',
+    },
+    {
+      name: 'Estudiar',
+      icon: '📝',
+      description: 'Dedicar tiempo al aprendizaje',
+    },
+    {
+      name: 'Gratitud',
+      icon: '🙏',
+      description: 'Escribir 3 cosas por las que estás agradecido',
+    },
+    {
+      name: 'Diario personal',
+      icon: '📔',
+      description: 'Escribir en tu diario personal',
+    },
+    {
+      name: 'Tiempo al aire libre',
+      icon: '🌿',
+      description: 'Salir y respirar aire fresco',
+    },
+    {
+      name: 'Desconexión digital',
+      icon: '📵',
+      description: 'Tiempo sin pantallas o dispositivos',
+    },
+    {
+      name: 'Organizar espacio',
+      icon: '🧹',
+      description: 'Mantener el entorno ordenado',
+    },
+    {
+      name: 'Tiempo creativo',
+      icon: '🎨',
+      description: 'Cualquier actividad creativa',
+    },
     // Segunda fila de hábitos
-    { name: 'Caminar diario', icon: '🚶‍♂️', description: 'Caminar al menos 30 minutos' },
-    { name: 'Comer saludable', icon: '🥗', description: 'Incluir frutas y verduras en comidas' },
-    { name: 'Dormir temprano', icon: '😴', description: 'Acostarse antes de las 10 PM' },
-    { name: 'Hacer la cama', icon: '🛏️', description: 'Ordenar la cama al levantarse' },
+    {
+      name: 'Caminar diario',
+      icon: '🚶‍♂️',
+      description: 'Caminar al menos 30 minutos',
+    },
+    {
+      name: 'Comer saludable',
+      icon: '🥗',
+      description: 'Incluir frutas y verduras en comidas',
+    },
+    {
+      name: 'Dormir temprano',
+      icon: '😴',
+      description: 'Acostarse antes de las 10 PM',
+    },
+    {
+      name: 'Hacer la cama',
+      icon: '🛏️',
+      description: 'Ordenar la cama al levantarse',
+    },
     { name: 'Tomar vitaminas', icon: '💊', description: 'Suplementos diarios' },
-    { name: 'Llamar a familia', icon: '📞', description: 'Contactar con seres queridos' },
-    { name: 'Escuchar música', icon: '🎵', description: 'Disfrutar de música favorita' },
-    { name: 'Cocinar en casa', icon: '👨‍🍳', description: 'Preparar comidas caseras' },
-    { name: 'Practicar idioma', icon: '🌍', description: 'Estudiar un nuevo idioma' },
-    { name: 'Hacer yoga', icon: '🧘‍♀️', description: 'Práctica de yoga o estiramientos' },
-    { name: 'Ahorrar dinero', icon: '💰', description: 'Guardar dinero cada día' },
-    { name: 'Sonreír más', icon: '😊', description: 'Mantener actitud positiva' }
-  ]
+    {
+      name: 'Llamar a familia',
+      icon: '📞',
+      description: 'Contactar con seres queridos',
+    },
+    {
+      name: 'Escuchar música',
+      icon: '🎵',
+      description: 'Disfrutar de música favorita',
+    },
+    {
+      name: 'Cocinar en casa',
+      icon: '👨‍🍳',
+      description: 'Preparar comidas caseras',
+    },
+    {
+      name: 'Practicar idioma',
+      icon: '🌍',
+      description: 'Estudiar un nuevo idioma',
+    },
+    {
+      name: 'Hacer yoga',
+      icon: '🧘‍♀️',
+      description: 'Práctica de yoga o estiramientos',
+    },
+    {
+      name: 'Ahorrar dinero',
+      icon: '💰',
+      description: 'Guardar dinero cada día',
+    },
+    {
+      name: 'Sonreír más',
+      icon: '😊',
+      description: 'Mantener actitud positiva',
+    },
+  ];
 
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
-      loadHabits()
+      loadHabits();
     } else if (!authLoading && !isAuthenticated) {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [authLoading, isAuthenticated])
+  }, [authLoading, isAuthenticated]);
 
   // Cargar entradas cuando los hábitos cambian
   useEffect(() => {
     if (habits.length > 0) {
-      loadHabitEntries()
+      loadHabitEntries();
     }
-  }, [habits])
+  }, [habits]);
 
   const loadHabits = async () => {
     try {
-      const response = await authenticatedFetch(apiUrls.habits.list())
-      const data = await response.json()
-      
+      const response = await authenticatedFetch(apiUrls.habits.list());
+      const data = await response.json();
+
       if (response.ok) {
-        setHabits(data.data)
+        setHabits(data.data);
       } else {
-        toast.error('Error cargando hábitos: ' + data.message)
+        toast.error('Error cargando hábitos: ' + data.message);
       }
     } catch (error) {
-      console.error('Error loading habits:', error)
-      toast.error('Error de conexión')
+      console.error('Error loading habits:', error);
+      toast.error('Error de conexión');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const loadHabitEntries = async () => {
     try {
       // Cargar entradas de los últimos 30 días para calcular estadísticas
-      const endDate = new Date().toISOString().split('T')[0]
-      const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-      
-      const allEntries: HabitEntry[] = []
-      
+      const endDate = new Date().toISOString().split('T')[0];
+      const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split('T')[0];
+
+      const allEntries: HabitEntry[] = [];
+
       // Cargar entradas para cada hábito
       for (const habit of habits) {
         try {
           const response = await authenticatedFetch(
             `${apiUrls.habits.entries(habit.id)}?startDate=${startDate}&endDate=${endDate}`
-          )
-          
+          );
+
           if (response.ok) {
-            const data = await response.json()
+            const data = await response.json();
             // Agregar las entradas de este hábito al array total
             if (data.data && Array.isArray(data.data)) {
               const habitEntries = data.data.map((entry: any) => ({
@@ -163,34 +386,34 @@ export default function HabitsPage() {
                 habitId: habit.id,
                 date: entry.date.split('T')[0], // Asegurar formato YYYY-MM-DD
                 count: entry.count,
-                notes: entry.notes
-              }))
-              allEntries.push(...habitEntries)
+                notes: entry.notes,
+              }));
+              allEntries.push(...habitEntries);
             }
           }
         } catch (error) {
-          console.error(`Error loading entries for habit ${habit.id}:`, error)
+          console.error(`Error loading entries for habit ${habit.id}:`, error);
         }
       }
-      
-      setHabitEntries(allEntries)
+
+      setHabitEntries(allEntries);
     } catch (error) {
-      console.error('Error loading habit entries:', error)
+      console.error('Error loading habit entries:', error);
     }
-  }
+  };
 
   // Funciones para manejar el modal de hábitos
   const openCreateHabitModal = () => {
-    setEditingHabit(null)
-    setIsEditingMode(false)
-    setIsHabitModalOpen(true)
-  }
+    setEditingHabit(null);
+    setIsEditingMode(false);
+    setIsHabitModalOpen(true);
+  };
 
   const openEditHabitModal = (habit: Habit) => {
-    setEditingHabit(habit)
-    setIsEditingMode(true)
-    setIsHabitModalOpen(true)
-  }
+    setEditingHabit(habit);
+    setIsEditingMode(true);
+    setIsHabitModalOpen(true);
+  };
 
   const openTemplateHabitModal = (template: any) => {
     const templateHabit = {
@@ -198,295 +421,330 @@ export default function HabitsPage() {
       description: template.description,
       frequency: 'DAILY',
       target: 1,
-      isActive: true
-    }
-    setEditingHabit(templateHabit as any)
-    setIsEditingMode(false)
-    setIsHabitModalOpen(true)
-  }
+      isActive: true,
+    };
+    setEditingHabit(templateHabit as any);
+    setIsEditingMode(false);
+    setIsHabitModalOpen(true);
+  };
 
   const closeHabitModal = () => {
-    setIsHabitModalOpen(false)
-    setEditingHabit(null)
-    setIsEditingMode(false)
-  }
+    setIsHabitModalOpen(false);
+    setEditingHabit(null);
+    setIsEditingMode(false);
+  };
 
   const handleHabitModalConfirm = async (habitData: any) => {
     if (isEditingMode && editingHabit?.id) {
       // Editar hábito existente
-      await updateHabitComplete(editingHabit.id, habitData)
+      await updateHabitComplete(editingHabit.id, habitData);
     } else {
       // Crear nuevo hábito
-      await createHabitComplete(habitData)
+      await createHabitComplete(habitData);
     }
-    closeHabitModal()
-  }
-
-
+    closeHabitModal();
+  };
 
   const createHabitComplete = async (habitData: any) => {
     try {
       const response = await authenticatedFetch(apiUrls.habits.create(), {
         method: 'POST',
         body: JSON.stringify(habitData),
-      })
-      
-      const data = await response.json()
-      
+      });
+
+      const data = await response.json();
+
       if (response.ok) {
-        setHabits([...habits, data.data])
-        await loadHabitEntries() // Recargar entradas
-        toast.success('¡Hábito creado exitosamente!')
+        setHabits([...habits, data.data]);
+        await loadHabitEntries(); // Recargar entradas
+        toast.success('¡Hábito creado exitosamente!');
       } else {
-        toast.error('Error: ' + data.message)
+        toast.error('Error: ' + data.message);
       }
     } catch (error) {
-      toast.error('Error de conexión con el servidor')
+      toast.error('Error de conexión con el servidor');
     }
-  }
+  };
 
   const updateHabitComplete = async (habitId: string, habitData: any) => {
     try {
-      const response = await authenticatedFetch(apiUrls.habits.update(habitId), {
-        method: 'PUT',
-        body: JSON.stringify(habitData),
-      })
-      
-      const data = await response.json()
-      
+      const response = await authenticatedFetch(
+        apiUrls.habits.update(habitId),
+        {
+          method: 'PUT',
+          body: JSON.stringify(habitData),
+        }
+      );
+
+      const data = await response.json();
+
       if (response.ok) {
-        setHabits(habits.map((habit: Habit) => 
-          habit.id === habitId 
-            ? { ...habit, ...data.data }
-            : habit
-        ))
-        toast.success('¡Hábito editado exitosamente!')
+        setHabits(
+          habits.map((habit: Habit) =>
+            habit.id === habitId ? { ...habit, ...data.data } : habit
+          )
+        );
+        toast.success('¡Hábito editado exitosamente!');
       } else {
-        toast.error('Error: ' + data.message)
+        toast.error('Error: ' + data.message);
       }
     } catch (error) {
-      toast.error('Error de conexión con el servidor')
+      toast.error('Error de conexión con el servidor');
     }
-  }
+  };
 
   const addPredefinedHabit = async (habitName: string) => {
     // Verificar si el hábito ya existe
-    const habitExists = habits.some(habit => habit.name.toLowerCase() === habitName.toLowerCase())
+    const habitExists = habits.some(
+      habit => habit.name.toLowerCase() === habitName.toLowerCase()
+    );
     if (habitExists) {
-      toast.warning('¡Este hábito ya existe en tu lista!')
-      return
+      toast.warning('¡Este hábito ya existe en tu lista!');
+      return;
     }
 
     // Buscar la plantilla correspondiente
-    const template = predefinedHabits.find(h => h.name === habitName)
+    const template = predefinedHabits.find(h => h.name === habitName);
     if (template) {
-      openTemplateHabitModal(template)
+      openTemplateHabitModal(template);
     }
-  }
+  };
 
   const deleteHabit = async (habitId: string, habitName: string) => {
-    const confirmed = await confirm.confirmDelete(habitName)
+    const confirmed = await confirm.confirmDelete(habitName);
     if (!confirmed) {
-      return
+      return;
     }
 
     try {
-      const response = await authenticatedFetch(apiUrls.habits.delete(habitId), {
-        method: 'DELETE',
-      })
-      
+      const response = await authenticatedFetch(
+        apiUrls.habits.delete(habitId),
+        {
+          method: 'DELETE',
+        }
+      );
+
       if (response.ok) {
-        setHabits(habits.filter(h => h.id !== habitId))
-        toast.delete('¡Hábito eliminado exitosamente!')
+        setHabits(habits.filter(h => h.id !== habitId));
+        toast.delete('¡Hábito eliminado exitosamente!');
       } else {
-        const data = await response.json()
-        toast.error('Error: ' + data.message)
+        const data = await response.json();
+        toast.error('Error: ' + data.message);
       }
     } catch (error) {
-      toast.error('Error de conexión con el servidor')
+      toast.error('Error de conexión con el servidor');
     }
-  }
+  };
 
   const editHabit = (habit: Habit) => {
-    openEditHabitModal(habit)
-  }
+    openEditHabitModal(habit);
+  };
 
   const toggleHabitComplete = async (habitId: string, target: number) => {
-    const today = new Date().toISOString().split('T')[0]
-    const { completed } = getTodayProgress(habitId, target)
-    const isCurrentlyCompleted = completed >= target
-    
+    const today = new Date().toISOString().split('T')[0];
+    const { completed } = getTodayProgress(habitId, target);
+    const isCurrentlyCompleted = completed >= target;
+
     if (isCurrentlyCompleted) {
       // Desmarcar - eliminar la entrada más reciente del día
-      await unmarkHabitComplete(habitId, today)
+      await unmarkHabitComplete(habitId, today);
     } else {
       // Marcar - agregar nueva entrada
-      await markHabitComplete(habitId, target, today)
+      await markHabitComplete(habitId, target, today);
     }
-  }
+  };
 
-  const markHabitComplete = async (habitId: string, target: number, today: string) => {
+  const markHabitComplete = async (
+    habitId: string,
+    target: number,
+    today: string
+  ) => {
     try {
-      const response = await authenticatedFetch(apiUrls.habits.entries(habitId), {
-        method: 'POST',
-        body: JSON.stringify({ 
-          date: today,
-          count: 1 
-        }),
-      })
-      
-      const data = await response.json()
-      
+      const response = await authenticatedFetch(
+        apiUrls.habits.entries(habitId),
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            date: today,
+            count: 1,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
       if (response.ok) {
         // Verificar que tenemos un ID válido del backend
         if (!data.data?.id) {
-          console.error('Backend did not return a valid ID:', data)
-          toast.error('Error: El servidor no devolvió un ID válido')
-          return
+          console.error('Backend did not return a valid ID:', data);
+          toast.error('Error: El servidor no devolvió un ID válido');
+          return;
         }
-        
+
         // Agregar la nueva entrada al estado local con el ID real del backend
         const newEntry: HabitEntry = {
           id: data.data.id, // Usar SOLO el ID del backend
           habitId,
           date: today,
-          count: 1
-        }
-        const updatedEntries = [...habitEntries, newEntry]
-        setHabitEntries(updatedEntries)
-        
+          count: 1,
+        };
+        const updatedEntries = [...habitEntries, newEntry];
+        setHabitEntries(updatedEntries);
+
         // Calcular el progreso con la nueva entrada
-        const todayEntries = updatedEntries.filter(entry => 
-          entry.habitId === habitId && entry.date === today
-        )
-        const newCompleted = todayEntries.reduce((sum, entry) => sum + entry.count, 0)
-        
+        const todayEntries = updatedEntries.filter(
+          entry => entry.habitId === habitId && entry.date === today
+        );
+        const newCompleted = todayEntries.reduce(
+          (sum, entry) => sum + entry.count,
+          0
+        );
+
         if (newCompleted >= target) {
-          toast.success('¡Meta del día completada! 🎉')
+          toast.success('¡Meta del día completada! 🎉');
         } else {
-          toast.success(`Progreso: ${newCompleted}/${target} ¡Sigue así!`)
+          toast.success(`Progreso: ${newCompleted}/${target} ¡Sigue así!`);
         }
       } else {
-        toast.error('Error: ' + data.message)
+        toast.error('Error: ' + data.message);
       }
     } catch (error) {
-      console.error('Error marking habit complete:', error)
-      toast.error('Error de conexión con el servidor')
+      console.error('Error marking habit complete:', error);
+      toast.error('Error de conexión con el servidor');
     }
-  }
+  };
 
   const unmarkHabitComplete = async (habitId: string, today: string) => {
     try {
       // Encontrar la entrada más reciente del día para este hábito
-      const todayEntries = habitEntries.filter(entry => 
-        entry.habitId === habitId && entry.date === today
-      )
-      
+      const todayEntries = habitEntries.filter(
+        entry => entry.habitId === habitId && entry.date === today
+      );
+
       if (todayEntries.length === 0) {
-        toast.warning('No hay entradas que desmarcar')
-        return
+        toast.warning('No hay entradas que desmarcar');
+        return;
       }
-      
+
       // Tomar la entrada más reciente
-      const entryToDelete = todayEntries[todayEntries.length - 1]
-      
+      const entryToDelete = todayEntries[todayEntries.length - 1];
+
       // Llamar al endpoint para eliminar la entrada
-      const response = await authenticatedFetch(apiUrls.habits.deleteEntry(entryToDelete.id), {
-        method: 'DELETE',
-      })
-      
+      const response = await authenticatedFetch(
+        apiUrls.habits.deleteEntry(entryToDelete.id),
+        {
+          method: 'DELETE',
+        }
+      );
+
       if (response.ok) {
         // Actualizar el estado local eliminando la entrada
-        const updatedEntries = habitEntries.filter(entry => entry.id !== entryToDelete.id)
-        setHabitEntries(updatedEntries)
-        
+        const updatedEntries = habitEntries.filter(
+          entry => entry.id !== entryToDelete.id
+        );
+        setHabitEntries(updatedEntries);
+
         // Calcular el nuevo progreso
-        const remainingTodayEntries = updatedEntries.filter(entry => 
-          entry.habitId === habitId && entry.date === today
-        )
-        const newCompleted = remainingTodayEntries.reduce((sum, entry) => sum + entry.count, 0)
-        
+        const remainingTodayEntries = updatedEntries.filter(
+          entry => entry.habitId === habitId && entry.date === today
+        );
+        const newCompleted = remainingTodayEntries.reduce(
+          (sum, entry) => sum + entry.count,
+          0
+        );
+
         if (newCompleted === 0) {
-          toast.success('Hábito desmarcado')
+          toast.success('Hábito desmarcado');
         } else {
           // Obtener el target del hábito
-          const habit = habits.find(h => h.id === habitId)
-          const target = habit?.target || 1
-          toast.success(`Desmarcado. Progreso actual: ${newCompleted}/${target}`)
+          const habit = habits.find(h => h.id === habitId);
+          const target = habit?.target || 1;
+          toast.success(
+            `Desmarcado. Progreso actual: ${newCompleted}/${target}`
+          );
         }
       } else {
-        const data = await response.json()
-        toast.error('Error: ' + data.message)
+        const data = await response.json();
+        toast.error('Error: ' + data.message);
       }
-      
     } catch (error) {
-      console.error('Error unmarking habit:', error)
-      toast.error('Error de conexión con el servidor')
+      console.error('Error unmarking habit:', error);
+      toast.error('Error de conexión con el servidor');
     }
-  }
+  };
 
   // Funciones para calcular estadísticas
   const getTodayProgress = (habitId: string, target: number) => {
-    const today = new Date().toISOString().split('T')[0]
-    const todayEntries = habitEntries.filter(entry => 
-      entry.habitId === habitId && entry.date === today
-    )
-    const todayCount = todayEntries.reduce((sum, entry) => sum + entry.count, 0)
-    return { completed: todayCount, target }
-  }
+    const today = new Date().toISOString().split('T')[0];
+    const todayEntries = habitEntries.filter(
+      entry => entry.habitId === habitId && entry.date === today
+    );
+    const todayCount = todayEntries.reduce(
+      (sum, entry) => sum + entry.count,
+      0
+    );
+    return { completed: todayCount, target };
+  };
 
   const getStreak = (habitId: string) => {
     // Calcular días consecutivos desde hoy hacia atrás
-    let streak = 0
-    const today = new Date()
-    
+    let streak = 0;
+    const today = new Date();
+
     for (let i = 0; i < 30; i++) {
-      const checkDate = new Date(today)
-      checkDate.setDate(today.getDate() - i)
-      const dateStr = checkDate.toISOString().split('T')[0]
-      
-      const hasEntry = habitEntries.some(entry => 
-        entry.habitId === habitId && entry.date === dateStr && entry.count > 0
-      )
-      
+      const checkDate = new Date(today);
+      checkDate.setDate(today.getDate() - i);
+      const dateStr = checkDate.toISOString().split('T')[0];
+
+      const hasEntry = habitEntries.some(
+        entry =>
+          entry.habitId === habitId && entry.date === dateStr && entry.count > 0
+      );
+
       if (hasEntry) {
-        streak++
-      } else if (i > 0) { // No romper la racha el primer día (hoy) si no se ha completado
-        break
+        streak++;
+      } else if (i > 0) {
+        // No romper la racha el primer día (hoy) si no se ha completado
+        break;
       }
     }
-    
-    return streak
-  }
+
+    return streak;
+  };
 
   const getWeeklyProgress = (habitId: string) => {
-    const today = new Date()
-    const weekStart = new Date(today)
-    weekStart.setDate(today.getDate() - today.getDay()) // Domingo de esta semana
-    
-    let completedDays = 0
-    
+    const today = new Date();
+    const weekStart = new Date(today);
+    weekStart.setDate(today.getDate() - today.getDay()); // Domingo de esta semana
+
+    let completedDays = 0;
+
     for (let i = 0; i < 7; i++) {
-      const checkDate = new Date(weekStart)
-      checkDate.setDate(weekStart.getDate() + i)
-      const dateStr = checkDate.toISOString().split('T')[0]
-      
-      const hasEntry = habitEntries.some(entry => 
-        entry.habitId === habitId && entry.date === dateStr && entry.count > 0
-      )
-      
+      const checkDate = new Date(weekStart);
+      checkDate.setDate(weekStart.getDate() + i);
+      const dateStr = checkDate.toISOString().split('T')[0];
+
+      const hasEntry = habitEntries.some(
+        entry =>
+          entry.habitId === habitId && entry.date === dateStr && entry.count > 0
+      );
+
       if (hasEntry) {
-        completedDays++
+        completedDays++;
       }
     }
-    
-    return { completed: completedDays, total: 7, percentage: Math.round((completedDays / 7) * 100) }
-  }
+
+    return {
+      completed: completedDays,
+      total: 7,
+      percentage: Math.round((completedDays / 7) * 100),
+    };
+  };
 
   const isCompletedToday = (habitId: string, target: number) => {
-    const { completed } = getTodayProgress(habitId, target)
-    return completed >= target
-  }
+    const { completed } = getTodayProgress(habitId, target);
+    return completed >= target;
+  };
 
   if (authLoading) {
     return (
@@ -496,11 +754,11 @@ export default function HabitsPage() {
           <p className="text-white mt-2">Verificando autenticación...</p>
         </div>
       </div>
-    )
+    );
   }
 
   if (!isAuthenticated) {
-    return null
+    return null;
   }
 
   if (loading) {
@@ -511,7 +769,7 @@ export default function HabitsPage() {
           <p className="text-white mt-2">Cargando hábitos...</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -521,10 +779,15 @@ export default function HabitsPage() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Link href="/dashboard" className="text-blue-100 hover:text-white">
+              <Link
+                href="/dashboard"
+                className="text-blue-100 hover:text-white"
+              >
                 ← Dashboard
               </Link>
-              <h1 className="text-2xl font-bold text-white">🎯 Seguimiento de Hábitos</h1>
+              <h1 className="text-2xl font-bold text-white">
+                🎯 Seguimiento de Hábitos
+              </h1>
             </div>
             <Link href="/" className="text-blue-100 hover:text-white">
               Cerrar Sesión
@@ -537,12 +800,16 @@ export default function HabitsPage() {
       <div className="container mx-auto px-4 py-8">
         {/* Today's Date */}
         <div className="bg-white/25 backdrop-blur-md shadow-lg border border-white/45 p-4 rounded-lg mb-8 text-center">
-          <h2 className="text-xl font-bold text-white" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
-            📅 Hoy: {new Date().toLocaleDateString('es-ES', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
+          <h2
+            className="text-xl font-bold text-white"
+            style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
+          >
+            📅 Hoy:{' '}
+            {new Date().toLocaleDateString('es-ES', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
             })}
           </h2>
         </div>
@@ -551,7 +818,12 @@ export default function HabitsPage() {
         <div className="bg-white/25 backdrop-blur-md shadow-lg border border-white/45 p-6 rounded-lg mb-8">
           {/* Create Custom Habit Button */}
           <div className="mb-6">
-            <h2 className="text-xl font-bold text-white mb-4" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>Crear Hábito Personalizado</h2>
+            <h2
+              className="text-xl font-bold text-white mb-4"
+              style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
+            >
+              Crear Hábito Personalizado
+            </h2>
             <button
               onClick={openCreateHabitModal}
               className="w-full bg-purple-600/70 backdrop-blur-md text-white px-6 py-4 rounded-lg font-bold border border-purple-400/70 hover:bg-purple-700/80 transition-all duration-150 shadow-lg text-lg"
@@ -559,181 +831,277 @@ export default function HabitsPage() {
             >
               🌟 Crear Nuevo Hábito
             </button>
-            <p className="text-white/80 text-sm mt-2 text-center font-medium" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
+            <p
+              className="text-white/80 text-sm mt-2 text-center font-medium"
+              style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}
+            >
               Configura nombre, descripción, frecuencia y metas personalizadas
             </p>
           </div>
-          
-          <h3 className="text-xl font-bold text-white mb-4" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>🌟 Hábitos Populares</h3>
-          
+
+          <h3
+            className="text-xl font-bold text-white mb-4"
+            style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
+          >
+            🌟 Hábitos Populares
+          </h3>
+
           <div className="grid grid-cols-6 md:grid-cols-12 gap-1">
             {predefinedHabits.map((habit, index) => {
-              const isAdded = habits.some(h => h.name.toLowerCase() === habit.name.toLowerCase())
-              
+              const isAdded = habits.some(
+                h => h.name.toLowerCase() === habit.name.toLowerCase()
+              );
+
               return (
-                <div 
-                  key={index} 
+                <div
+                  key={index}
                   onClick={() => !isAdded && addPredefinedHabit(habit.name)}
                   className={`px-0 py-1.5 rounded border transition-all duration-150 cursor-pointer ${
-                    isAdded 
-                      ? 'bg-white/30 border-white/60 shadow-md cursor-not-allowed' 
+                    isAdded
+                      ? 'bg-white/30 border-white/60 shadow-md cursor-not-allowed'
                       : 'bg-white/10 border-white/20 hover:bg-white/20 hover:border-white/40'
                   }`}
                   style={{
                     backgroundColor: isAdded ? '#10b98140' : undefined,
-                    borderColor: isAdded ? '#10b98180' : undefined
+                    borderColor: isAdded ? '#10b98180' : undefined,
                   }}
                 >
                   <div className="text-center">
                     <div className="text-sm mb-0.5">{habit.icon}</div>
-                    <div className={`text-xs font-bold leading-tight ${
-                      isAdded ? 'text-white' : 'text-white/90'
-                    }`} style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
+                    <div
+                      className={`text-xs font-bold leading-tight ${
+                        isAdded ? 'text-white' : 'text-white/90'
+                      }`}
+                      style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
+                    >
                       {habit.name}
                     </div>
                     {isAdded && (
-                      <div className="text-xs text-green-200 font-bold mt-0.5" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
+                      <div
+                        className="text-xs text-green-200 font-bold mt-0.5"
+                        style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
+                      >
                         ✓ Agregado
                       </div>
                     )}
                   </div>
                 </div>
-              )
+              );
             })}
           </div>
         </div>
 
-
         {/* Habits List */}
         <div className="bg-white/25 backdrop-blur-md shadow-lg border border-white/45 rounded-lg">
           <div className="p-6 border-b border-white/40">
-            <h2 className="text-xl font-bold text-white" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
+            <h2
+              className="text-xl font-bold text-white"
+              style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
+            >
               Mis Hábitos ({habits.length})
             </h2>
           </div>
-          
+
           <div className="p-6">
             {habits.length === 0 ? (
               <div className="text-center py-8">
                 <div className="text-4xl mb-4">🌱</div>
-                <p className="text-white font-bold text-lg" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>No tienes hábitos configurados aún.</p>
-                <p className="text-white/90 text-base font-medium" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>Crea tu primer hábito usando el formulario de arriba.</p>
+                <p
+                  className="text-white font-bold text-lg"
+                  style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
+                >
+                  No tienes hábitos configurados aún.
+                </p>
+                <p
+                  className="text-white/90 text-base font-medium"
+                  style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}
+                >
+                  Crea tu primer hábito usando el formulario de arriba.
+                </p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {habits.map((habit: any) => {
-                  const todayProgress = getTodayProgress(habit.id, habit.target)
-                  const streak = getStreak(habit.id)
-                  const weeklyProgress = getWeeklyProgress(habit.id)
-                  const isCompleted = isCompletedToday(habit.id, habit.target)
-                  
+                  const todayProgress = getTodayProgress(
+                    habit.id,
+                    habit.target
+                  );
+                  const streak = getStreak(habit.id);
+                  const weeklyProgress = getWeeklyProgress(habit.id);
+                  const isCompleted = isCompletedToday(habit.id, habit.target);
+
                   return (
-                    <div key={habit.id} className="bg-white/30 backdrop-blur-md border border-white/45 rounded-lg p-4 shadow-lg">
+                    <div
+                      key={habit.id}
+                      className="bg-white/30 backdrop-blur-md border border-white/45 rounded-lg p-4 shadow-lg"
+                    >
                       {/* Header with icon and name */}
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center space-x-2">
-                          <span className="text-2xl">{getHabitIcon(habit.name)}</span>
-                          <h3 className="font-bold text-white text-base leading-tight" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
+                          <span className="text-2xl">
+                            {getHabitIcon(habit.name)}
+                          </span>
+                          <h3
+                            className="font-bold text-white text-base leading-tight"
+                            style={{
+                              textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)',
+                            }}
+                          >
                             {habit.name}
                           </h3>
                         </div>
                       </div>
-                      
+
                       {/* Frequency and target info */}
-                      <p className="text-white/90 font-medium text-sm mb-3" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
+                      <p
+                        className="text-white/90 font-medium text-sm mb-3"
+                        style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}
+                      >
                         {habit.frequency} | Meta: {habit.target} vez(es)
                       </p>
-                      
+
                       {/* Toggle button centered */}
                       <div className="flex justify-center mb-4">
-                        <button 
+                        <button
                           className={`w-16 h-16 rounded-full border-2 flex items-center justify-center transition-all duration-150 cursor-pointer backdrop-blur-md ${
-                            isCompleted 
-                              ? 'border-green-400 bg-green-500/70 text-white hover:bg-green-600/80 shadow-green-500/20' 
+                            isCompleted
+                              ? 'border-green-400 bg-green-500/70 text-white hover:bg-green-600/80 shadow-green-500/20'
                               : 'border-green-400 bg-white/30 hover:bg-green-500/40 text-green-200 hover:text-white'
                           } shadow-lg`}
-                          onClick={() => toggleHabitComplete(habit.id, habit.target)}
-                          title={isCompleted ? 'Click para desmarcar' : 'Click para marcar como completado'}
+                          onClick={() =>
+                            toggleHabitComplete(habit.id, habit.target)
+                          }
+                          title={
+                            isCompleted
+                              ? 'Click para desmarcar'
+                              : 'Click para marcar como completado'
+                          }
                         >
-                          <span className="text-3xl font-bold">{isCompleted ? '✓' : '+'}</span>
+                          <span className="text-3xl font-bold">
+                            {isCompleted ? '✓' : '+'}
+                          </span>
                         </button>
                       </div>
-                      
+
                       {/* Stats row */}
                       <div className="grid grid-cols-2 gap-3 mb-4">
                         {/* Today progress */}
                         <div className="text-center">
-                          <div className="text-xs font-bold text-green-200 mb-1" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>Hoy</div>
-                          <div className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center text-sm font-bold transition-colors duration-150 backdrop-blur-md border ${
-                            isCompleted 
-                              ? 'bg-green-500/70 text-green-100 border-green-400/50' 
-                              : 'bg-white/30 text-white border-white/50'
-                          } shadow-lg`} style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
+                          <div
+                            className="text-xs font-bold text-green-200 mb-1"
+                            style={{
+                              textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)',
+                            }}
+                          >
+                            Hoy
+                          </div>
+                          <div
+                            className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center text-sm font-bold transition-colors duration-150 backdrop-blur-md border ${
+                              isCompleted
+                                ? 'bg-green-500/70 text-green-100 border-green-400/50'
+                                : 'bg-white/30 text-white border-white/50'
+                            } shadow-lg`}
+                            style={{
+                              textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)',
+                            }}
+                          >
                             {todayProgress.completed}/{todayProgress.target}
                           </div>
                           {isCompleted && (
-                            <div className="text-xs text-green-200 mt-1 font-bold" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}>
+                            <div
+                              className="text-xs text-green-200 mt-1 font-bold"
+                              style={{
+                                textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)',
+                              }}
+                            >
                               ¡Completado!
                             </div>
                           )}
                         </div>
-                        
+
                         {/* Streak */}
                         <div className="text-center">
-                          <div className="text-xs font-bold text-orange-200 mb-1" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>Racha</div>
-                          <div className="text-xl font-bold text-orange-200" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
+                          <div
+                            className="text-xs font-bold text-orange-200 mb-1"
+                            style={{
+                              textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)',
+                            }}
+                          >
+                            Racha
+                          </div>
+                          <div
+                            className="text-xl font-bold text-orange-200"
+                            style={{
+                              textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)',
+                            }}
+                          >
                             {streak > 0 ? `🔥 ${streak}` : '–'}
                           </div>
                         </div>
                       </div>
-                      
+
                       {/* Progress bar */}
                       <div className="mb-4">
-                        <div className="flex justify-between text-xs text-white mb-2 font-bold" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
+                        <div
+                          className="flex justify-between text-xs text-white mb-2 font-bold"
+                          style={{
+                            textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)',
+                          }}
+                        >
                           <span>Progreso semanal</span>
-                          <span>{weeklyProgress.completed}/{weeklyProgress.total} días</span>
+                          <span>
+                            {weeklyProgress.completed}/{weeklyProgress.total}{' '}
+                            días
+                          </span>
                         </div>
                         <div className="w-full bg-white/30 backdrop-blur-md rounded-full h-2 border border-white/50">
-                          <div className="bg-green-500/90 h-2 rounded-full transition-all duration-150 shadow-sm" style={{width: `${weeklyProgress.percentage}%`}}></div>
+                          <div
+                            className="bg-green-500/90 h-2 rounded-full transition-all duration-150 shadow-sm"
+                            style={{ width: `${weeklyProgress.percentage}%` }}
+                          ></div>
                         </div>
                       </div>
-                      
+
                       {/* Action buttons */}
                       <div className="grid grid-cols-2 gap-2">
-                        <button 
+                        <button
                           className="text-white bg-blue-400/40 backdrop-blur-md border border-blue-300/40 hover:bg-blue-500/60 text-sm font-bold py-2 rounded-lg transition-all duration-150 hover:shadow-md"
                           onClick={() => editHabit(habit)}
                           title="Editar hábito"
-                          style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}
+                          style={{
+                            textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)',
+                          }}
                         >
                           Editar
                         </button>
-                        <button 
-                          className="text-white bg-red-400/40 backdrop-blur-md border border-red-300/40 hover:bg-red-500/60 text-sm font-bold py-2 rounded-lg transition-all duration-150 hover:shadow-md" 
+                        <button
+                          className="text-white bg-red-400/40 backdrop-blur-md border border-red-300/40 hover:bg-red-500/60 text-sm font-bold py-2 rounded-lg transition-all duration-150 hover:shadow-md"
                           onClick={() => deleteHabit(habit.id, habit.name)}
-                          style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}
+                          style={{
+                            textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)',
+                          }}
                         >
                           Eliminar
                         </button>
                       </div>
                     </div>
-                  )
+                  );
                 })}
               </div>
             )}
           </div>
         </div>
       </div>
-      
+
       {/* Toast Container */}
       <toast.ToastContainer />
-      
+
       {/* Confirm Modal */}
       <confirm.ConfirmModal />
-      
+
       {/* Edit Modal */}
       <editModal.EditModal />
-      
+
       {/* Habit Modal */}
       <EditHabitModal
         isOpen={isHabitModalOpen}
@@ -743,5 +1111,5 @@ export default function HabitsPage() {
         onCancel={closeHabitModal}
       />
     </div>
-  )
+  );
 }

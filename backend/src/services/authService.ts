@@ -4,7 +4,9 @@ import { AuthUtils, validateEmail } from '../utils/auth';
 import { TransactionService } from './transactionService';
 
 export class AuthService {
-  static async register(userData: CreateUserDto): Promise<{ user: UserResponse; token: string }> {
+  static async register(
+    userData: CreateUserDto
+  ): Promise<{ user: UserResponse; token: string }> {
     const { email, name, password } = userData;
 
     // Validar email
@@ -18,7 +20,7 @@ export class AuthService {
 
     // Verificar si el usuario ya existe
     const existingUser = await prisma.user.findUnique({
-      where: { email }
+      where: { email },
     });
 
     if (existingUser) {
@@ -33,20 +35,22 @@ export class AuthService {
       data: {
         email,
         name,
-        password: hashedPassword
+        password: hashedPassword,
       },
       select: {
         id: true,
         email: true,
         name: true,
-        createdAt: true
-      }
+        createdAt: true,
+      },
     });
 
     // Crear categorías por defecto para el nuevo usuario
     try {
       await TransactionService.createDefaultCategories();
-      console.log(`✅ Categorías creadas automáticamente para usuario: ${user.email}`);
+      console.log(
+        `✅ Categorías creadas automáticamente para usuario: ${user.email}`
+      );
     } catch (error) {
       console.error('⚠️ Error creando categorías por defecto:', error);
       // No fallar el registro si las categorías no se pueden crear
@@ -58,7 +62,9 @@ export class AuthService {
     return { user, token };
   }
 
-  static async login(loginData: LoginDto): Promise<{ user: UserResponse; token: string }> {
+  static async login(
+    loginData: LoginDto
+  ): Promise<{ user: UserResponse; token: string }> {
     const { email, password } = loginData;
 
     // Buscar usuario
@@ -69,8 +75,8 @@ export class AuthService {
         email: true,
         name: true,
         password: true,
-        createdAt: true
-      }
+        createdAt: true,
+      },
     });
 
     if (!user) {
@@ -78,7 +84,10 @@ export class AuthService {
     }
 
     // Verificar contraseña
-    const isPasswordValid = await AuthUtils.comparePassword(password, user.password);
+    const isPasswordValid = await AuthUtils.comparePassword(
+      password,
+      user.password
+    );
     if (!isPasswordValid) {
       throw new Error('Invalid email or password');
     }
@@ -99,8 +108,8 @@ export class AuthService {
         id: true,
         email: true,
         name: true,
-        createdAt: true
-      }
+        createdAt: true,
+      },
     });
 
     return user;

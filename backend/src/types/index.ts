@@ -73,7 +73,7 @@ export interface TaskStatsResponse {
 // Tipos para filtros de fechas
 export interface DateRangeQuery {
   start: string; // YYYY-MM-DD
-  end: string;   // YYYY-MM-DD
+  end: string; // YYYY-MM-DD
 }
 
 // Habit types
