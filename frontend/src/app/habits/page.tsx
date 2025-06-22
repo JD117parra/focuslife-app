@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useToast } from '@/hooks/useToast'
 import { useConfirm } from '@/hooks/useConfirm'
 import { useEditModal } from '@/hooks/useEditModal'
+import { EditHabitModal } from '@/components/ui'
 import { apiUrls } from '@/config/api'
 
 interface Habit {
@@ -28,8 +29,12 @@ interface HabitEntry {
 export default function HabitsPage() {
   const [habits, setHabits] = useState<Habit[]>([])
   const [habitEntries, setHabitEntries] = useState<HabitEntry[]>([])
-  const [newHabitName, setNewHabitName] = useState('')
   const [loading, setLoading] = useState(true)
+  
+  // Estado para el modal de hábitos
+  const [isHabitModalOpen, setIsHabitModalOpen] = useState(false)
+  const [editingHabit, setEditingHabit] = useState<Habit | null>(null)
+  const [isEditingMode, setIsEditingMode] = useState(false)
   const { authenticatedFetch, isAuthenticated, isLoading: authLoading } = useAuth()
   const toast = useToast()
   const confirm = useConfirm()
@@ -174,23 +179,88 @@ export default function HabitsPage() {
     }
   }
 
-  const createHabit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (!newHabitName.trim()) return
+  // Funciones para manejar el modal de hábitos
+  const openCreateHabitModal = () => {
+    setEditingHabit(null)
+    setIsEditingMode(false)
+    setIsHabitModalOpen(true)
+  }
 
+  const openEditHabitModal = (habit: Habit) => {
+    setEditingHabit(habit)
+    setIsEditingMode(true)
+    setIsHabitModalOpen(true)
+  }
+
+  const openTemplateHabitModal = (template: any) => {
+    const templateHabit = {
+      name: template.name,
+      description: template.description,
+      frequency: 'DAILY',
+      target: 1,
+      isActive: true
+    }
+    setEditingHabit(templateHabit as any)
+    setIsEditingMode(false)
+    setIsHabitModalOpen(true)
+  }
+
+  const closeHabitModal = () => {
+    setIsHabitModalOpen(false)
+    setEditingHabit(null)
+    setIsEditingMode(false)
+  }
+
+  const handleHabitModalConfirm = async (habitData: any) => {
+    if (isEditingMode && editingHabit?.id) {
+      // Editar hábito existente
+      await updateHabitComplete(editingHabit.id, habitData)
+    } else {
+      // Crear nuevo hábito
+      await createHabitComplete(habitData)
+    }
+    closeHabitModal()
+  }
+
+
+
+  const createHabitComplete = async (habitData: any) => {
     try {
       const response = await authenticatedFetch(apiUrls.habits.create(), {
         method: 'POST',
-        body: JSON.stringify({ name: newHabitName }),
+        body: JSON.stringify(habitData),
       })
       
       const data = await response.json()
       
       if (response.ok) {
         setHabits([...habits, data.data])
-        setNewHabitName('')
+        await loadHabitEntries() // Recargar entradas
         toast.success('¡Hábito creado exitosamente!')
+      } else {
+        toast.error('Error: ' + data.message)
+      }
+    } catch (error) {
+      toast.error('Error de conexión con el servidor')
+    }
+  }
+
+  const updateHabitComplete = async (habitId: string, habitData: any) => {
+    try {
+      const response = await authenticatedFetch(apiUrls.habits.update(habitId), {
+        method: 'PUT',
+        body: JSON.stringify(habitData),
+      })
+      
+      const data = await response.json()
+      
+      if (response.ok) {
+        setHabits(habits.map((habit: Habit) => 
+          habit.id === habitId 
+            ? { ...habit, ...data.data }
+            : habit
+        ))
+        toast.success('¡Hábito editado exitosamente!')
       } else {
         toast.error('Error: ' + data.message)
       }
@@ -207,23 +277,10 @@ export default function HabitsPage() {
       return
     }
 
-    try {
-      const response = await authenticatedFetch(apiUrls.habits.create(), {
-        method: 'POST',
-        body: JSON.stringify({ name: habitName }),
-      })
-      
-      const data = await response.json()
-      
-      if (response.ok) {
-        setHabits([...habits, data.data])
-        await loadHabitEntries() // Recargar entradas
-        toast.success(`¡"${habitName}" agregado a tus hábitos!`)
-      } else {
-        toast.error('Error: ' + data.message)
-      }
-    } catch (error) {
-      toast.error('Error de conexión con el servidor')
+    // Buscar la plantilla correspondiente
+    const template = predefinedHabits.find(h => h.name === habitName)
+    if (template) {
+      openTemplateHabitModal(template)
     }
   }
 
@@ -250,33 +307,8 @@ export default function HabitsPage() {
     }
   }
 
-  const editHabit = async (habitId: string, currentName: string) => {
-    const newName = await editModal.editHabit(currentName)
-    if (!newName) {
-      return // Usuario canceló
-    }
-
-    try {
-      const response = await authenticatedFetch(apiUrls.habits.update(habitId), {
-        method: 'PUT',
-        body: JSON.stringify({ name: newName }),
-      })
-      
-      const data = await response.json()
-      
-      if (response.ok) {
-        setHabits(habits.map((habit: Habit) => 
-          habit.id === habitId 
-            ? { ...habit, name: newName }
-            : habit
-        ))
-        toast.success('¡Hábito editado exitosamente!')
-      } else {
-        toast.error('Error: ' + data.message)
-      }
-    } catch (error) {
-      toast.error('Error de conexión con el servidor')
-    }
+  const editHabit = (habit: Habit) => {
+    openEditHabitModal(habit)
   }
 
   const toggleHabitComplete = async (habitId: string, target: number) => {
@@ -517,8 +549,22 @@ export default function HabitsPage() {
 
         {/* Predefined Habits Section */}
         <div className="bg-white/25 backdrop-blur-md shadow-lg border border-white/45 p-6 rounded-lg mb-8">
-          <h2 className="text-xl font-bold text-white mb-4" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>🌟 Hábitos Populares</h2>
-          <p className="text-white text-base font-medium mb-6" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>Elige de nuestra selección de hábitos más comunes para empezar rápidamente</p>
+          {/* Create Custom Habit Button */}
+          <div className="mb-6">
+            <h2 className="text-xl font-bold text-white mb-4" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>Crear Hábito Personalizado</h2>
+            <button
+              onClick={openCreateHabitModal}
+              className="w-full bg-purple-600/70 backdrop-blur-md text-white px-6 py-4 rounded-lg font-bold border border-purple-400/70 hover:bg-purple-700/80 transition-all duration-150 shadow-lg text-lg"
+              style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}
+            >
+              🌟 Crear Nuevo Hábito
+            </button>
+            <p className="text-white/80 text-sm mt-2 text-center font-medium" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
+              Configura nombre, descripción, frecuencia y metas personalizadas
+            </p>
+          </div>
+          
+          <h3 className="text-xl font-bold text-white mb-4" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>🌟 Hábitos Populares</h3>
           
           <div className="grid grid-cols-6 md:grid-cols-12 gap-1">
             {predefinedHabits.map((habit, index) => {
@@ -557,28 +603,6 @@ export default function HabitsPage() {
           </div>
         </div>
 
-        {/* Create Custom Habit Form */}
-        <div className="bg-white/25 backdrop-blur-md shadow-lg border border-white/45 p-6 rounded-lg mb-8">
-          <h2 className="text-xl font-bold text-white mb-4" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>Crear Hábito Personalizado</h2>
-          <form onSubmit={createHabit} className="flex space-x-4">
-            <input
-              type="text"
-              value={newHabitName}
-              onChange={(e) => setNewHabitName(e.target.value)}
-              className="flex-1 p-3 bg-white/30 backdrop-blur-md border border-white/50 rounded-lg focus:ring-2 focus:ring-white/60 focus:border-white/60 text-white placeholder-white/80 font-medium text-base"
-              placeholder="¿No encuentras tu hábito arriba? Escríbelo aquí..."
-              style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}
-              required
-            />
-            <button
-              type="submit"
-              className="bg-green-600/70 backdrop-blur-md text-white px-6 py-3 rounded-lg font-bold border border-green-400/70 hover:bg-green-700/80 transition-all duration-150 shadow-lg text-base"
-              style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}
-            >
-              Crear Hábito
-            </button>
-          </form>
-        </div>
 
         {/* Habits List */}
         <div className="bg-white/25 backdrop-blur-md shadow-lg border border-white/45 rounded-lg">
@@ -596,7 +620,7 @@ export default function HabitsPage() {
                 <p className="text-white/90 text-base font-medium" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>Crea tu primer hábito usando el formulario de arriba.</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {habits.map((habit: any) => {
                   const todayProgress = getTodayProgress(habit.id, habit.target)
                   const streak = getStreak(habit.id)
@@ -605,84 +629,92 @@ export default function HabitsPage() {
                   
                   return (
                     <div key={habit.id} className="bg-white/30 backdrop-blur-md border border-white/45 rounded-lg p-4 shadow-lg">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                          <button 
-                            className={`w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all duration-150 cursor-pointer backdrop-blur-md ${
-                              isCompleted 
-                                ? 'border-green-400 bg-green-500/70 text-white hover:bg-green-600/80 shadow-green-500/20' 
-                                : 'border-green-400 bg-white/30 hover:bg-green-500/40 text-green-200 hover:text-white'
-                            } shadow-lg`}
-                            onClick={() => toggleHabitComplete(habit.id, habit.target)}
-                            title={isCompleted ? 'Click para desmarcar' : 'Click para marcar como completado'}
-                          >
-                            <span className="text-2xl font-bold">{isCompleted ? '✓' : '+'}</span>
-                          </button>
-                          <div>
-                            <div className="flex items-center space-x-2">
-                              <span className="text-xl">{getHabitIcon(habit.name)}</span>
-                              <h3 className="font-bold text-white text-lg" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>{habit.name}</h3>
-                            </div>
-                            <p className="text-white font-medium text-base" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
-                              Frecuencia: {habit.frequency} | Meta: {habit.target} vez(es)
-                            </p>
+                      {/* Header with icon and name */}
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-2xl">{getHabitIcon(habit.name)}</span>
+                          <h3 className="font-bold text-white text-base leading-tight" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
+                            {habit.name}
+                          </h3>
+                        </div>
+                      </div>
+                      
+                      {/* Frequency and target info */}
+                      <p className="text-white/90 font-medium text-sm mb-3" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
+                        {habit.frequency} | Meta: {habit.target} vez(es)
+                      </p>
+                      
+                      {/* Toggle button centered */}
+                      <div className="flex justify-center mb-4">
+                        <button 
+                          className={`w-16 h-16 rounded-full border-2 flex items-center justify-center transition-all duration-150 cursor-pointer backdrop-blur-md ${
+                            isCompleted 
+                              ? 'border-green-400 bg-green-500/70 text-white hover:bg-green-600/80 shadow-green-500/20' 
+                              : 'border-green-400 bg-white/30 hover:bg-green-500/40 text-green-200 hover:text-white'
+                          } shadow-lg`}
+                          onClick={() => toggleHabitComplete(habit.id, habit.target)}
+                          title={isCompleted ? 'Click para desmarcar' : 'Click para marcar como completado'}
+                        >
+                          <span className="text-3xl font-bold">{isCompleted ? '✓' : '+'}</span>
+                        </button>
+                      </div>
+                      
+                      {/* Stats row */}
+                      <div className="grid grid-cols-2 gap-3 mb-4">
+                        {/* Today progress */}
+                        <div className="text-center">
+                          <div className="text-xs font-bold text-green-200 mb-1" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>Hoy</div>
+                          <div className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center text-sm font-bold transition-colors duration-150 backdrop-blur-md border ${
+                            isCompleted 
+                              ? 'bg-green-500/70 text-green-100 border-green-400/50' 
+                              : 'bg-white/30 text-white border-white/50'
+                          } shadow-lg`} style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
+                            {todayProgress.completed}/{todayProgress.target}
                           </div>
+                          {isCompleted && (
+                            <div className="text-xs text-green-200 mt-1 font-bold" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}>
+                              ¡Completado!
+                            </div>
+                          )}
                         </div>
                         
-                        <div className="flex items-center space-x-4">
-                          {/* Progress indicator */}
-                          <div className="text-center">
-                            <div className="text-sm font-bold text-green-200" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>Hoy</div>
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-colors duration-150 backdrop-blur-md border ${
-                              isCompleted 
-                                ? 'bg-green-500/70 text-green-100 border-green-400/50' 
-                                : 'bg-white/30 text-white border-white/50'
-                            } shadow-lg`} style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
-                              {todayProgress.completed}/{todayProgress.target}
-                            </div>
-                            {isCompleted && (
-                              <div className="text-xs text-green-200 mt-1 font-bold" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}>
-                                ¡Completado!
-                              </div>
-                            )}
+                        {/* Streak */}
+                        <div className="text-center">
+                          <div className="text-xs font-bold text-orange-200 mb-1" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>Racha</div>
+                          <div className="text-xl font-bold text-orange-200" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
+                            {streak > 0 ? `🔥 ${streak}` : '–'}
                           </div>
-                          
-                          {/* Streak */}
-                          <div className="text-center">
-                            <div className="text-sm font-bold text-orange-200" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>Racha</div>
-                            <div className="text-xl font-bold text-orange-200" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
-                              {streak > 0 ? `🔥 ${streak}` : '–'}
-                            </div>
-                          </div>
-                          
-                          {/* Edit and Delete buttons */}
-                          <button 
-                            className="text-white bg-blue-500/70 backdrop-blur-md border border-blue-400/50 hover:bg-blue-600/80 text-sm font-bold px-4 py-2 rounded-lg transition-all duration-150 hover:shadow-md transform hover:scale-105"
-                            onClick={() => editHabit(habit.id, habit.name)}
-                            title="Editar hábito"
-                            style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}
-                          >
-                            Editar
-                          </button>
-                          <button 
-                            className="text-white bg-red-500/70 backdrop-blur-md border border-red-400/50 hover:bg-red-600/80 text-sm font-bold px-4 py-2 rounded-lg transition-all duration-150 hover:shadow-md transform hover:scale-105" 
-                            onClick={() => deleteHabit(habit.id, habit.name)}
-                            style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}
-                          >
-                            Eliminar
-                          </button>
                         </div>
                       </div>
                       
                       {/* Progress bar */}
-                      <div className="mt-4">
-                        <div className="flex justify-between text-sm text-white mb-2 font-bold" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
+                      <div className="mb-4">
+                        <div className="flex justify-between text-xs text-white mb-2 font-bold" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
                           <span>Progreso semanal</span>
                           <span>{weeklyProgress.completed}/{weeklyProgress.total} días</span>
                         </div>
-                        <div className="w-full bg-white/30 backdrop-blur-md rounded-full h-3 border border-white/50">
-                          <div className="bg-green-500/90 h-3 rounded-full transition-all duration-150 shadow-sm" style={{width: `${weeklyProgress.percentage}%`}}></div>
+                        <div className="w-full bg-white/30 backdrop-blur-md rounded-full h-2 border border-white/50">
+                          <div className="bg-green-500/90 h-2 rounded-full transition-all duration-150 shadow-sm" style={{width: `${weeklyProgress.percentage}%`}}></div>
                         </div>
+                      </div>
+                      
+                      {/* Action buttons */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <button 
+                          className="text-white bg-blue-400/40 backdrop-blur-md border border-blue-300/40 hover:bg-blue-500/60 text-sm font-bold py-2 rounded-lg transition-all duration-150 hover:shadow-md"
+                          onClick={() => editHabit(habit)}
+                          title="Editar hábito"
+                          style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}
+                        >
+                          Editar
+                        </button>
+                        <button 
+                          className="text-white bg-red-400/40 backdrop-blur-md border border-red-300/40 hover:bg-red-500/60 text-sm font-bold py-2 rounded-lg transition-all duration-150 hover:shadow-md" 
+                          onClick={() => deleteHabit(habit.id, habit.name)}
+                          style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}
+                        >
+                          Eliminar
+                        </button>
                       </div>
                     </div>
                   )
@@ -701,6 +733,15 @@ export default function HabitsPage() {
       
       {/* Edit Modal */}
       <editModal.EditModal />
+      
+      {/* Habit Modal */}
+      <EditHabitModal
+        isOpen={isHabitModalOpen}
+        habit={editingHabit}
+        isEditing={isEditingMode}
+        onConfirm={handleHabitModalConfirm}
+        onCancel={closeHabitModal}
+      />
     </div>
   )
 }

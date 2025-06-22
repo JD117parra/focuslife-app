@@ -208,10 +208,10 @@
     /* Optimize scrolling performance */
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
-    /* Additional performance optimizations */
-    transform: translateZ(0);
-    backface-visibility: hidden;
-    perspective: 1000px;
+    /* REMOVIDAS las propiedades que interfieren con position: fixed */
+    /* transform: translateZ(0); */
+    /* backface-visibility: hidden; */
+    /* perspective: 1000px; */
   }
   
   /* Optimize rendering for better scroll performance */

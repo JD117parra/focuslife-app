@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useAuth } from '@/hooks/useAuth'
 import { useToast } from '@/hooks/useToast'
 import { useConfirm } from '@/hooks/useConfirm'
-import { useEditModal } from '@/hooks/useEditModal'
+import { EditTransactionModal } from '@/components/ui'
 import { apiUrls } from '@/config/api'
 
 interface Transaction {
@@ -16,9 +16,9 @@ interface Transaction {
   date: string
   categoryId?: string
   category?: {
-    id: string
+    id?: string
     name: string
-    color: string
+    color?: string
     icon?: string
   }
 }
@@ -34,15 +34,16 @@ interface Category {
 export default function FinancesPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [categories, setCategories] = useState<Category[]>([])
-  const [amount, setAmount] = useState('')
-  const [description, setDescription] = useState('')
-  const [type, setType] = useState('EXPENSE')
-  const [categoryId, setCategoryId] = useState('')
   const [loading, setLoading] = useState(true)
+  
+  // Estado para el modal de transacciones
+  const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false)
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
+  const [isEditingMode, setIsEditingMode] = useState(false)
+  
   const { authenticatedFetch, isAuthenticated, isLoading: authLoading } = useAuth()
   const toast = useToast()
   const confirm = useConfirm()
-  const editModal = useEditModal()
 
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
@@ -79,54 +80,41 @@ export default function FinancesPage() {
       if (response.ok) {
         if (data.data && data.data.length > 0) {
           setCategories(data.data)
-          console.log('Categorías cargadas:', data.data.length, 'categorías')
         } else {
-          // Si no hay categorías, crear las por defecto automáticamente
-          console.log('No hay categorías, creando automáticamente...')
           await createDefaultCategories()
         }
       } else {
-        console.log('Error en respuesta, creando categorías automáticamente...')
         await createDefaultCategories()
       }
     } catch (error) {
       console.error('Error loading categories:', error)
-      console.log('Error de conexión, creando categorías automáticamente...')
       await createDefaultCategories()
     }
   }
 
   const createDefaultCategories = async () => {
     try {
-      console.log('🔄 Actualizando categorías...')
-      toast.info('Actualizando categorías...')
+      toast.info('Configurando categorías...')
       
       const response = await authenticatedFetch(apiUrls.transactions.categoriesDefaults(), {
         method: 'POST'
       })
       
       if (response.ok) {
-        console.log('✅ Categorías actualizadas exitosamente')
-        // Recargar categorías después de crear las por defecto
         const reloadResponse = await authenticatedFetch(apiUrls.transactions.categoriesFinance())
         const reloadData = await reloadResponse.json()
         
         if (reloadResponse.ok && reloadData.data) {
           setCategories(reloadData.data)
-          console.log(`📄 Categorías totales cargadas: ${reloadData.data.length}`)
           
-          // Contar categorías por tipo para mostrar feedback
           const incomeCategories = ['Salario', 'Freelance', 'Inversiones', 'Bonos', 'Comisiones', 'Ventas', 'Alquiler', 'Dividendos', 'Regalos', 'Propinas', 'Reembolsos', 'Negocios', 'Pensión', 'Becas', 'Trabajo extra', 'Otros ingresos', 'Consultorías', 'Cashback', 'Rifas', 'Intereses', 'Seguros', 'Herencias', 'Préstamos', 'Agricultura']
           const ingresos = reloadData.data.filter(cat => incomeCategories.includes(cat.name)).length
           const gastos = reloadData.data.filter(cat => !incomeCategories.includes(cat.name)).length
           
-          toast.success(`✅ Categorías actualizadas: ${ingresos} ingresos + ${gastos} gastos`)
+          toast.success(`✅ Categorías configuradas: ${ingresos} ingresos + ${gastos} gastos`)
         }
       } else {
-        console.error('⚠️ Error actualizando categorías')
-        const errorData = await response.json()
-        console.error('Error details:', errorData)
-        toast.error('Error actualizando categorías')
+        toast.error('Error configurando categorías')
       }
     } catch (error) {
       console.error('Error creating default categories:', error)
@@ -134,77 +122,110 @@ export default function FinancesPage() {
     }
   }
 
-  // Filtrar categorías según el tipo de transacción
-  const getFilteredCategories = () => {
-    // Verificar que categories sea un array válido
-    if (!categories || !Array.isArray(categories)) {
-      return []
+  // Funciones para manejar el modal de transacciones
+  const openCreateTransactionModal = () => {
+    setEditingTransaction(null)
+    setIsEditingMode(false)
+    setIsTransactionModalOpen(true)
+  }
+
+  const openEditTransactionModal = (transaction: Transaction) => {
+    // Convertir la transacción para incluir category como string
+    const transactionForEdit = {
+      ...transaction,
+      category: transaction.category?.name || ''
     }
-    
-    // Categorías a excluir temporalmente
-    const excludedCategories = ['Deportes', 'Internet', 'Mantenimiento']
-    
-    // Categorías de ingresos - EXPANDIDAS para incluir todas las nuevas opciones (24 total)
-    const incomeCategories = [
-      'Salario', 'Freelance', 'Inversiones', 'Bonos', 'Comisiones', 
-      'Ventas', 'Alquiler', 'Dividendos', 'Regalos', 'Propinas', 
-      'Reembolsos', 'Negocios', 'Pensión', 'Becas', 'Trabajo extra', 
-      'Otros ingresos', 'Consultorías', 'Cashback', 'Rifas', 'Intereses',
-      'Seguros', 'Herencias', 'Préstamos', 'Agricultura'
-    ]
-    
-    let filteredCategories;
-    if (type === 'INCOME') {
-      filteredCategories = categories.filter(cat => incomeCategories.includes(cat.name))
+    setEditingTransaction(transactionForEdit as any)
+    setIsEditingMode(true)
+    setIsTransactionModalOpen(true)
+  }
+
+  const openTemplateTransactionModal = (template: any) => {
+    const templateTransaction = {
+      description: template.description,
+      type: template.type,
+      category: template.category
+    }
+    setEditingTransaction(templateTransaction as any)
+    setIsEditingMode(false)
+    setIsTransactionModalOpen(true)
+  }
+
+  const closeTransactionModal = () => {
+    setIsTransactionModalOpen(false)
+    setEditingTransaction(null)
+    setIsEditingMode(false)
+  }
+
+  const handleTransactionModalConfirm = async (transactionData: any) => {
+    if (isEditingMode && editingTransaction?.id) {
+      await updateTransactionComplete(editingTransaction.id, transactionData)
     } else {
-      filteredCategories = categories.filter(cat => !incomeCategories.includes(cat.name))
+      await createTransactionComplete(transactionData)
     }
-    
-    // Excluir las categorías temporalmente ocultas
-    return filteredCategories.filter(cat => !excludedCategories.includes(cat.name))
+    closeTransactionModal()
   }
 
-  // Manejar selección/deseleción de categoría (toggle)
-  const handleCategoryToggle = (category: Category) => {
-    if (categoryId === category.id) {
-      // Si ya está seleccionada, la quitamos
-      setCategoryId('')
-    } else {
-      // Si no está seleccionada, la seleccionamos
-      setCategoryId(category.id)
-    }
-  }
-
-  // Resetear categoría cuando cambie el tipo
-  const handleTypeChange = (newType: string) => {
-    setType(newType)
-    setCategoryId('') // Limpiar selección de categoría
-  }
-
-  const createTransaction = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (!amount || !description) return
-
+  const createTransactionComplete = async (transactionData: any) => {
     try {
+      // Convertir category a categoryId si es necesario (por compatibilidad)
+      const requestData = {
+        ...transactionData,
+        categoryId: undefined // Enviamos sin categoría por ahora
+      }
+      delete requestData.category // Eliminamos el campo category
+
       const response = await authenticatedFetch(apiUrls.transactions.create(), {
         method: 'POST',
-        body: JSON.stringify({ 
-          amount: parseFloat(amount), 
-          description, 
-          type,
-          categoryId: categoryId || undefined // Incluir categoría si se seleccionó
-        }),
+        body: JSON.stringify(requestData),
       })
       
       const data = await response.json()
       
       if (response.ok) {
-        setTransactions([data.data, ...transactions])
-        setAmount('')
-        setDescription('')
-        setCategoryId('') // Limpiar selección de categoría
+        // Agregar la categoría manual al objeto para mostrar en la UI
+        const transactionWithCategory = {
+          ...data.data,
+          category: transactionData.category ? { name: transactionData.category } : null
+        }
+        setTransactions([transactionWithCategory, ...transactions])
         toast.success('¡Transacción registrada exitosamente!')
+      } else {
+        toast.error('Error: ' + data.message)
+      }
+    } catch (error) {
+      toast.error('Error de conexión con el servidor')
+    }
+  }
+
+  const updateTransactionComplete = async (transactionId: string, transactionData: any) => {
+    try {
+      // Convertir category a categoryId si es necesario (por compatibilidad)
+      const requestData = {
+        ...transactionData,
+        categoryId: undefined // Enviamos sin categoría por ahora
+      }
+      delete requestData.category // Eliminamos el campo category
+
+      const response = await authenticatedFetch(apiUrls.transactions.update(transactionId), {
+        method: 'PUT',
+        body: JSON.stringify(requestData),
+      })
+      
+      const data = await response.json()
+      
+      if (response.ok) {
+        // Actualizar la transacción con la categoría manual
+        const updatedTransaction = {
+          ...data.data,
+          category: transactionData.category ? { name: transactionData.category } : null
+        }
+        setTransactions(transactions.map((transaction: Transaction) => 
+          transaction.id === transactionId 
+            ? { ...transaction, ...updatedTransaction }
+            : transaction
+        ))
+        toast.success('¡Transacción editada exitosamente!')
       } else {
         toast.error('Error: ' + data.message)
       }
@@ -236,33 +257,13 @@ export default function FinancesPage() {
     }
   }
 
-  const editTransaction = async (transactionId: string, currentDescription: string) => {
-    const newDescription = await editModal.editTransaction(currentDescription)
-    if (!newDescription) {
-      return // Usuario canceló
-    }
+  const editTransaction = (transaction: Transaction) => {
+    openEditTransactionModal(transaction)
+  }
 
-    try {
-      const response = await authenticatedFetch(apiUrls.transactions.update(transactionId), {
-        method: 'PUT',
-        body: JSON.stringify({ description: newDescription }),
-      })
-      
-      const data = await response.json()
-      
-      if (response.ok) {
-        setTransactions(transactions.map((transaction: Transaction) => 
-          transaction.id === transactionId 
-            ? { ...transaction, description: newDescription }
-            : transaction
-        ))
-        toast.success('¡Transacción editada exitosamente!')
-      } else {
-        toast.error('Error: ' + data.message)
-      }
-    } catch (error) {
-      toast.error('Error de conexión con el servidor')
-    }
+  // Función para usar plantilla
+  const useTemplate = (template: {description: string, type: 'INCOME' | 'EXPENSE', category: string}) => {
+    openTemplateTransactionModal(template)
   }
 
   // Calcular totales
@@ -323,136 +324,6 @@ export default function FinancesPage() {
 
       {/* Content */}
       <div className="container mx-auto px-4 py-8">
-        {/* Create Transaction Form */}
-        <div className="bg-white/15 backdrop-blur-md shadow-lg border border-white/30 p-6 rounded-lg mb-6">
-          <h2 className="text-xl font-bold text-white mb-4" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>💰 Registrar Nueva Transacción</h2>
-          <form onSubmit={createTransaction} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div>
-                <label className="block text-sm font-bold text-white mb-1" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>Tipo</label>
-                <select
-                  value={type}
-                  onChange={(e) => handleTypeChange(e.target.value)}
-                  className="w-full p-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white"
-                >
-                  <option value="EXPENSE" className="bg-gray-800 text-white">💸 Gasto</option>
-                  <option value="INCOME" className="bg-gray-800 text-white">💵 Ingreso</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-bold text-white mb-1" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>Cantidad</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  className="w-full p-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white placeholder-white/60"
-                  placeholder="0.00"
-                  required
-                />
-              </div>
-              
-              <div className="md:col-span-2">
-                <label className="block text-sm font-bold text-white mb-1" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>Descripción</label>
-                <input
-                  type="text"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full p-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white placeholder-white/60"
-                  placeholder="Ej: Supermercado, Salario, Gasolina..."
-                  required
-                />
-              </div>
-            </div>
-            
-            {/* Selector de Categoría */}
-            <div>
-              <label className="block text-sm font-bold text-white mb-3" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
-                Categoría {type === 'INCOME' ? 'de Ingreso' : 'de Gasto'} (opcional)
-              </label>
-              
-              {getFilteredCategories().length > 0 ? (
-                <>
-                  {/* Grid de categorías */}
-                  <div className="grid grid-cols-6 md:grid-cols-12 gap-1">
-                    {getFilteredCategories().map((category) => (
-                      <button
-                        key={category.id}
-                        type="button"
-                        onClick={() => handleCategoryToggle(category)}
-                        className={`px-0 py-1.5 rounded border transition-all duration-150 ${
-                          categoryId === category.id
-                            ? 'bg-white/30 border-white/60 shadow-md'
-                            : 'bg-white/10 border-white/20 hover:bg-white/20 hover:border-white/40'
-                        }`}
-                        style={{
-                          backgroundColor: categoryId === category.id 
-                            ? `${category.color}40` 
-                            : undefined,
-                          borderColor: categoryId === category.id 
-                            ? `${category.color}80` 
-                            : undefined
-                        }}
-                      >
-                        <div className="text-center">
-                          <div className="text-sm mb-0.5">{category.icon || '📋'}</div>
-                          <div 
-                            className={`text-xs font-bold leading-tight ${
-                              categoryId === category.id ? 'text-white' : 'text-white/90'
-                            }`} 
-                            style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
-                          >
-                            {category.name}
-                          </div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                  
-                  {/* Mostrar categoría seleccionada */}
-                  {categoryId && (
-                    <div className="mt-3 text-center">
-                      <span className="text-sm font-medium text-white" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
-                        Seleccionado: <strong>{getFilteredCategories().find(c => c.id === categoryId)?.name}</strong>
-                      </span>
-                      <p className="text-sm text-white/80 mt-1 font-medium" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
-                        Haz clic de nuevo para quitar
-                      </p>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="text-center py-8 bg-white/10 rounded-lg border border-white/20">
-                  <div className="text-3xl mb-2">🔄</div>
-                  <p className="text-white text-base font-medium mb-2" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
-                    Configurando categorías {type === 'INCOME' ? 'de ingresos' : 'de gastos'}...
-                  </p>
-                  <div className="flex justify-center mt-4">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white/60"></div>
-                  </div>
-                  <p className="text-sm text-white/80 mt-3 font-medium" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
-                    {type === 'INCOME' 
-                      ? 'Preparando: Salario, Freelance, Bonos, Consultorías, y 20 más'
-                      : 'Preparando: Alimentación, Transporte, Seguros, Gasolina, y 20 más'
-                    }
-                  </p>
-                </div>
-              )}
-            </div>
-            
-            <div className="flex justify-center">
-              <button
-                type="submit"
-                className="bg-purple-600/70 backdrop-blur-md text-white py-3 px-8 rounded-lg font-bold border border-purple-400/70 hover:bg-purple-700/80 transition-all duration-150 shadow-lg text-base"
-                style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}
-              >
-                Registrar Transacción
-              </button>
-            </div>
-          </form>
-        </div>
-
         {/* Financial Summary */}
         <div className="grid md:grid-cols-3 gap-4 mb-6">
           <div className="bg-green-500/40 backdrop-blur-md shadow-lg border-2 border-green-400/60 p-4 rounded-lg">
@@ -485,6 +356,102 @@ export default function FinancesPage() {
           </div>
         </div>
 
+        {/* Sección de Creación de Transacciones */}
+        <div className="bg-white/15 backdrop-blur-md shadow-lg border border-white/30 p-6 rounded-lg mb-6">
+          {/* Botón Crear Transacción Personalizada */}
+          <div className="mb-6">
+            <h2 className="text-xl font-bold text-white mb-4" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>Registrar Transacción Personalizada</h2>
+            <button
+              onClick={openCreateTransactionModal}
+              className="w-full bg-purple-600/70 backdrop-blur-md text-white px-6 py-4 rounded-lg font-bold border border-purple-400/70 hover:bg-purple-700/80 transition-all duration-150 shadow-lg text-lg"
+              style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}
+            >
+              💰 Nueva Transacción
+            </button>
+            <p className="text-white/80 text-sm mt-2 text-center font-medium" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
+              Configura tipo, monto, descripción y categoría personalizados
+            </p>
+          </div>
+          
+          <h3 className="text-xl font-bold text-white mb-4" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>💸 Plantillas de Gastos</h3>
+          
+          <div className="grid grid-cols-6 md:grid-cols-12 gap-1 mb-6">
+            {[
+              // Gastos comunes
+              { description: 'Supermercado', type: 'EXPENSE', icon: '🛒', category: 'Alimentación' },
+              { description: 'Gasolina', type: 'EXPENSE', icon: '⛽', category: 'Transporte' },
+              { description: 'Almuerzo', type: 'EXPENSE', icon: '🍽️', category: 'Alimentación' },
+              { description: 'Farmacia', type: 'EXPENSE', icon: '💊', category: 'Salud' },
+              { description: 'Transporte público', type: 'EXPENSE', icon: '🚌', category: 'Transporte' },
+              { description: 'Café', type: 'EXPENSE', icon: '☕', category: 'Alimentación' },
+              { description: 'Restaurante', type: 'EXPENSE', icon: '🍴', category: 'Alimentación' },
+              { description: 'Cine', type: 'EXPENSE', icon: '🎥', category: 'Entretenimiento' },
+              { description: 'Gimnasio', type: 'EXPENSE', icon: '🏋️', category: 'Salud' },
+              { description: 'Ropa', type: 'EXPENSE', icon: '👕', category: 'Vestimenta' },
+              { description: 'Internet', type: 'EXPENSE', icon: '📶', category: 'Servicios' },
+              { description: 'Electricidad', type: 'EXPENSE', icon: '⚡', category: 'Servicios' },
+              { description: 'Agua', type: 'EXPENSE', icon: '💧', category: 'Servicios' },
+              { description: 'Teléfono', type: 'EXPENSE', icon: '📱', category: 'Servicios' },
+              { description: 'Taxi/Uber', type: 'EXPENSE', icon: '🚕', category: 'Transporte' },
+              { description: 'Libros', type: 'EXPENSE', icon: '📚', category: 'Educación' },
+              { description: 'Streaming', type: 'EXPENSE', icon: '📺', category: 'Entretenimiento' },
+              { description: 'Seguros', type: 'EXPENSE', icon: '🛡️', category: 'Seguros' }
+            ].map((template, index) => (
+              <div 
+                key={index}
+                onClick={() => useTemplate(template)}
+                className="px-0 py-1.5 rounded border transition-all duration-150 cursor-pointer bg-white/10 border-red-400/40 hover:bg-white/20 hover:border-red-400/60"
+              >
+                <div className="text-center">
+                  <div className="text-sm mb-0.5">{template.icon}</div>
+                  <div className="text-xs font-bold leading-tight text-white/90" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
+                    {template.description}
+                  </div>
+                  <div className="text-xs font-bold text-red-200" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
+                    {template.category}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <h3 className="text-xl font-bold text-white mb-4" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>💵 Plantillas de Ingresos</h3>
+          
+          <div className="grid grid-cols-6 md:grid-cols-12 gap-1">
+            {[
+              // Ingresos comunes
+              { description: 'Salario', type: 'INCOME', icon: '💼', category: 'Trabajo' },
+              { description: 'Freelance', type: 'INCOME', icon: '💻', category: 'Trabajo' },
+              { description: 'Bono', type: 'INCOME', icon: '🎁', category: 'Trabajo' },
+              { description: 'Venta', type: 'INCOME', icon: '🏪', category: 'Negocios' },
+              { description: 'Propina', type: 'INCOME', icon: '💵', category: 'Trabajo' },
+              { description: 'Reembolso', type: 'INCOME', icon: '💳', category: 'Diversos' },
+              { description: 'Consultoría', type: 'INCOME', icon: '📈', category: 'Trabajo' },
+              { description: 'Inversión', type: 'INCOME', icon: '💰', category: 'Inversiones' },
+              { description: 'Alquiler', type: 'INCOME', icon: '🏠', category: 'Propiedades' },
+              { description: 'Comisión', type: 'INCOME', icon: '💹', category: 'Trabajo' },
+              { description: 'Regalo', type: 'INCOME', icon: '🎁', category: 'Diversos' },
+              { description: 'Trabajo extra', type: 'INCOME', icon: '⏰', category: 'Trabajo' }
+            ].map((template, index) => (
+              <div 
+                key={index}
+                onClick={() => useTemplate(template)}
+                className="px-0 py-1.5 rounded border transition-all duration-150 cursor-pointer bg-white/10 border-green-400/40 hover:bg-white/20 hover:border-green-400/60"
+              >
+                <div className="text-center">
+                  <div className="text-sm mb-0.5">{template.icon}</div>
+                  <div className="text-xs font-bold leading-tight text-white/90" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
+                    {template.description}
+                  </div>
+                  <div className="text-xs font-bold text-green-200" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
+                    {template.category}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Transactions List */}
         <div className="bg-white/15 backdrop-blur-md shadow-lg border border-white/30 rounded-lg">
           <div className="p-6 border-b border-white/20">
@@ -498,7 +465,7 @@ export default function FinancesPage() {
               <div className="text-center py-8">
                 <div className="text-4xl mb-4">💳</div>
                 <p className="text-white font-bold text-lg" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>No tienes transacciones registradas aún.</p>
-                <p className="text-white/90 text-base font-medium" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>Registra tu primera transacción usando el formulario de arriba.</p>
+                <p className="text-white/90 text-base font-medium" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>Registra tu primera transacción usando el botón de arriba.</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -547,7 +514,7 @@ export default function FinancesPage() {
                       </span>
                       <button 
                         className="text-white bg-blue-500/70 backdrop-blur-md border border-blue-400/50 hover:bg-blue-600/80 text-sm font-bold px-4 py-2 rounded-lg transition-all duration-150 hover:shadow-md transform hover:scale-105"
-                        onClick={() => editTransaction(transaction.id, transaction.description)}
+                        onClick={() => editTransaction(transaction)}
                         title="Editar transacción"
                         style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}
                       >
@@ -575,8 +542,14 @@ export default function FinancesPage() {
       {/* Confirm Modal */}
       <confirm.ConfirmModal />
       
-      {/* Edit Modal */}
-      <editModal.EditModal />
+      {/* Transaction Modal */}
+      <EditTransactionModal
+        isOpen={isTransactionModalOpen}
+        transaction={editingTransaction}
+        isEditing={isEditingMode}
+        onConfirm={handleTransactionModalConfirm}
+        onCancel={closeTransactionModal}
+      />
     </div>
   )
 }

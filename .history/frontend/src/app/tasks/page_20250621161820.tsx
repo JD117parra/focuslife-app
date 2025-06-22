@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useToast } from '@/hooks/useToast'
 import { useAuth } from '@/hooks/useAuth'
 import { useConfirm } from '@/hooks/useConfirm'
-import { EditTaskModal } from '@/components/ui'
+import { useEditModal } from '@/hooks/useEditModal'
 import { apiUrls } from '@/config/api'
 
 interface Task {
@@ -29,22 +29,22 @@ export default function TasksPage() {
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([])
   const [activeFilter, setActiveFilter] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [newTaskTitle, setNewTaskTitle] = useState('')
+  const [newTaskDescription, setNewTaskDescription] = useState('')
+  const [newTaskDueDate, setNewTaskDueDate] = useState('')
+  const [newTaskPriority, setNewTaskPriority] = useState<'LOW' | 'MEDIUM' | 'HIGH'>('MEDIUM')
   const [loading, setLoading] = useState(true)
   const [filterLoading, setFilterLoading] = useState(false)
-  
-  // Estado para el modal de tareas
-  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
-  const [editingTask, setEditingTask] = useState<Task | null>(null)
-  const [isEditingMode, setIsEditingMode] = useState(false)
-  
   const toast = useToast()
   const { authenticatedFetch, isAuthenticated, isLoading: authLoading } = useAuth()
   const confirm = useConfirm()
+  const editModal = useEditModal()
 
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
       loadTasks()
     } else if (!authLoading && !isAuthenticated) {
+      // El hook ya maneja la redirección
       setLoading(false)
     }
   }, [authLoading, isAuthenticated])
@@ -56,7 +56,7 @@ export default function TasksPage() {
       
       if (response.ok) {
         setTasks(data.data)
-        setFilteredTasks(data.data)
+        setFilteredTasks(data.data) // Inicialmente mostrar todas las tareas
       } else {
         toast.error('Error cargando tareas: ' + data.message)
       }
@@ -68,120 +68,62 @@ export default function TasksPage() {
     }
   }
 
-  // Funciones para manejar el modal de tareas
-  const openCreateTaskModal = () => {
-    setEditingTask(null)
-    setIsEditingMode(false)
-    setIsTaskModalOpen(true)
+  // Funciones auxiliares para fechas
+  const isToday = (dateString: string | null) => {
+    if (!dateString) return false
+    const date = new Date(dateString)
+    const today = new Date()
+    return date.toDateString() === today.toDateString()
   }
 
-  const openEditTaskModal = (task: Task) => {
-    setEditingTask(task)
-    setIsEditingMode(true)
-    setIsTaskModalOpen(true)
-  }
-
-  const openTemplateTaskModal = (template: any) => {
-    const templateTask = {
-      title: template.title,
-      description: template.desc,
-      priority: template.priority,
-      status: 'PENDING',
-      dueDate: null
-    }
-    setEditingTask(templateTask as any)
-    setIsEditingMode(false)
-    setIsTaskModalOpen(true)
-  }
-
-  const closeTaskModal = () => {
-    setIsTaskModalOpen(false)
-    setEditingTask(null)
-    setIsEditingMode(false)
-  }
-
-  const handleTaskModalConfirm = async (taskData: any) => {
-    if (isEditingMode && editingTask?.id) {
-      await updateTaskComplete(editingTask.id, taskData)
-    } else {
-      await createTaskComplete(taskData)
-    }
-    closeTaskModal()
-  }
-
-  const createTaskComplete = async (taskData: any) => {
-    try {
-      const response = await authenticatedFetch(apiUrls.tasks.create(), {
-        method: 'POST',
-        body: JSON.stringify(taskData),
-      })
-      
-      const data = await response.json()
-      
-      if (response.ok) {
-        await loadTasks()
-        await applyFilter(activeFilter)
-        toast.success('¡Tarea creada exitosamente!')
-      } else {
-        toast.error('Error: ' + data.message)
-      }
-    } catch (error) {
-      toast.error('Error de conexión con el servidor')
-    }
-  }
-
-  const updateTaskComplete = async (taskId: string, taskData: any) => {
-    try {
-      const response = await authenticatedFetch(apiUrls.tasks.update(taskId), {
-        method: 'PUT',
-        body: JSON.stringify(taskData),
-      })
-      
-      const data = await response.json()
-      
-      if (response.ok) {
-        await loadTasks()
-        await applyFilter(activeFilter)
-        toast.success('¡Tarea editada exitosamente!')
-      } else {
-        toast.error('Error: ' + data.message)
-      }
-    } catch (error) {
-      toast.error('Error de conexión con el servidor')
-    }
+  const isOverdue = (dateString: string | null) => {
+    if (!dateString) return false
+    const date = new Date(dateString)
+    const today = new Date()
+    return date < today && !isToday(dateString)
   }
 
   // Función para aplicar filtros combinados
   const applyCombinedFilter = (filterType: string, allTasks: Task[]) => {
     switch (filterType) {
       case 'urgent':
+        // 🔥 Urgente = Vencidas + Alta prioridad + Sin completar
         return allTasks.filter(task => 
           isOverdue(task.dueDate) && 
           task.priority === 'HIGH' && 
           task.status !== 'COMPLETED'
         )
+      
       case 'today-important':
+        // 📅 Hoy Importante = Hoy + Alta prioridad + Pendientes
         return allTasks.filter(task => 
           isToday(task.dueDate) && 
           task.priority === 'HIGH' && 
           task.status === 'PENDING'
         )
+      
       case 'overdue-all':
+        // ⚠️ Atrasadas = Vencidas + Sin completar
         return allTasks.filter(task => 
           isOverdue(task.dueDate) && 
           task.status !== 'COMPLETED'
         )
+      
       case 'unplanned-urgent':
+        // 📋 Sin Planificar = Sin fecha + Alta prioridad + Pendientes
         return allTasks.filter(task => 
           !task.dueDate && 
           task.priority === 'HIGH' && 
           task.status === 'PENDING'
         )
+      
       case 'achievements':
+        // ✅ Logros = Completadas + Alta prioridad
         return allTasks.filter(task => 
           task.status === 'COMPLETED' && 
           task.priority === 'HIGH'
         )
+      
       default:
         return allTasks
     }
@@ -189,16 +131,19 @@ export default function TasksPage() {
 
   // Función para aplicar filtros
   const applyFilter = async (filterType: string) => {
-    if (filterType === activeFilter) return
+    if (filterType === activeFilter) return // No recargar si es el mismo filtro
     
     setFilterLoading(true)
     setActiveFilter(filterType)
     
     try {
+      // Filtros combinados que requieren todas las tareas
       const combinedFilters = ['urgent', 'today-important', 'overdue-all', 'unplanned-urgent', 'achievements']
       
       if (combinedFilters.includes(filterType)) {
+        // Para filtros combinados, necesitamos todas las tareas
         if (tasks.length === 0) {
+          // Si no tenemos todas las tareas cargadas, las obtenemos
           const response = await authenticatedFetch(apiUrls.tasks.list())
           const data = await response.json()
           if (response.ok) {
@@ -210,6 +155,7 @@ export default function TasksPage() {
             toast.error('Error cargando tareas: ' + data.message)
           }
         } else {
+          // Aplicar filtro combinado a las tareas existentes
           const filtered = applyCombinedFilter(filterType, tasks)
           setFilteredTasks(filtered)
         }
@@ -217,6 +163,7 @@ export default function TasksPage() {
         return
       }
       
+      // Filtros originales
       let response
       
       switch (filterType) {
@@ -236,14 +183,17 @@ export default function TasksPage() {
           response = await authenticatedFetch(apiUrls.tasks.noDate())
           break
         case 'pending':
+          // Filtrar localmente por estado
           setFilteredTasks(tasks.filter(task => task.status === 'PENDING'))
           setFilterLoading(false)
           return
         case 'completed':
+          // Filtrar localmente por estado
           setFilteredTasks(tasks.filter(task => task.status === 'COMPLETED'))
           setFilterLoading(false)
           return
         case 'high-priority':
+          // Filtrar localmente por prioridad
           setFilteredTasks(tasks.filter(task => task.priority === 'HIGH'))
           setFilterLoading(false)
           return
@@ -272,27 +222,73 @@ export default function TasksPage() {
     setSearchQuery(query)
     
     if (!query.trim()) {
+      // Si no hay búsqueda, aplicar el filtro actual
       applyFilter(activeFilter)
       return
     }
     
+    // Obtener tareas base según el filtro activo
     let baseTasks: Task[]
     const combinedFilters = ['urgent', 'today-important', 'overdue-all', 'unplanned-urgent', 'achievements']
     
     if (combinedFilters.includes(activeFilter)) {
+      // Para filtros combinados, usar la lógica de filtros combinados
       baseTasks = applyCombinedFilter(activeFilter, tasks)
     } else if (activeFilter === 'all') {
       baseTasks = tasks
     } else {
+      // Para otros filtros, usar las tareas ya filtradas
       baseTasks = filteredTasks
     }
     
+    // Aplicar búsqueda sobre las tareas base
     const filtered = baseTasks.filter(task => 
       task.title.toLowerCase().includes(query.toLowerCase()) ||
       (task.description && task.description.toLowerCase().includes(query.toLowerCase()))
     )
     
     setFilteredTasks(filtered)
+  }
+
+  const createTask = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!newTaskTitle.trim()) return
+
+    try {
+      const taskData = {
+        title: newTaskTitle.trim(),
+        description: newTaskDescription.trim() || undefined,
+        dueDate: newTaskDueDate || undefined,
+        priority: newTaskPriority
+      }
+      
+      const response = await authenticatedFetch(apiUrls.tasks.create(), {
+        method: 'POST',
+        body: JSON.stringify(taskData),
+      })
+      
+      const data = await response.json()
+      
+      if (response.ok) {
+        // Recargar tareas
+        await loadTasks()
+        // Volver a aplicar el filtro actual
+        await applyFilter(activeFilter)
+        
+        // Limpiar formulario
+        setNewTaskTitle('')
+        setNewTaskDescription('')
+        setNewTaskDueDate('')
+        setNewTaskPriority('MEDIUM')
+        
+        toast.success('¡Tarea creada exitosamente!')
+      } else {
+        toast.error('Error: ' + data.message)
+      }
+    } catch (error) {
+      toast.error('Error de conexión con el servidor')
+    }
   }
 
   const toggleTask = async (taskId: string, currentStatus: string) => {
@@ -307,6 +303,7 @@ export default function TasksPage() {
       const data = await response.json()
       
       if (response.ok) {
+        // Actualizar estado local solo si la API responde exitosamente
         const updatedTasks = tasks.map((task: Task) => 
           task.id === taskId 
             ? { ...task, status: newStatus }
@@ -314,6 +311,7 @@ export default function TasksPage() {
         )
         setTasks(updatedTasks)
         
+        // Actualizar también las tareas filtradas
         const updatedFilteredTasks = filteredTasks.map((task: Task) => 
           task.id === taskId 
             ? { ...task, status: newStatus }
@@ -321,6 +319,7 @@ export default function TasksPage() {
         )
         setFilteredTasks(updatedFilteredTasks)
         
+        // Toast de confirmación
         const statusText = newStatus === 'COMPLETED' ? 'completada' : 'marcada como pendiente'
         toast.success(`¡Tarea ${statusText}!`)
       } else {
@@ -357,25 +356,41 @@ export default function TasksPage() {
     }
   }
 
-  const editTask = (task: Task) => {
-    openEditTaskModal(task)
+  const editTask = async (task: Task) => {
+    const updatedData = await editModal.editTaskComplete({
+      id: task.id,
+      title: task.title,
+      description: task.description || '',
+      status: task.status,
+      priority: task.priority,
+      dueDate: task.dueDate
+    })
+    
+    if (!updatedData) {
+      return // Usuario canceló
+    }
+
+    try {
+      const response = await authenticatedFetch(apiUrls.tasks.update(task.id), {
+        method: 'PUT',
+        body: JSON.stringify(updatedData),
+      })
+      
+      const data = await response.json()
+      
+      if (response.ok) {
+        await loadTasks()
+        await applyFilter(activeFilter) // Volver a aplicar el filtro actual
+        toast.success('¡Tarea editada exitosamente!')
+      } else {
+        toast.error('Error: ' + data.message)
+      }
+    } catch (error) {
+      toast.error('Error de conexión con el servidor')
+    }
   }
 
-  // Funciones auxiliares para fechas
-  const isToday = (dateString: string | null) => {
-    if (!dateString) return false
-    const date = new Date(dateString)
-    const today = new Date()
-    return date.toDateString() === today.toDateString()
-  }
-
-  const isOverdue = (dateString: string | null) => {
-    if (!dateString) return false
-    const date = new Date(dateString)
-    const today = new Date()
-    return date < today && !isToday(dateString)
-  }
-
+  // Funciones auxiliares
   const formatDate = (dateString: string | null) => {
     if (!dateString) return null
     
@@ -386,6 +401,7 @@ export default function TasksPage() {
     const yesterday = new Date(today)
     yesterday.setDate(yesterday.getDate() - 1)
     
+    // Comparar solo fechas, sin horas
     const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate())
     const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate())
     const tomorrowOnly = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate())
@@ -404,189 +420,31 @@ export default function TasksPage() {
     }
   }
 
+  // Función para usar plantilla
   const useTemplate = (template: {title: string, desc: string, priority: 'LOW' | 'MEDIUM' | 'HIGH'}) => {
-    openTemplateTaskModal(template)
+    setNewTaskTitle(template.title)
+    setNewTaskDescription(template.desc)
+    setNewTaskPriority(template.priority)
+    // Limpiar fecha para que el usuario la establezca
+    setNewTaskDueDate('')
+    
+    // Scroll hasta el formulario
+    const formElement = document.getElementById('task-form')
+    if (formElement) {
+      formElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
   }
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'HIGH': return 'bg-red-500/60 text-red-100 border border-red-400/40'
-      case 'MEDIUM': return 'bg-yellow-500/60 text-yellow-100 border border-yellow-400/40'
-      case 'LOW': return 'bg-green-500/60 text-green-100 border border-green-400/40'
-      default: return 'bg-gray-500/60 text-gray-100 border border-gray-400/40'
+      case 'HIGH': return 'bg-red-500/60 text-red-100 backdrop-blur-sm border border-red-400/40'
+      case 'MEDIUM': return 'bg-yellow-500/60 text-yellow-100 backdrop-blur-sm border border-yellow-400/40'
+      case 'LOW': return 'bg-green-500/60 text-green-100 backdrop-blur-sm border border-green-400/40'
+      default: return 'bg-gray-500/60 text-gray-100 backdrop-blur-sm border border-gray-400/40'
     }
   }
 
-  // Función para ordenar tareas por prioridad
-  const sortTasksByPriority = (tasks: Task[]) => {
-    const priorityOrder = { 'HIGH': 0, 'MEDIUM': 1, 'LOW': 2 }
-    
-    return [...tasks].sort((a, b) => {
-      const priorityDiff = priorityOrder[a.priority as keyof typeof priorityOrder] - priorityOrder[b.priority as keyof typeof priorityOrder]
-      if (priorityDiff !== 0) return priorityDiff
-      
-      const statusOrder = { 'PENDING': 0, 'IN_PROGRESS': 1, 'COMPLETED': 2 }
-      const statusDiff = statusOrder[a.status as keyof typeof statusOrder] - statusOrder[b.status as keyof typeof statusOrder]
-      if (statusDiff !== 0) return statusDiff
-      
-      if (a.dueDate && b.dueDate) {
-        return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
-      }
-      if (a.dueDate && !b.dueDate) return -1
-      if (!a.dueDate && b.dueDate) return 1
-      
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    })
-  }
-
-  // Función para agrupar tareas por prioridad con separadores
-  const renderTasksWithSeparators = (tasks: Task[]) => {
-    const sortedTasks = sortTasksByPriority(tasks)
-    const result: JSX.Element[] = []
-    let currentPriority: string | null = null
-    
-    sortedTasks.forEach((task, index) => {
-      if (currentPriority !== null && currentPriority !== task.priority) {
-        result.push(
-          <div key={`separator-${task.priority}-${index}`} className="flex items-center my-4">
-            <div className="flex-1 h-px bg-white/20"></div>
-            <div className="px-4 text-xs font-bold text-white/60" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
-              {task.priority === 'MEDIUM' ? '🟡 Prioridad Media' : '🟢 Prioridad Baja'}
-            </div>
-            <div className="flex-1 h-px bg-white/20"></div>
-          </div>
-        )
-      }
-      
-      if (currentPriority === null && task.priority === 'HIGH') {
-        result.push(
-          <div key={`header-high`} className="flex items-center mb-4">
-            <div className="flex-1 h-px bg-white/20"></div>
-            <div className="px-4 text-xs font-bold text-white/60" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
-              🔴 Prioridad Alta
-            </div>
-            <div className="flex-1 h-px bg-white/20"></div>
-          </div>
-        )
-      }
-      
-      currentPriority = task.priority
-      
-      const dateInfo = formatDate(task.dueDate)
-      
-      const getPriorityStyles = (priority: string, dateInfo: any, status: string) => {
-        if (dateInfo?.isOverdue && status !== 'COMPLETED') {
-          return 'border-l-rose-200 bg-rose-50/80'
-        }
-        if (dateInfo?.isToday) {
-          return 'border-l-blue-300 bg-blue-100/60'
-        }
-        switch (priority) {
-          case 'HIGH':
-            return 'border-l-rose-200 bg-rose-50/80'
-          case 'MEDIUM':
-            return 'border-l-amber-200 bg-amber-50/80'
-          case 'LOW':
-            return 'border-l-teal-300 bg-teal-100/60'
-          default:
-            return 'border-l-slate-300 bg-slate-100/60'
-        }
-      }
-      
-      result.push(
-        <div key={task.id} className={`p-3 rounded-lg border-l-4 border border-white/30 ${
-          getPriorityStyles(task.priority, dateInfo, task.status)
-        } shadow-lg`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3 flex-1 min-w-0">
-              <input 
-                type="checkbox" 
-                checked={task.status === 'COMPLETED'}
-                className="h-4 w-4 text-blue-600 rounded"
-                onChange={() => toggleTask(task.id, task.status)}
-              />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center space-x-2 mb-1">
-                  <span className={`font-medium truncate ${
-                    task.status === 'COMPLETED' ? 'line-through text-white/50' : 'text-white'
-                  }`} style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
-                    {task.title}
-                  </span>
-                  <span className={`px-1.5 py-0.5 text-xs rounded-full font-medium whitespace-nowrap ${
-                    getPriorityColor(task.priority)
-                  }`}>
-                    {task.priority === 'HIGH' ? 'Alta' :
-                     task.priority === 'MEDIUM' ? 'Media' : 'Baja'}
-                  </span>
-                </div>
-                
-                {task.description && (
-                  <div className="text-sm text-white/80 truncate font-medium" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
-                    {task.description}
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-3 ml-4">
-              <div className="text-sm text-center min-w-0 font-medium">
-                {dateInfo ? (
-                  <div className={`flex items-center space-x-1 ${
-                    dateInfo.isOverdue && task.status !== 'COMPLETED' ? 'text-red-200 font-medium' :
-                    dateInfo.isToday ? 'text-blue-200 font-medium' :
-                    'text-white/70'
-                  }`} style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
-                    <span>📅</span>
-                    <span className="whitespace-nowrap">{dateInfo.text}</span>
-                    {dateInfo.isOverdue && task.status !== 'COMPLETED' && (
-                      <span className="text-red-200">⚠️</span>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-white/60 flex items-center space-x-1 font-medium" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
-                    <span>📅</span>
-                    <span className="whitespace-nowrap">Sin fecha</span>
-                  </div>
-                )}
-              </div>
-              
-              <div>
-                <span className={`px-1.5 py-0.5 rounded-full text-xs whitespace-nowrap border ${
-                  task.status === 'COMPLETED' ? 'bg-green-500/60 text-green-100 border-green-400/40' :
-                  task.status === 'IN_PROGRESS' ? 'bg-blue-500/60 text-blue-100 border-blue-400/40' :
-                  'bg-yellow-500/60 text-yellow-100 border-yellow-400/40'
-                }`} style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
-                  {task.status === 'COMPLETED' ? 'Completada' :
-                   task.status === 'IN_PROGRESS' ? 'En progreso' : 'Pendiente'}
-                </span>
-              </div>
-              
-              <div className="flex items-center space-x-1">
-                <button 
-                  className="text-white bg-blue-500/70 border border-blue-400/50 hover:bg-blue-600/80 text-sm font-bold px-4 py-2 rounded-lg transition-all duration-150 hover:shadow-md transform hover:scale-105"
-                  onClick={() => editTask(task)}
-                  title="Editar tarea"
-                  style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}
-                >
-                  Editar
-                </button>
-                <button 
-                  className="text-white bg-red-500/70 border border-red-400/50 hover:bg-red-600/80 text-sm font-bold px-4 py-2 rounded-lg transition-all duration-150 hover:shadow-md transform hover:scale-105"
-                  onClick={() => deleteTask(task.id, task.title)}
-                  style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}
-                >
-                  ×
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )
-    })
-    
-    return result
-  }
-
+  // Mostrar loading mientras se verifica autenticación
   if (authLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-300 via-blue-400 to-indigo-500 flex items-center justify-center">
@@ -606,6 +464,7 @@ export default function TasksPage() {
     )
   }
 
+  // Si no está autenticado, el hook ya redirige
   if (!isAuthenticated) {
     return null
   }
@@ -659,7 +518,7 @@ export default function TasksPage() {
               </div>
             </div>
             
-            {/* Filtros Inteligentes Combinados */}
+            {/* Filtros Inteligentes Combinados - NUEVA SECCIÓN */}
             <div className="flex flex-wrap gap-2">
               <h3 className="text-sm font-bold text-white mb-2 w-full" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
                 🎆 Filtros Inteligentes (Combinados):
@@ -692,7 +551,7 @@ export default function TasksPage() {
               ))}
             </div>
             
-            {/* Filtros Básicos */}
+            {/* Filtros Básicos - SECCIÓN EXISTENTE */}
             <div className="flex flex-wrap gap-2">
               <h3 className="text-sm font-bold text-white mb-2 w-full" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
                 📋 Filtros Básicos:
@@ -751,58 +610,134 @@ export default function TasksPage() {
           </div>
         </div>
 
-        {/* Sección de Creación de Tareas */}
+        {/* Sección de Creación de Tareas - Formulario + Plantillas */}
         <div className="bg-white/15 backdrop-blur-md shadow-lg border border-white/30 p-6 rounded-lg mb-6">
-          {/* Botón Crear Tarea Personalizada */}
-          <div className="mb-6">
-            <h2 className="text-xl font-bold text-white mb-4" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>Crear Tarea Personalizada</h2>
-            <button
-              onClick={openCreateTaskModal}
-              className="w-full bg-blue-600/70 backdrop-blur-md text-white px-6 py-4 rounded-lg font-bold border border-blue-400/70 hover:bg-blue-700/80 transition-all duration-150 shadow-lg text-lg"
-              style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}
-            >
+          <div className="text-center mb-6">
+            <h2 className="text-xl font-bold text-white mb-2" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
               ✨ Crear Nueva Tarea
-            </button>
-            <p className="text-white/80 text-sm mt-2 text-center font-medium" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
-              Configura título, descripción, prioridad, fecha y estado personalizados
+            </h2>
+            <p className="text-white text-base font-medium" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
+              Crea una tarea personalizada o usa una plantilla rápida
             </p>
           </div>
           
-          <h3 className="text-xl font-bold text-white mb-4" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>📝 Plantillas Rápidas</h3>
-          
-          <div className="grid grid-cols-6 md:grid-cols-12 gap-1">
-            {[
-              { title: 'Revisar emails', desc: 'Chequear y responder correos importantes', priority: 'MEDIUM', icon: '📧' },
-              { title: 'Llamar a un cliente', desc: 'Seguimiento de proyecto o consulta', priority: 'HIGH', icon: '📞' },
-              { title: 'Comprar víveres', desc: 'Lista de compras para la semana', priority: 'MEDIUM', icon: '🛒' },
-              { title: 'Revisar presupuesto', desc: 'Análisis mensual de finanzas', priority: 'MEDIUM', icon: '📊' },
-              { title: 'Preparar presentación', desc: 'Slides para reunión del próximo jueves', priority: 'HIGH', icon: '📊' },
-              { title: 'Renovar documentos', desc: 'Licencia, seguro o trámites pendientes', priority: 'MEDIUM', icon: '📝' },
-              { title: 'Hacer ejercicio', desc: 'Rutina de ejercicios o ir al gimnasio', priority: 'MEDIUM', icon: '💪' },
-              { title: 'Pagar facturas', desc: 'Servicios, tarjetas y pagos pendientes', priority: 'HIGH', icon: '💳' },
-              { title: 'Limpiar casa', desc: 'Tareas de limpieza y organización', priority: 'LOW', icon: '🧹' },
-              { title: 'Estudiar curso', desc: 'Revisar material de estudio o capacitación', priority: 'MEDIUM', icon: '📚' },
-              { title: 'Backup datos', desc: 'Respaldar archivos importantes', priority: 'LOW', icon: '💾' },
-              { title: 'Cita médica', desc: 'Agendar o asistir a consulta médica', priority: 'HIGH', icon: '🏥' }
-            ].map((template, index) => (
-              <div 
-                key={index}
-                onClick={() => useTemplate(template)}
-                className="px-0 py-1.5 rounded border transition-all duration-150 cursor-pointer bg-white/10 border-white/20 hover:bg-white/20 hover:border-white/40"
-              >
-                <div className="text-center">
-                  <div className="text-sm mb-0.5">{template.icon}</div>
-                  <div className="text-xs font-bold leading-tight text-white/90" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
-                    {template.title}
+          {/* Grid de 2 columnas: Formulario + Plantillas */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            {/* Columna Izquierda: Formulario Personalizado Completo */}
+            <div id="task-form">
+              <h3 className="text-lg font-bold text-white mb-4" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
+                📝 Formulario Personalizado
+              </h3>
+              <form onSubmit={createTask} className="space-y-4">
+                {/* Título */}
+                <div>
+                  <label className="block text-sm font-bold text-white mb-1" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>Título *</label>
+                  <input
+                    type="text"
+                    value={newTaskTitle}
+                    onChange={(e) => setNewTaskTitle(e.target.value)}
+                    className="w-full p-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white placeholder-white/60"
+                    placeholder="Título de la tarea..."
+                    required
+                  />
+                </div>
+                
+                {/* Fecha y Prioridad */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-bold text-white mb-1" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>Fecha límite</label>
+                    <input
+                      type="date"
+                      value={newTaskDueDate}
+                      onChange={(e) => setNewTaskDueDate(e.target.value)}
+                      className="w-full p-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-bold text-white mb-1" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>Prioridad</label>
+                    <select
+                      value={newTaskPriority}
+                      onChange={(e) => setNewTaskPriority(e.target.value as 'LOW' | 'MEDIUM' | 'HIGH')}
+                      className="w-full p-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white"
+                    >
+                      <option value="LOW" className="bg-gray-800 text-white">🟢 Baja</option>
+                      <option value="MEDIUM" className="bg-gray-800 text-white">🟡 Media</option>
+                      <option value="HIGH" className="bg-gray-800 text-white">🔴 Alta</option>
+                    </select>
                   </div>
                 </div>
+                
+                {/* Descripción */}
+                <div>
+                  <label className="block text-sm font-bold text-white mb-1" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>Descripción</label>
+                  <textarea
+                    value={newTaskDescription}
+                    onChange={(e) => setNewTaskDescription(e.target.value)}
+                    className="w-full p-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white placeholder-white/60 resize-none"
+                    placeholder="Descripción opcional..."
+                    rows={3}
+                  />
+                </div>
+                
+                {/* Botón */}
+                <div>
+                  <button
+                    type="submit"
+                    className="w-full bg-blue-600/70 backdrop-blur-md text-white px-6 py-3 rounded-lg font-bold border border-blue-400/70 hover:bg-blue-700/80 transition-all duration-150 shadow-lg text-base transform hover:scale-105"
+                    style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}
+                  >
+                    ➕ Crear Tarea
+                  </button>
+                </div>
+              </form>
+            </div>
+            
+            {/* Columna Derecha: Todas las Plantillas */}
+            <div>
+              <h3 className="text-lg font-bold text-white mb-4" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
+                📝 Plantillas Rápidas
+              </h3>
+              {/* Espaciado para alinear con el primer input del formulario */}
+              <div className="mb-4">
+                <div className="text-sm font-bold text-white mb-1 opacity-0">Alineación</div>
               </div>
-            ))}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {[
+                  { title: 'Revisar emails', desc: 'Chequear y responder correos importantes', priority: 'MEDIUM', icon: '📧' },
+                  { title: 'Llamar a un cliente', desc: 'Seguimiento de proyecto o consulta', priority: 'HIGH', icon: '📞' },
+                  { title: 'Comprar víveres', desc: 'Lista de compras para la semana', priority: 'MEDIUM', icon: '🛒' },
+                  { title: 'Revisar presupuesto', desc: 'Análisis mensual de finanzas', priority: 'MEDIUM', icon: '📊' },
+                  { title: 'Preparar presentación', desc: 'Slides para reunión del próximo jueves', priority: 'HIGH', icon: '📊' },
+                  { title: 'Renovar documentos', desc: 'Licencia, seguro o trámites pendientes', priority: 'MEDIUM', icon: '📝' },
+                  { title: 'Hacer ejercicio', desc: 'Rutina de ejercicios o ir al gimnasio', priority: 'MEDIUM', icon: '💪' },
+                  { title: 'Pagar facturas', desc: 'Servicios, tarjetas y pagos pendientes', priority: 'HIGH', icon: '💳' },
+                  { title: 'Limpiar casa', desc: 'Tareas de limpieza y organización', priority: 'LOW', icon: '🧹' },
+                  { title: 'Estudiar curso', desc: 'Revisar material de estudio o capacitación', priority: 'MEDIUM', icon: '📚' },
+                  { title: 'Backup datos', desc: 'Respaldar archivos importantes', priority: 'LOW', icon: '💾' },
+                  { title: 'Cita médica', desc: 'Agendar o asistir a consulta médica', priority: 'HIGH', icon: '🏥' }
+                ].map((template, index) => (
+                  <div 
+                    key={index}
+                    onClick={() => useTemplate(template)}
+                    className="p-3 rounded-lg border transition-all duration-150 cursor-pointer bg-white/10 border-white/20 hover:bg-white/20 hover:border-white/40 hover:scale-105 transform"
+                    title={`${template.title} - ${template.desc}`}
+                  >
+                    <div className="text-center">
+                      <div className="text-xl mb-2">{template.icon}</div>
+                      <div className="text-xs font-bold leading-tight text-white/90" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
+                        {template.title}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Lista de Tareas */}
-        <div className="bg-white/25 shadow-lg border border-white/30 rounded-lg">
+        <div className="bg-white/15 backdrop-blur-md shadow-lg border border-white/30 rounded-lg">
           <div className="p-6 border-b border-white/20">
             <h2 className="text-xl font-bold text-white" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
               Mis Tareas ({filteredTasks.length} de {tasks.length})
@@ -819,7 +754,7 @@ export default function TasksPage() {
               <div className="text-center py-8">
                 <div className="text-4xl mb-4">📝</div>
                 <p className="text-white font-bold text-lg" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>No tienes tareas aún.</p>
-                <p className="text-white/90 text-base font-medium" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>Crea tu primera tarea usando el botón de arriba.</p>
+                <p className="text-white/90 text-base font-medium" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>Crea tu primera tarea usando el formulario de arriba.</p>
               </div>
             ) : filteredTasks.length === 0 ? (
               <div className="text-center py-8">
@@ -829,7 +764,106 @@ export default function TasksPage() {
               </div>
             ) : (
               <div className="space-y-3">
-                {renderTasksWithSeparators(filteredTasks)}
+                {filteredTasks.map((task: Task) => {
+                  const dateInfo = formatDate(task.dueDate)
+                  return (
+                    <div key={task.id} className={`p-3 rounded-lg border-l-4 bg-white/20 backdrop-blur-sm border border-white/30 ${
+                      dateInfo?.isOverdue && task.status !== 'COMPLETED' ? 'border-l-red-400 shadow-red-500/20' :
+                      dateInfo?.isToday ? 'border-l-blue-400 shadow-blue-500/20' :
+                      'border-l-white/40'
+                    } shadow-lg`}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3 flex-1 min-w-0">
+                          <input 
+                            type="checkbox" 
+                            checked={task.status === 'COMPLETED'}
+                            className="h-4 w-4 text-blue-600 rounded"
+                            onChange={() => toggleTask(task.id, task.status)}
+                          />
+                          <div className="flex-1 min-w-0">
+                            {/* Título y prioridad */}
+                            <div className="flex items-center space-x-2 mb-1">
+                              <span className={`font-medium truncate ${
+                                task.status === 'COMPLETED' ? 'line-through text-white/50' : 'text-white'
+                              }`} style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
+                                {task.title}
+                              </span>
+                              <span className={`px-1.5 py-0.5 text-xs rounded-full font-medium whitespace-nowrap ${
+                                getPriorityColor(task.priority)
+                              }`}>
+                                {task.priority === 'HIGH' ? 'Alta' :
+                                 task.priority === 'MEDIUM' ? 'Media' : 'Baja'}
+                              </span>
+                            </div>
+                            
+                            {/* Descripción (si existe) */}
+                            {task.description && (
+                              <div className="text-sm text-white/80 truncate font-medium" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
+                                {task.description}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {/* Lado derecho: Fecha, Estado y Botones */}
+                        <div className="flex items-center space-x-3 ml-4">
+                          {/* Fecha */}
+                          <div className="text-sm text-center min-w-0 font-medium">
+                            {dateInfo ? (
+                              <div className={`flex items-center space-x-1 ${
+                                dateInfo.isOverdue && task.status !== 'COMPLETED' ? 'text-red-200 font-medium' :
+                                dateInfo.isToday ? 'text-blue-200 font-medium' :
+                                'text-white/70'
+                              }`} style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
+                                <span>📅</span>
+                                <span className="whitespace-nowrap">{dateInfo.text}</span>
+                                {dateInfo.isOverdue && task.status !== 'COMPLETED' && (
+                                  <span className="text-red-200">⚠️</span>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="text-white/60 flex items-center space-x-1 font-medium" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
+                                <span>📅</span>
+                                <span className="whitespace-nowrap">Sin fecha</span>
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Estado */}
+                          <div>
+                            <span className={`px-1.5 py-0.5 rounded-full text-xs whitespace-nowrap backdrop-blur-sm border ${
+                              task.status === 'COMPLETED' ? 'bg-green-500/60 text-green-100 border-green-400/40' :
+                              task.status === 'IN_PROGRESS' ? 'bg-blue-500/60 text-blue-100 border-blue-400/40' :
+                              'bg-yellow-500/60 text-yellow-100 border-yellow-400/40'
+                            }`} style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
+                              {task.status === 'COMPLETED' ? 'Completada' :
+                               task.status === 'IN_PROGRESS' ? 'En progreso' : 'Pendiente'}
+                            </span>
+                          </div>
+                          
+                          {/* Botones */}
+                          <div className="flex items-center space-x-1">
+                            <button 
+                              className="text-white bg-blue-500/70 backdrop-blur-md border border-blue-400/50 hover:bg-blue-600/80 text-sm font-bold px-4 py-2 rounded-lg transition-all duration-150 hover:shadow-md transform hover:scale-105"
+                              onClick={() => editTask(task)}
+                              title="Editar tarea"
+                              style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}
+                            >
+                              Editar
+                            </button>
+                            <button 
+                              className="text-white bg-red-500/70 backdrop-blur-md border border-red-400/50 hover:bg-red-600/80 text-sm font-bold px-4 py-2 rounded-lg transition-all duration-150 hover:shadow-md transform hover:scale-105"
+                              onClick={() => deleteTask(task.id, task.title)}
+                              style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>
@@ -842,14 +876,8 @@ export default function TasksPage() {
       {/* Confirm Modal */}
       <confirm.ConfirmModal />
       
-      {/* Task Modal */}
-      <EditTaskModal
-        isOpen={isTaskModalOpen}
-        task={editingTask}
-        isEditing={isEditingMode}
-        onConfirm={handleTaskModalConfirm}
-        onCancel={closeTaskModal}
-      />
+      {/* Edit Modal */}
+      <editModal.EditModal />
     </div>
   )
 }
