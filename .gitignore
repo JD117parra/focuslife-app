@@ -5,6 +5,10 @@
 # Documentos internos para ubicación en conversaciones
 STATUS.md
 ROADMAP.md
+# Documentación de configuración local
+ESLINT-GUIDE.md
+# Documentación de desarrollo
+.prettierrc.json
 
 # Directorio de archivos eliminados/backup
 _to_delete/
