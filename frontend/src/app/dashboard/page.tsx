@@ -135,16 +135,16 @@ export default function DashboardPage() {
             <h1 className="text-2xl font-bold text-white">
               FocusLife Dashboard
             </h1>
-            <div className="flex items-center space-x-4">
-              <span className="text-blue-100">
-                Hola{' '}
+            <div className="flex items-center space-x-6">
+              <span className="text-blue-100 mr-6">
+                ¡Hola{' '}
                 <span className="font-medium text-white">
                   {user?.name || user?.email || 'Usuario'}
-                </span>
+                </span>!
               </span>
               <Link
                 href="/"
-                className="text-blue-100 hover:text-white font-medium"
+                className="text-blue-100 hover:text-white font-bold text-lg"
               >
                 Cerrar Sesión
               </Link>
@@ -157,10 +157,10 @@ export default function DashboardPage() {
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
           <h2 className="text-2xl font-bold text-white mb-2 text-shadow-medium">
-            ¿Qué quieres gestionar hoy?
+            ¿Qué vamos a gestionar hoy?
           </h2>
           <p className="text-white/90 text-shadow-light">
-            Elige una sección para comenzar
+            Elige una sección para que comencemos
           </p>
         </div>
 
@@ -225,9 +225,6 @@ export default function DashboardPage() {
               <h2 className="text-2xl font-bold text-white text-shadow-medium">
                 📊 Resumen General
               </h2>
-              <p className="text-white/90 text-shadow-light">
-                Tu productividad de un vistazo
-              </p>
             </div>
             <div className="text-sm text-white/80 text-shadow-light">
               📅{' '}

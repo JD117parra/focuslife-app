@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { apiUrls } from '@/config/api';
 
 interface AuthUser {
@@ -20,8 +20,24 @@ export const useAuth = (): UseAuthReturn => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Manejar errores de autenticación
+  const handleAuthError = (reason: string) => {
+    console.warn('Auth error:', reason);
+    localStorage.removeItem('authToken');
+    setUser(null);
+
+    // Solo redirigir si no estamos ya en login/register
+    if (
+      !window.location.pathname.includes('/login') &&
+      !window.location.pathname.includes('/register') &&
+      window.location.pathname !== '/'
+    ) {
+      window.location.href = '/login';
+    }
+  };
+
   // Función para hacer fetch con autenticación automática
-  const authenticatedFetch = async (
+  const authenticatedFetch = useCallback(async (
     url: string,
     options: RequestInit = {}
   ): Promise<Response> => {
@@ -48,23 +64,9 @@ export const useAuth = (): UseAuthReturn => {
     }
 
     return response;
-  };
+  }, []);
 
-  // Manejar errores de autenticación
-  const handleAuthError = (reason: string) => {
-    console.warn('Auth error:', reason);
-    localStorage.removeItem('authToken');
-    setUser(null);
 
-    // Solo redirigir si no estamos ya en login/register
-    if (
-      !window.location.pathname.includes('/login') &&
-      !window.location.pathname.includes('/register') &&
-      window.location.pathname !== '/'
-    ) {
-      window.location.href = '/login';
-    }
-  };
 
   // Verificar autenticación al cargar
   const checkAuth = async () => {

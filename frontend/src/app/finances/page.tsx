@@ -1,12 +1,199 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 import { useConfirm } from '@/hooks/useConfirm';
-import { EditTransactionModal } from '@/components/ui';
+import { EditTransactionModal, ItemActionModal } from '@/components/ui';
 import { apiUrls } from '@/config/api';
+
+// 🎯 PLANTILLAS SIMPLES - Se crean UNA sola vez (no en cada render)
+const EXPENSE_TEMPLATES = [
+  {
+    description: 'Supermercado',
+    type: 'EXPENSE' as const,
+    icon: '🛒',
+    category: 'Alimentación',
+  },
+  {
+    description: 'Gasolina',
+    type: 'EXPENSE' as const,
+    icon: '⛽',
+    category: 'Transporte',
+  },
+  {
+    description: 'Almuerzo',
+    type: 'EXPENSE' as const,
+    icon: '🍽️',
+    category: 'Alimentación',
+  },
+  {
+    description: 'Farmacia',
+    type: 'EXPENSE' as const,
+    icon: '💊',
+    category: 'Salud',
+  },
+  {
+    description: 'Transporte público',
+    type: 'EXPENSE' as const,
+    icon: '🚌',
+    category: 'Transporte',
+  },
+  {
+    description: 'Café',
+    type: 'EXPENSE' as const,
+    icon: '☕',
+    category: 'Alimentación',
+  },
+  {
+    description: 'Restaurante',
+    type: 'EXPENSE' as const,
+    icon: '🍴',
+    category: 'Alimentación',
+  },
+  {
+    description: 'Cine',
+    type: 'EXPENSE' as const,
+    icon: '🎥',
+    category: 'Entretenimiento',
+  },
+  {
+    description: 'Gimnasio',
+    type: 'EXPENSE' as const,
+    icon: '🏋️',
+    category: 'Salud',
+  },
+  {
+    description: 'Ropa',
+    type: 'EXPENSE' as const,
+    icon: '👕',
+    category: 'Vestimenta',
+  },
+  {
+    description: 'Internet',
+    type: 'EXPENSE' as const,
+    icon: '📶',
+    category: 'Servicios',
+  },
+  {
+    description: 'Electricidad',
+    type: 'EXPENSE' as const,
+    icon: '⚡',
+    category: 'Servicios',
+  },
+  {
+    description: 'Agua',
+    type: 'EXPENSE' as const,
+    icon: '💧',
+    category: 'Servicios',
+  },
+  {
+    description: 'Teléfono',
+    type: 'EXPENSE' as const,
+    icon: '📱',
+    category: 'Servicios',
+  },
+  {
+    description: 'Taxi/Uber',
+    type: 'EXPENSE' as const,
+    icon: '🚕',
+    category: 'Transporte',
+  },
+  {
+    description: 'Libros',
+    type: 'EXPENSE' as const,
+    icon: '📚',
+    category: 'Educación',
+  },
+  {
+    description: 'Streaming',
+    type: 'EXPENSE' as const,
+    icon: '📺',
+    category: 'Entretenimiento',
+  },
+  {
+    description: 'Seguros',
+    type: 'EXPENSE' as const,
+    icon: '🛡️',
+    category: 'Seguros',
+  },
+] as const;
+
+const INCOME_TEMPLATES = [
+  {
+    description: 'Salario',
+    type: 'INCOME' as const,
+    icon: '💼',
+    category: 'Trabajo',
+  },
+  {
+    description: 'Freelance',
+    type: 'INCOME' as const,
+    icon: '💻',
+    category: 'Trabajo',
+  },
+  {
+    description: 'Bono',
+    type: 'INCOME' as const,
+    icon: '🎁',
+    category: 'Trabajo',
+  },
+  {
+    description: 'Venta',
+    type: 'INCOME' as const,
+    icon: '🏪',
+    category: 'Negocios',
+  },
+  {
+    description: 'Propina',
+    type: 'INCOME' as const,
+    icon: '💵',
+    category: 'Trabajo',
+  },
+  {
+    description: 'Reembolso',
+    type: 'INCOME' as const,
+    icon: '💳',
+    category: 'Diversos',
+  },
+  {
+    description: 'Consultoría',
+    type: 'INCOME' as const,
+    icon: '📈',
+    category: 'Trabajo',
+  },
+  {
+    description: 'Inversión',
+    type: 'INCOME' as const,
+    icon: '💰',
+    category: 'Inversiones',
+  },
+  {
+    description: 'Alquiler',
+    type: 'INCOME' as const,
+    icon: '🏠',
+    category: 'Propiedades',
+  },
+  {
+    description: 'Comisión',
+    type: 'INCOME' as const,
+    icon: '💹',
+    category: 'Trabajo',
+  },
+  {
+    description: 'Regalo',
+    type: 'INCOME' as const,
+    icon: '🎁',
+    category: 'Diversos',
+  },
+  {
+    description: 'Trabajo extra',
+    type: 'INCOME' as const,
+    icon: '⏰',
+    category: 'Trabajo',
+  },
+] as const;
 
 interface Transaction {
   id: string;
@@ -61,15 +248,21 @@ export default function FinancesPage() {
     useState<TransactionWithCategory | null>(null);
   const [isEditingMode, setIsEditingMode] = useState(false);
 
+  // Estado para el modal de acciones
+  const [isActionModalOpen, setIsActionModalOpen] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+
   const {
     authenticatedFetch,
     isAuthenticated,
     isLoading: authLoading,
+    user,
   } = useAuth();
   const toast = useToast();
   const confirm = useConfirm();
 
-  const createDefaultCategories = useCallback(async () => {
+  // 📊 FUNCIONES SIMPLES - Sin useCallback innecesario
+  const createDefaultCategories = async () => {
     try {
       toast.info('Configurando categorías...');
 
@@ -133,9 +326,9 @@ export default function FinancesPage() {
       console.error('Error creating default categories:', _error);
       toast.error('Error de conexión');
     }
-  }, [authenticatedFetch, toast, setCategories]);
+  };
 
-  const loadCategories = useCallback(async () => {
+  const loadCategories = async () => {
     try {
       const response = await authenticatedFetch(
         apiUrls.transactions.categoriesFinance()
@@ -155,9 +348,9 @@ export default function FinancesPage() {
       console.error('Error loading categories:', error);
       await createDefaultCategories();
     }
-  }, [authenticatedFetch, createDefaultCategories, setCategories]);
+  };
 
-  const loadTransactions = useCallback(async () => {
+  const loadTransactions = async () => {
     try {
       const response = await authenticatedFetch(apiUrls.transactions.list());
       const data = await response.json();
@@ -173,16 +366,23 @@ export default function FinancesPage() {
     } finally {
       setLoading(false);
     }
-  }, [authenticatedFetch, toast]);
+  };
 
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
       loadTransactions();
       loadCategories();
+      // Toast de bienvenida
+      setTimeout(() => {
+        toast.welcome(
+          `¿Alguna cuenta que hacer hoy ${user?.name || user?.email || 'Usuario'}? 💰`,
+          4000
+        );
+      }, 500);
     } else if (!authLoading && !isAuthenticated) {
       setLoading(false);
     }
-  }, [authLoading, isAuthenticated, loadTransactions, loadCategories]);
+  }, [authLoading, isAuthenticated, user]);
 
   // Funciones para manejar el modal de transacciones
   const openCreateTransactionModal = () => {
@@ -231,7 +431,32 @@ export default function FinancesPage() {
     closeTransactionModal();
   };
 
-  const createTransactionComplete = useCallback(async (transactionData: TransactionData) => {
+  // Funciones para el modal de acciones
+  const openActionModal = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setIsActionModalOpen(true);
+  };
+
+  const closeActionModal = () => {
+    setIsActionModalOpen(false);
+    setSelectedTransaction(null);
+  };
+
+  const handleEditFromAction = () => {
+    if (selectedTransaction) {
+      closeActionModal();
+      openEditTransactionModal(selectedTransaction);
+    }
+  };
+
+  const handleDeleteFromAction = () => {
+    if (selectedTransaction) {
+      closeActionModal();
+      deleteTransaction(selectedTransaction.id, selectedTransaction.description);
+    }
+  };
+
+  const createTransactionComplete = async (transactionData: TransactionData) => {
     try {
       // Convertir category a categoryId si es necesario (por compatibilidad)
       const requestData = {
@@ -255,7 +480,7 @@ export default function FinancesPage() {
             ? { name: transactionData.category }
             : null,
         };
-        setTransactions([transactionWithCategory, ...transactions]);
+        setTransactions(prev => [transactionWithCategory, ...prev]);
         toast.success('¡Transacción registrada exitosamente!');
       } else {
         toast.error(`Error: ${data.message}`);
@@ -263,9 +488,9 @@ export default function FinancesPage() {
     } catch (_error) {
       toast.error('Error de conexión con el servidor');
     }
-  }, [authenticatedFetch, transactions, toast]);
+  };
 
-  const updateTransactionComplete = useCallback(async (
+  const updateTransactionComplete = async (
     transactionId: string,
     transactionData: TransactionData
   ) => {
@@ -295,8 +520,8 @@ export default function FinancesPage() {
             ? { name: transactionData.category }
             : null,
         };
-        setTransactions(
-          transactions.map((transaction: Transaction) =>
+        setTransactions(prev =>
+          prev.map((transaction: Transaction) =>
             transaction.id === transactionId
               ? { ...transaction, ...updatedTransaction }
               : transaction
@@ -309,9 +534,9 @@ export default function FinancesPage() {
     } catch (_error) {
       toast.error('Error de conexión con el servidor');
     }
-  }, [authenticatedFetch, transactions, toast]);
+  };
 
-  const deleteTransaction = useCallback(async (
+  const deleteTransaction = async (
     transactionId: string,
     transactionDescription: string
   ) => {
@@ -329,7 +554,7 @@ export default function FinancesPage() {
       );
 
       if (response.ok) {
-        setTransactions(transactions.filter(t => t.id !== transactionId));
+        setTransactions(prev => prev.filter(t => t.id !== transactionId));
         toast.delete('¡Transacción eliminada exitosamente!');
       } else {
         const data = await response.json();
@@ -338,27 +563,105 @@ export default function FinancesPage() {
     } catch (_error) {
       toast.error('Error de conexión con el servidor');
     }
-  }, [authenticatedFetch, transactions, toast, confirm]);
-
-  const editTransaction = (transaction: Transaction) => {
-    openEditTransactionModal(transaction);
   };
 
-  // Función para usar plantilla (renombrada para evitar confusión con hooks)
+  // Función para usar plantilla
   const applyTemplate = (template: TemplateData) => {
     openTemplateTransactionModal(template);
   };
 
-  // Calcular totales
-  const totalIncome = transactions
-    .filter((t: Transaction) => t.type === 'INCOME')
-    .reduce((sum: number, t: Transaction) => sum + Math.abs(t.amount), 0);
+  // 🧮 Calcular totales - SIMPLES sin memoización innecesaria
+  const getTotalIncome = () => {
+    return transactions
+      .filter((t: Transaction) => t.type === 'INCOME')
+      .reduce((sum: number, t: Transaction) => sum + Math.abs(t.amount), 0);
+  };
 
-  const totalExpenses = transactions
-    .filter((t: Transaction) => t.type === 'EXPENSE')
-    .reduce((sum: number, t: Transaction) => sum + Math.abs(t.amount), 0);
+  const getTotalExpenses = () => {
+    return transactions
+      .filter((t: Transaction) => t.type === 'EXPENSE')
+      .reduce((sum: number, t: Transaction) => sum + Math.abs(t.amount), 0);
+  };
 
-  const balance = totalIncome - totalExpenses;
+  const getBalance = () => {
+    return getTotalIncome() - getTotalExpenses();
+  };
+
+  // 🎨 RENDERIZADO DIRECTO DE TRANSACCIONES - Como en tareas
+  const renderTransactions = () => {
+    return transactions.map((transaction) => (
+      <div key={transaction.id} className="flex items-center justify-between p-4 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg shadow-lg cursor-pointer hover:scale-[1.02] transition-transform duration-200" onClick={() => openActionModal(transaction)}>
+        <div className="flex items-center space-x-4">
+          <div
+            className={`w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-sm border ${
+              transaction.type === 'INCOME'
+                ? 'bg-green-500/60 border-green-400/40'
+                : 'bg-red-500/60 border-red-400/40'
+            } shadow-lg`}
+          >
+            <span className="text-xl">
+              {transaction.category?.icon ||
+                (transaction.type === 'INCOME' ? '💵' : '💸')}
+            </span>
+          </div>
+          <div>
+            <h3
+              className="font-bold text-white text-lg"
+              style={{
+                textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)',
+              }}
+            >
+              {transaction.description}
+            </h3>
+            <div className="flex items-center space-x-2">
+              <p
+                className="text-sm text-white/80 font-medium"
+                style={{
+                  textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)',
+                }}
+              >
+                {new Date(transaction.date).toLocaleDateString('es-ES')}
+              </p>
+              {transaction.category && (
+                <>
+                  <span className="text-white/50">•</span>
+                  <span
+                    className="text-xs px-2 py-1 rounded-full text-white/80 border"
+                    style={{
+                      backgroundColor: `${transaction.category.color}40`,
+                      borderColor: `${transaction.category.color}60`,
+                      textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)',
+                    }}
+                  >
+                    {transaction.category.name}
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-4">
+          <span
+            className={`text-xl font-bold ${
+              transaction.type === 'INCOME'
+                ? 'text-green-200'
+                : 'text-red-200'
+            }`}
+            style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
+          >
+            {transaction.type === 'INCOME' ? '+' : '-'}$
+            {Math.abs(transaction.amount).toLocaleString()}
+          </span>
+        </div>
+      </div>
+    ));
+  };
+
+  // Calcular totales para mostrar
+  const totalIncome = getTotalIncome();
+  const totalExpenses = getTotalExpenses();
+  const balance = getBalance();
 
   if (authLoading) {
     return (
@@ -403,7 +706,7 @@ export default function FinancesPage() {
                 💰 Finanzas Personales
               </h1>
             </div>
-            <Link href="/" className="text-blue-100 hover:text-white">
+            <Link href="/" className="text-blue-100 hover:text-white font-bold text-lg">
               Cerrar Sesión
             </Link>
           </div>
@@ -412,85 +715,14 @@ export default function FinancesPage() {
 
       {/* Content */}
       <div className="container mx-auto px-4 py-8">
-        {/* Financial Summary */}
-        <div className="grid md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-green-500/40 backdrop-blur-md shadow-lg border-2 border-green-400/60 p-4 rounded-lg">
-            <h3
-              className="text-sm font-bold text-green-100 mb-1"
-              style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
-            >
-              Ingresos
-            </h3>
-            <p
-              className="text-xl font-bold text-white"
-              style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
-            >
-              +${totalIncome.toLocaleString()}
-            </p>
-          </div>
-
-          <div className="bg-red-500/40 backdrop-blur-md shadow-lg border-2 border-red-400/60 p-4 rounded-lg">
-            <h3
-              className="text-sm font-bold text-red-100 mb-1"
-              style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
-            >
-              Gastos
-            </h3>
-            <p
-              className="text-xl font-bold text-white"
-              style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
-            >
-              -${totalExpenses.toLocaleString()}
-            </p>
-          </div>
-
-          <div
-            className={`p-4 rounded-lg border-2 backdrop-blur-md shadow-lg ${
-              balance >= 0
-                ? 'bg-blue-500/40 border-blue-400/60'
-                : 'bg-orange-500/40 border-orange-400/60'
-            }`}
-          >
-            <h3
-              className={`text-sm font-bold mb-1 ${
-                balance >= 0 ? 'text-blue-100' : 'text-orange-100'
-              }`}
-              style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
-            >
-              Balance
-            </h3>
-            <p
-              className={`text-xl font-bold text-white`}
-              style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
-            >
-              ${balance.toLocaleString()}
-            </p>
-          </div>
-        </div>
-
         {/* Sección de Creación de Transacciones */}
         <div className="bg-white/15 backdrop-blur-md shadow-lg border border-white/30 p-6 rounded-lg mb-6">
-          {/* Botón Crear Transacción Personalizada */}
-          <div className="mb-6">
-            <h2
-              className="text-xl font-bold text-white mb-4"
-              style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
-            >
-              Registrar Transacción Personalizada
-            </h2>
+          {/* Botón Crear Transacción */}
+          <div className="mb-6 flex justify-center">
             <button
-              onClick={openCreateTransactionModal}
-              className="w-full bg-purple-600/70 backdrop-blur-md text-white px-6 py-4 rounded-lg font-bold border border-purple-400/70 hover:bg-purple-700/80 transition-all duration-150 shadow-lg text-lg"
-              style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}
-            >
-              💰 Nueva Transacción
-            </button>
-            <p
-              className="text-white/80 text-sm mt-2 text-center font-medium"
-              style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}
-            >
-              Configura tipo, monto, descripción y categoría personalizados
-            </p>
+            onClick={openCreateTransactionModal}
+            className="bg-purple-600/70 backdrop-blur-md text-white px-4 py-2 rounded-lg font-bold border border-purple-400/70 hover:bg-purple-700/80 transition-all duration-150 shadow-lg text-sm"
+            style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}>💰 Nueva Transacción</button>
           </div>
 
           <h3
@@ -501,135 +733,16 @@ export default function FinancesPage() {
           </h3>
 
           <div className="grid grid-cols-6 md:grid-cols-12 gap-1 mb-6">
-            {[
-              // Gastos comunes
-              {
-                description: 'Supermercado',
-                type: 'EXPENSE' as const,
-                icon: '🛒',
-                category: 'Alimentación',
-              },
-              {
-                description: 'Gasolina',
-                type: 'EXPENSE' as const,
-                icon: '⛽',
-                category: 'Transporte',
-              },
-              {
-                description: 'Almuerzo',
-                type: 'EXPENSE' as const,
-                icon: '🍽️',
-                category: 'Alimentación',
-              },
-              {
-                description: 'Farmacia',
-                type: 'EXPENSE' as const,
-                icon: '💊',
-                category: 'Salud',
-              },
-              {
-                description: 'Transporte público',
-                type: 'EXPENSE' as const,
-                icon: '🚌',
-                category: 'Transporte',
-              },
-              {
-                description: 'Café',
-                type: 'EXPENSE' as const,
-                icon: '☕',
-                category: 'Alimentación',
-              },
-              {
-                description: 'Restaurante',
-                type: 'EXPENSE' as const,
-                icon: '🍴',
-                category: 'Alimentación',
-              },
-              {
-                description: 'Cine',
-                type: 'EXPENSE' as const,
-                icon: '🎥',
-                category: 'Entretenimiento',
-              },
-              {
-                description: 'Gimnasio',
-                type: 'EXPENSE' as const,
-                icon: '🏋️',
-                category: 'Salud',
-              },
-              {
-                description: 'Ropa',
-                type: 'EXPENSE' as const,
-                icon: '👕',
-                category: 'Vestimenta',
-              },
-              {
-                description: 'Internet',
-                type: 'EXPENSE' as const,
-                icon: '📶',
-                category: 'Servicios',
-              },
-              {
-                description: 'Electricidad',
-                type: 'EXPENSE' as const,
-                icon: '⚡',
-                category: 'Servicios',
-              },
-              {
-                description: 'Agua',
-                type: 'EXPENSE' as const,
-                icon: '💧',
-                category: 'Servicios',
-              },
-              {
-                description: 'Teléfono',
-                type: 'EXPENSE' as const,
-                icon: '📱',
-                category: 'Servicios',
-              },
-              {
-                description: 'Taxi/Uber',
-                type: 'EXPENSE' as const,
-                icon: '🚕',
-                category: 'Transporte',
-              },
-              {
-                description: 'Libros',
-                type: 'EXPENSE' as const,
-                icon: '📚',
-                category: 'Educación',
-              },
-              {
-                description: 'Streaming',
-                type: 'EXPENSE' as const,
-                icon: '📺',
-                category: 'Entretenimiento',
-              },
-              {
-                description: 'Seguros',
-                type: 'EXPENSE' as const,
-                icon: '🛡️',
-                category: 'Seguros',
-              },
-            ].map((template, index) => (
+            {EXPENSE_TEMPLATES.map((template, index) => (
               <div
                 key={index}
                 onClick={() => applyTemplate(template)}
-                className="px-0 py-1.5 rounded border transition-all duration-150 cursor-pointer bg-white/10 border-red-400/40 hover:bg-white/20 hover:border-red-400/60"
+                className="px-0 py-1.5 rounded cursor-pointer bg-red-50/80 border border-red-200 hover:bg-red-100/90 transition-colors will-change-auto"
               >
                 <div className="text-center">
                   <div className="text-sm mb-0.5">{template.icon}</div>
-                  <div
-                    className="text-xs font-bold leading-tight text-white/90"
-                    style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
-                  >
+                  <div className="text-xs font-bold leading-tight text-gray-800">
                     {template.description}
-                  </div>
-                  <div
-                    className="text-xs font-bold text-red-200"
-                    style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
-                  >
-                    {template.category}
                   </div>
                 </div>
               </div>
@@ -644,99 +757,16 @@ export default function FinancesPage() {
           </h3>
 
           <div className="grid grid-cols-6 md:grid-cols-12 gap-1">
-            {[
-              // Ingresos comunes
-              {
-                description: 'Salario',
-                type: 'INCOME' as const,
-                icon: '💼',
-                category: 'Trabajo',
-              },
-              {
-                description: 'Freelance',
-                type: 'INCOME' as const,
-                icon: '💻',
-                category: 'Trabajo',
-              },
-              {
-                description: 'Bono',
-                type: 'INCOME' as const,
-                icon: '🎁',
-                category: 'Trabajo',
-              },
-              {
-                description: 'Venta',
-                type: 'INCOME' as const,
-                icon: '🏪',
-                category: 'Negocios',
-              },
-              {
-                description: 'Propina',
-                type: 'INCOME' as const,
-                icon: '💵',
-                category: 'Trabajo',
-              },
-              {
-                description: 'Reembolso',
-                type: 'INCOME' as const,
-                icon: '💳',
-                category: 'Diversos',
-              },
-              {
-                description: 'Consultoría',
-                type: 'INCOME' as const,
-                icon: '📈',
-                category: 'Trabajo',
-              },
-              {
-                description: 'Inversión',
-                type: 'INCOME' as const,
-                icon: '💰',
-                category: 'Inversiones',
-              },
-              {
-                description: 'Alquiler',
-                type: 'INCOME' as const,
-                icon: '🏠',
-                category: 'Propiedades',
-              },
-              {
-                description: 'Comisión',
-                type: 'INCOME' as const,
-                icon: '💹',
-                category: 'Trabajo',
-              },
-              {
-                description: 'Regalo',
-                type: 'INCOME' as const,
-                icon: '🎁',
-                category: 'Diversos',
-              },
-              {
-                description: 'Trabajo extra',
-                type: 'INCOME' as const,
-                icon: '⏰',
-                category: 'Trabajo',
-              },
-            ].map((template, index) => (
+            {INCOME_TEMPLATES.map((template, index) => (
               <div
                 key={index}
                 onClick={() => applyTemplate(template)}
-                className="px-0 py-1.5 rounded border transition-all duration-150 cursor-pointer bg-white/10 border-green-400/40 hover:bg-white/20 hover:border-green-400/60"
+                className="px-0 py-1.5 rounded cursor-pointer bg-green-50/80 border border-green-200 hover:bg-green-100/90 transition-colors will-change-auto"
               >
                 <div className="text-center">
                   <div className="text-sm mb-0.5">{template.icon}</div>
-                  <div
-                    className="text-xs font-bold leading-tight text-white/90"
-                    style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
-                  >
+                  <div className="text-xs font-bold leading-tight text-gray-800">
                     {template.description}
-                  </div>
-                  <div
-                    className="text-xs font-bold text-green-200"
-                    style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
-                  >
-                    {template.category}
                   </div>
                 </div>
               </div>
@@ -747,12 +777,58 @@ export default function FinancesPage() {
         {/* Transactions List */}
         <div className="bg-white/15 backdrop-blur-md shadow-lg border border-white/30 rounded-lg">
           <div className="p-6 border-b border-white/20">
-            <h2
-              className="text-xl font-bold text-white"
-              style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
-            >
-              Transacciones Recientes ({transactions.length})
-            </h2>
+            <div className="flex items-center justify-between">
+              <h2
+                className="text-xl font-bold text-white"
+                style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
+              >
+                Transacciones Recientes ({transactions.length})
+              </h2>
+              
+              {/* Financial Summary Cards */}
+              <div className="flex gap-4">
+                <div className="bg-green-100/90 border-2 border-green-300 p-3 rounded-lg min-w-[150px]">
+                  <h3 className="text-xs font-bold text-green-800 mb-1">
+                    Ingresos
+                  </h3>
+                  <p className="text-lg font-bold text-green-900">
+                    +${totalIncome.toLocaleString()}
+                  </p>
+                </div>
+
+                <div className="bg-red-100/90 border-2 border-red-300 p-3 rounded-lg min-w-[150px]">
+                  <h3 className="text-xs font-bold text-red-800 mb-1">
+                    Gastos
+                  </h3>
+                  <p className="text-lg font-bold text-red-900">
+                    -${totalExpenses.toLocaleString()}
+                  </p>
+                </div>
+
+                <div
+                  className={`p-3 rounded-lg border-2 min-w-[150px] ${
+                    balance >= 0
+                      ? 'bg-blue-100/90 border-blue-300'
+                      : 'bg-orange-100/90 border-orange-300'
+                  }`}
+                >
+                  <h3
+                    className={`text-xs font-bold mb-1 ${
+                      balance >= 0 ? 'text-blue-800' : 'text-orange-800'
+                    }`}
+                  >
+                    Balance
+                  </h3>
+                  <p
+                    className={`text-lg font-bold ${
+                      balance >= 0 ? 'text-blue-900' : 'text-orange-900'
+                    }`}
+                  >
+                    ${balance.toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="p-6">
@@ -774,98 +850,7 @@ export default function FinancesPage() {
               </div>
             ) : (
               <div className="space-y-3">
-                {transactions.map((transaction: Transaction) => (
-                  <div
-                    key={transaction.id}
-                    className="flex items-center justify-between p-4 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg shadow-lg"
-                  >
-                    <div className="flex items-center space-x-4">
-                      <div
-                        className={`w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-sm border ${
-                          transaction.type === 'INCOME'
-                            ? 'bg-green-500/60 border-green-400/40'
-                            : 'bg-red-500/60 border-red-400/40'
-                        } shadow-lg`}
-                      >
-                        <span className="text-xl">
-                          {transaction.category?.icon ||
-                            (transaction.type === 'INCOME' ? '💵' : '💸')}
-                        </span>
-                      </div>
-                      <div>
-                        <h3
-                          className="font-bold text-white text-lg"
-                          style={{
-                            textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)',
-                          }}
-                        >
-                          {transaction.description}
-                        </h3>
-                        <div className="flex items-center space-x-2">
-                          <p
-                            className="text-sm text-white/80 font-medium"
-                            style={{
-                              textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)',
-                            }}
-                          >
-                            {new Date(transaction.date).toLocaleDateString(
-                              'es-ES'
-                            )}
-                          </p>
-                          {transaction.category && (
-                            <>
-                              <span className="text-white/50">•</span>
-                              <span
-                                className="text-xs px-2 py-1 rounded-full text-white/80 border"
-                                style={{
-                                  backgroundColor: `${transaction.category.color}40`,
-                                  borderColor: `${transaction.category.color}60`,
-                                  textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)',
-                                }}
-                              >
-                                {transaction.category.name}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center space-x-4">
-                      <span
-                        className={`text-xl font-bold ${
-                          transaction.type === 'INCOME'
-                            ? 'text-green-200'
-                            : 'text-red-200'
-                        }`}
-                        style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
-                      >
-                        {transaction.type === 'INCOME' ? '+' : '-'}$
-                        {Math.abs(transaction.amount).toLocaleString()}
-                      </span>
-                      <button
-                        className="text-white bg-blue-500/70 backdrop-blur-md border border-blue-400/50 hover:bg-blue-600/80 text-sm font-bold px-4 py-2 rounded-lg transition-all duration-150 hover:shadow-md transform hover:scale-105"
-                        onClick={() => editTransaction(transaction)}
-                        title="Editar transacción"
-                        style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}
-                      >
-                        Editar
-                      </button>
-                      <button
-                        className="text-white bg-red-500/70 backdrop-blur-md border border-red-400/50 hover:bg-red-600/80 text-sm font-bold px-4 py-2 rounded-lg transition-all duration-150 hover:shadow-md transform hover:scale-105"
-                        onClick={() =>
-                          deleteTransaction(
-                            transaction.id,
-                            transaction.description
-                          )
-                        }
-                        style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}
-                      >
-                        Eliminar
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                {renderTransactions()}
               </div>
             )}
           </div>
@@ -885,6 +870,17 @@ export default function FinancesPage() {
         isEditing={isEditingMode}
         onConfirm={handleTransactionModalConfirm}
         onCancel={closeTransactionModal}
+      />
+
+      {/* Item Action Modal */}
+      <ItemActionModal
+        isOpen={isActionModalOpen}
+        title={selectedTransaction?.description || ''}
+        description={selectedTransaction?.category?.name ? `Categoría: ${selectedTransaction.category.name}` : undefined}
+        type="transaction"
+        onEdit={handleEditFromAction}
+        onDelete={handleDeleteFromAction}
+        onClose={closeActionModal}
       />
     </div>
   );

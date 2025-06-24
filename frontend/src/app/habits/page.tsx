@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 import { useConfirm } from '@/hooks/useConfirm';
 import { useEditModal } from '@/hooks/useEditModal';
-import { EditHabitModal } from '@/components/ui';
+import { EditHabitModal, ItemActionModal } from '@/components/ui';
 import { apiUrls } from '@/config/api';
 
 interface Habit {
@@ -26,6 +26,69 @@ interface HabitEntry {
   notes?: string;
 }
 
+// 🎨 FUNCIÓN DE ICONOS SIMPLE
+const getHabitIcon = (habitName: string) => {
+  const name = habitName.toLowerCase();
+  
+  if (name.includes('ejercicio') || name.includes('gym') || name.includes('deporte')) return '🏃‍♂️';
+  if (name.includes('leer') || name.includes('lectura')) return '📚';
+  if (name.includes('meditar') || name.includes('meditación')) return '🧘‍♀️';
+  if (name.includes('agua') || name.includes('beber')) return '💧';
+  if (name.includes('temprano') || name.includes('despertar')) return '🌅';
+  if (name.includes('estudiar') || name.includes('aprender')) return '📝';
+  if (name.includes('gratitud') || name.includes('agradecer')) return '🙏';
+  if (name.includes('diario') || name.includes('escribir')) return '📔';
+  if (name.includes('aire libre') || name.includes('naturaleza')) return '🌿';
+  if (name.includes('digital') || name.includes('pantalla')) return '📵';
+  if (name.includes('organizar') || name.includes('limpiar')) return '🧹';
+  if (name.includes('creativo') || name.includes('arte')) return '🎨';
+  if (name.includes('cocinar')) return '👨‍🍳';
+  if (name.includes('caminar') || name.includes('paso')) return '🚶‍♂️';
+  if (name.includes('dormir') || name.includes('sueño')) return '😴';
+  if (name.includes('saludable') || name.includes('fruta')) return '🥗';
+  if (name.includes('familia') || name.includes('llamar')) return '📞';
+  if (name.includes('música') || name.includes('instrumento')) return '🎸';
+  if (name.includes('vitamina')) return '💊';
+  if (name.includes('yoga') || name.includes('estir')) return '🧘‍♀️';
+  return '⭐';
+};
+
+// 🌟 PLANTILLAS SIMPLES
+const predefinedHabits = [
+  { name: 'Hacer ejercicio', icon: '🏃‍♂️', description: '30 minutos de actividad física' },
+  { name: 'Leer', icon: '📚', description: 'Leer al menos 20 minutos' },
+  { name: 'Meditar', icon: '🧘‍♀️', description: 'Meditación o mindfulness' },
+  { name: 'Beber agua', icon: '💧', description: 'Tomar 8 vasos de agua al día' },
+  { name: 'Levantarse temprano', icon: '🌅', description: 'Despertar antes de las 7 AM' },
+  { name: 'Estudiar', icon: '📝', description: 'Dedicar tiempo al aprendizaje' },
+  { name: 'Gratitud', icon: '🙏', description: 'Escribir 3 cosas por las que estás agradecido' },
+  { name: 'Diario personal', icon: '📔', description: 'Escribir en tu diario personal' },
+  { name: 'Tiempo al aire libre', icon: '🌿', description: 'Salir y respirar aire fresco' },
+  { name: 'Desconexión digital', icon: '📵', description: 'Tiempo sin pantallas o dispositivos' },
+  { name: 'Organizar espacio', icon: '🧹', description: 'Mantener el entorno ordenado' },
+  { name: 'Tiempo creativo', icon: '🎨', description: 'Cualquier actividad creativa' },
+  { name: 'Caminar diario', icon: '🚶‍♂️', description: 'Caminar al menos 30 minutos' },
+  { name: 'Comer saludable', icon: '🥗', description: 'Incluir frutas y verduras en comidas' },
+  { name: 'Dormir temprano', icon: '😴', description: 'Acostarse antes de las 10 PM' },
+  { name: 'Hacer la cama', icon: '🛏️', description: 'Ordenar la cama al levantarse' },
+  { name: 'Tomar vitaminas', icon: '💊', description: 'Suplementos diarios' },
+  { name: 'Llamar a familia', icon: '📞', description: 'Contactar con seres queridos' },
+  { name: 'Escuchar música', icon: '🎵', description: 'Disfrutar de música favorita' },
+  { name: 'Cocinar en casa', icon: '👨‍🍳', description: 'Preparar comidas caseras' },
+  { name: 'Practicar idioma', icon: '🌍', description: 'Estudiar un nuevo idioma' },
+  { name: 'Hacer yoga', icon: '🧘‍♀️', description: 'Práctica de yoga o estiramientos' },
+  { name: 'Ahorrar dinero', icon: '💰', description: 'Guardar dinero cada día' },
+  { name: 'Sonreír más', icon: '😊', description: 'Mantener actitud positiva' },
+] as const;
+
+// 🎮 FUNCIONES DE GAMIFICACIÓN
+const getStreakLevel = (streak: number) => {
+  if (streak >= 21) return { level: 'gold', emoji: '🥇', color: 'from-yellow-400 to-yellow-600', text: 'text-yellow-700' };
+  if (streak >= 7) return { level: 'silver', emoji: '🥈', color: 'from-gray-300 to-gray-500', text: 'text-gray-700' };
+  if (streak >= 1) return { level: 'bronze', emoji: '🥉', color: 'from-orange-400 to-orange-600', text: 'text-orange-700' };
+  return { level: 'none', emoji: '–', color: 'from-gray-200 to-gray-300', text: 'text-gray-600' };
+};
+
 export default function HabitsPage() {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [habitEntries, setHabitEntries] = useState<HabitEntry[]>([]);
@@ -35,313 +98,17 @@ export default function HabitsPage() {
   const [isHabitModalOpen, setIsHabitModalOpen] = useState(false);
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
   const [isEditingMode, setIsEditingMode] = useState(false);
-  const {
-    authenticatedFetch,
-    isAuthenticated,
-    isLoading: authLoading,
-  } = useAuth();
+  
+  // Estado para el modal de acciones
+  const [isActionModalOpen, setIsActionModalOpen] = useState(false);
+  const [selectedHabit, setSelectedHabit] = useState<Habit | null>(null);
+  
+  const { authenticatedFetch, isAuthenticated, isLoading: authLoading, user } = useAuth();
   const toast = useToast();
   const confirm = useConfirm();
   const editModal = useEditModal();
 
-  // Función para obtener el icono de un hábito basado en su nombre
-  const getHabitIcon = (habitName: string) => {
-    const name = habitName.toLowerCase();
-
-    // Iconos predefinidos
-    if (
-      name.includes('ejercicio') ||
-      name.includes('ejercitar') ||
-      name.includes('gym') ||
-      name.includes('deporte')
-    )
-      return '🏃‍♂️';
-    if (
-      name.includes('leer') ||
-      name.includes('lectura') ||
-      name.includes('libro')
-    )
-      return '📚';
-    if (
-      name.includes('meditar') ||
-      name.includes('meditación') ||
-      name.includes('mindfulness')
-    )
-      return '🧘‍♀️';
-    if (
-      name.includes('agua') ||
-      name.includes('beber') ||
-      name.includes('hidrat')
-    )
-      return '💧';
-    if (
-      name.includes('levantarse') ||
-      name.includes('despertar') ||
-      name.includes('temprano') ||
-      name.includes('madruga')
-    )
-      return '🌅';
-    if (
-      name.includes('estudiar') ||
-      name.includes('aprender') ||
-      name.includes('curso') ||
-      name.includes('estudio')
-    )
-      return '📝';
-    if (
-      name.includes('gratitud') ||
-      name.includes('agradecer') ||
-      name.includes('agradecido')
-    )
-      return '🙏';
-
-    // Nuevos hábitos
-    if (
-      name.includes('diario') ||
-      name.includes('escribir') ||
-      name.includes('journal')
-    )
-      return '📔';
-    if (
-      name.includes('aire libre') ||
-      name.includes('exterior') ||
-      name.includes('naturaleza') ||
-      name.includes('outdoor')
-    )
-      return '🌿';
-    if (
-      name.includes('desconexión') ||
-      name.includes('digital') ||
-      name.includes('pantalla') ||
-      name.includes('teléfono') ||
-      name.includes('movil')
-    )
-      return '📵';
-    if (
-      name.includes('organizar') ||
-      name.includes('ordenar') ||
-      name.includes('limpiar') ||
-      name.includes('limpieza')
-    )
-      return '🧹';
-    if (
-      name.includes('creativo') ||
-      name.includes('creatividad') ||
-      name.includes('crear') ||
-      name.includes('arte') ||
-      name.includes('dibujar')
-    )
-      return '🎨';
-
-    // Iconos adicionales para otros hábitos comunes
-    if (name.includes('cocinar') || name.includes('cocina')) return '👨‍🍳';
-    if (
-      name.includes('trabajo') ||
-      name.includes('productiv') ||
-      name.includes('enfocar')
-    )
-      return '💼';
-    if (
-      name.includes('dinero') ||
-      name.includes('ahorro') ||
-      name.includes('finanzas')
-    )
-      return '💰';
-    if (
-      name.includes('social') ||
-      name.includes('amigos') ||
-      name.includes('socializar')
-    )
-      return '👥';
-    if (
-      name.includes('jardín') ||
-      name.includes('plantas') ||
-      name.includes('jardinería')
-    )
-      return '🌱';
-    if (
-      name.includes('mascota') ||
-      name.includes('perro') ||
-      name.includes('gato')
-    )
-      return '🐕';
-    if (
-      name.includes('vitamina') ||
-      name.includes('medicament') ||
-      name.includes('supplement')
-    )
-      return '💊';
-    if (
-      name.includes('yoga') ||
-      name.includes('estir') ||
-      name.includes('flexibilidad')
-    )
-      return '🧘‍♀️';
-    if (
-      name.includes('caminar') ||
-      name.includes('paso') ||
-      name.includes('andar')
-    )
-      return '🚶‍♂️';
-    if (
-      name.includes('dormir') ||
-      name.includes('sueño') ||
-      name.includes('descansar')
-    )
-      return '😴';
-    if (
-      name.includes('comer') ||
-      name.includes('saludable') ||
-      name.includes('dieta') ||
-      name.includes('vegetal') ||
-      name.includes('fruta')
-    )
-      return '🥗';
-    if (
-      name.includes('familia') ||
-      name.includes('llamar') ||
-      name.includes('contactar')
-    )
-      return '📞';
-    if (
-      name.includes('instrumento') ||
-      name.includes('música') ||
-      name.includes('tocar') ||
-      name.includes('piano') ||
-      name.includes('guitarra')
-    )
-      return '🎸';
-
-    // Icono por defecto para hábitos personalizados
-    return '⭐';
-  };
-  const predefinedHabits = [
-    {
-      name: 'Hacer ejercicio',
-      icon: '🏃‍♂️',
-      description: '30 minutos de actividad física',
-    },
-    { name: 'Leer', icon: '📚', description: 'Leer al menos 20 minutos' },
-    { name: 'Meditar', icon: '🧘‍♀️', description: 'Meditación o mindfulness' },
-    {
-      name: 'Beber agua',
-      icon: '💧',
-      description: 'Tomar 8 vasos de agua al día',
-    },
-    {
-      name: 'Levantarse temprano',
-      icon: '🌅',
-      description: 'Despertar antes de las 7 AM',
-    },
-    {
-      name: 'Estudiar',
-      icon: '📝',
-      description: 'Dedicar tiempo al aprendizaje',
-    },
-    {
-      name: 'Gratitud',
-      icon: '🙏',
-      description: 'Escribir 3 cosas por las que estás agradecido',
-    },
-    {
-      name: 'Diario personal',
-      icon: '📔',
-      description: 'Escribir en tu diario personal',
-    },
-    {
-      name: 'Tiempo al aire libre',
-      icon: '🌿',
-      description: 'Salir y respirar aire fresco',
-    },
-    {
-      name: 'Desconexión digital',
-      icon: '📵',
-      description: 'Tiempo sin pantallas o dispositivos',
-    },
-    {
-      name: 'Organizar espacio',
-      icon: '🧹',
-      description: 'Mantener el entorno ordenado',
-    },
-    {
-      name: 'Tiempo creativo',
-      icon: '🎨',
-      description: 'Cualquier actividad creativa',
-    },
-    // Segunda fila de hábitos
-    {
-      name: 'Caminar diario',
-      icon: '🚶‍♂️',
-      description: 'Caminar al menos 30 minutos',
-    },
-    {
-      name: 'Comer saludable',
-      icon: '🥗',
-      description: 'Incluir frutas y verduras en comidas',
-    },
-    {
-      name: 'Dormir temprano',
-      icon: '😴',
-      description: 'Acostarse antes de las 10 PM',
-    },
-    {
-      name: 'Hacer la cama',
-      icon: '🛏️',
-      description: 'Ordenar la cama al levantarse',
-    },
-    { name: 'Tomar vitaminas', icon: '💊', description: 'Suplementos diarios' },
-    {
-      name: 'Llamar a familia',
-      icon: '📞',
-      description: 'Contactar con seres queridos',
-    },
-    {
-      name: 'Escuchar música',
-      icon: '🎵',
-      description: 'Disfrutar de música favorita',
-    },
-    {
-      name: 'Cocinar en casa',
-      icon: '👨‍🍳',
-      description: 'Preparar comidas caseras',
-    },
-    {
-      name: 'Practicar idioma',
-      icon: '🌍',
-      description: 'Estudiar un nuevo idioma',
-    },
-    {
-      name: 'Hacer yoga',
-      icon: '🧘‍♀️',
-      description: 'Práctica de yoga o estiramientos',
-    },
-    {
-      name: 'Ahorrar dinero',
-      icon: '💰',
-      description: 'Guardar dinero cada día',
-    },
-    {
-      name: 'Sonreír más',
-      icon: '😊',
-      description: 'Mantener actitud positiva',
-    },
-  ];
-
-  useEffect(() => {
-    if (!authLoading && isAuthenticated) {
-      loadHabits();
-    } else if (!authLoading && !isAuthenticated) {
-      setLoading(false);
-    }
-  }, [authLoading, isAuthenticated]);
-
-  // Cargar entradas cuando los hábitos cambian
-  useEffect(() => {
-    if (habits.length > 0) {
-      loadHabitEntries();
-    }
-  }, [habits]);
-
+  // 📊 FUNCIONES SIMPLES - Sin useCallback innecesario
   const loadHabits = async () => {
     try {
       const response = await authenticatedFetch(apiUrls.habits.list());
@@ -362,16 +129,12 @@ export default function HabitsPage() {
 
   const loadHabitEntries = async () => {
     try {
-      // Cargar entradas de los últimos 30 días para calcular estadísticas
       const endDate = new Date().toISOString().split('T')[0];
-      const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-        .toISOString()
-        .split('T')[0];
-
+      const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
       const allEntries: HabitEntry[] = [];
 
-      // Cargar entradas para cada hábito
-      for (const habit of habits) {
+      // Cargar entradas en paralelo
+      const entryPromises = habits.map(async (habit) => {
         try {
           const response = await authenticatedFetch(
             `${apiUrls.habits.entries(habit.id)}?startDate=${startDate}&endDate=${endDate}`
@@ -379,30 +142,130 @@ export default function HabitsPage() {
 
           if (response.ok) {
             const data = await response.json();
-            // Agregar las entradas de este hábito al array total
             if (data.data && Array.isArray(data.data)) {
-              const habitEntries = data.data.map((entry: any) => ({
+              return data.data.map((entry: any) => ({
                 id: entry.id,
                 habitId: habit.id,
-                date: entry.date.split('T')[0], // Asegurar formato YYYY-MM-DD
+                date: entry.date.split('T')[0],
                 count: entry.count,
                 notes: entry.notes,
               }));
-              allEntries.push(...habitEntries);
             }
           }
         } catch (error) {
           console.error(`Error loading entries for habit ${habit.id}:`, error);
         }
-      }
+        return [];
+      });
 
+      const results = await Promise.all(entryPromises);
+      allEntries.push(...results.flat());
       setHabitEntries(allEntries);
     } catch (error) {
       console.error('Error loading habit entries:', error);
     }
   };
 
-  // Funciones para manejar el modal de hábitos
+  // Funciones CRUD simples
+  const createHabitComplete = async (habitData: any) => {
+    try {
+      const response = await authenticatedFetch(apiUrls.habits.create(), {
+        method: 'POST',
+        body: JSON.stringify(habitData),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        setHabits(prev => [...prev, data.data]);
+        await loadHabitEntries();
+        toast.success('¡Hábito creado exitosamente!');
+      } else {
+        toast.error('Error: ' + data.message);
+      }
+    } catch (error) {
+      toast.error('Error de conexión con el servidor');
+    }
+  };
+
+  const updateHabitComplete = async (habitId: string, habitData: any) => {
+    try {
+      const response = await authenticatedFetch(apiUrls.habits.update(habitId), {
+        method: 'PUT',
+        body: JSON.stringify(habitData),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        setHabits(prev => prev.map((habit: Habit) => 
+          habit.id === habitId ? { ...habit, ...data.data } : habit
+        ));
+        toast.success('¡Hábito editado exitosamente!');
+      } else {
+        toast.error('Error: ' + data.message);
+      }
+    } catch (error) {
+      toast.error('Error de conexión con el servidor');
+    }
+  };
+
+  const deleteHabit = async (habitId: string, habitName: string) => {
+    const confirmed = await confirm.confirmDelete(habitName);
+    if (!confirmed) return;
+
+    try {
+      const response = await authenticatedFetch(apiUrls.habits.delete(habitId), {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setHabits(prev => prev.filter(h => h.id !== habitId));
+        toast.delete('¡Hábito eliminado exitosamente!');
+      } else {
+        const data = await response.json();
+        toast.error('Error: ' + data.message);
+      }
+    } catch (error) {
+      toast.error('Error de conexión con el servidor');
+    }
+  };
+
+  const addPredefinedHabit = async (habitName: string) => {
+    const habitExists = habits.some(habit => 
+      habit.name.toLowerCase() === habitName.toLowerCase()
+    );
+    if (habitExists) {
+      toast.warning('¡Este hábito ya existe en tu lista!');
+      return;
+    }
+
+    const template = predefinedHabits.find(h => h.name === habitName);
+    if (template) {
+      openTemplateHabitModal(template);
+    }
+  };
+
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      loadHabits();
+      // Toast de bienvenida
+      setTimeout(() => {
+        toast.welcome(
+          `¡Ánimo con esos hábitos ${user?.name || user?.email || 'Usuario'}! 🎯`,
+          4000
+        );
+      }, 500);
+    } else if (!authLoading && !isAuthenticated) {
+      setLoading(false);
+    }
+  }, [authLoading, isAuthenticated, user]);
+
+  useEffect(() => {
+    if (habits.length > 0) {
+      loadHabitEntries();
+    }
+  }, [habits]);
+
+  // Funciones para manejar el modal
   const openCreateHabitModal = () => {
     setEditingHabit(null);
     setIsEditingMode(false);
@@ -436,108 +299,93 @@ export default function HabitsPage() {
 
   const handleHabitModalConfirm = async (habitData: any) => {
     if (isEditingMode && editingHabit?.id) {
-      // Editar hábito existente
       await updateHabitComplete(editingHabit.id, habitData);
     } else {
-      // Crear nuevo hábito
       await createHabitComplete(habitData);
     }
     closeHabitModal();
   };
 
-  const createHabitComplete = async (habitData: any) => {
-    try {
-      const response = await authenticatedFetch(apiUrls.habits.create(), {
-        method: 'POST',
-        body: JSON.stringify(habitData),
-      });
+  // Funciones para el modal de acciones
+  const openActionModal = (habit: Habit) => {
+    setSelectedHabit(habit);
+    setIsActionModalOpen(true);
+  };
 
-      const data = await response.json();
+  const closeActionModal = () => {
+    setIsActionModalOpen(false);
+    setSelectedHabit(null);
+  };
 
-      if (response.ok) {
-        setHabits([...habits, data.data]);
-        await loadHabitEntries(); // Recargar entradas
-        toast.success('¡Hábito creado exitosamente!');
-      } else {
-        toast.error('Error: ' + data.message);
-      }
-    } catch (error) {
-      toast.error('Error de conexión con el servidor');
+  const handleEditFromAction = () => {
+    if (selectedHabit) {
+      closeActionModal();
+      openEditHabitModal(selectedHabit);
     }
   };
 
-  const updateHabitComplete = async (habitId: string, habitData: any) => {
-    try {
-      const response = await authenticatedFetch(
-        apiUrls.habits.update(habitId),
-        {
-          method: 'PUT',
-          body: JSON.stringify(habitData),
-        }
-      );
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setHabits(
-          habits.map((habit: Habit) =>
-            habit.id === habitId ? { ...habit, ...data.data } : habit
-          )
-        );
-        toast.success('¡Hábito editado exitosamente!');
-      } else {
-        toast.error('Error: ' + data.message);
-      }
-    } catch (error) {
-      toast.error('Error de conexión con el servidor');
+  const handleDeleteFromAction = () => {
+    if (selectedHabit) {
+      closeActionModal();
+      deleteHabit(selectedHabit.id, selectedHabit.name);
     }
   };
 
-  const addPredefinedHabit = async (habitName: string) => {
-    // Verificar si el hábito ya existe
-    const habitExists = habits.some(
-      habit => habit.name.toLowerCase() === habitName.toLowerCase()
+  // 🧮 Funciones de cálculo SIMPLES - Sin memoización innecesaria
+  const getTodayProgress = (habitId: string, target: number) => {
+    const today = new Date().toISOString().split('T')[0];
+    const todayEntries = habitEntries.filter(
+      entry => entry.habitId === habitId && entry.date === today
     );
-    if (habitExists) {
-      toast.warning('¡Este hábito ya existe en tu lista!');
-      return;
-    }
-
-    // Buscar la plantilla correspondiente
-    const template = predefinedHabits.find(h => h.name === habitName);
-    if (template) {
-      openTemplateHabitModal(template);
-    }
+    const todayCount = todayEntries.reduce((sum, entry) => sum + entry.count, 0);
+    return { completed: todayCount, target };
   };
 
-  const deleteHabit = async (habitId: string, habitName: string) => {
-    const confirmed = await confirm.confirmDelete(habitName);
-    if (!confirmed) {
-      return;
-    }
+  const getStreak = (habitId: string) => {
+    let streakCount = 0;
+    const today = new Date();
 
-    try {
-      const response = await authenticatedFetch(
-        apiUrls.habits.delete(habitId),
-        {
-          method: 'DELETE',
-        }
+    for (let i = 0; i < 30; i++) {
+      const checkDate = new Date(today);
+      checkDate.setDate(today.getDate() - i);
+      const dateStr = checkDate.toISOString().split('T')[0];
+
+      const hasEntry = habitEntries.some(
+        entry => entry.habitId === habitId && entry.date === dateStr && entry.count > 0
       );
 
-      if (response.ok) {
-        setHabits(habits.filter(h => h.id !== habitId));
-        toast.delete('¡Hábito eliminado exitosamente!');
-      } else {
-        const data = await response.json();
-        toast.error('Error: ' + data.message);
+      if (hasEntry) {
+        streakCount++;
+      } else if (i > 0) {
+        break;
       }
-    } catch (error) {
-      toast.error('Error de conexión con el servidor');
     }
+    return streakCount;
   };
 
-  const editHabit = (habit: Habit) => {
-    openEditHabitModal(habit);
+  const getWeeklyProgress = (habitId: string) => {
+    const today = new Date();
+    const weekStart = new Date(today);
+    weekStart.setDate(today.getDate() - today.getDay());
+
+    let completedDays = 0;
+    for (let i = 0; i < 7; i++) {
+      const checkDate = new Date(weekStart);
+      checkDate.setDate(weekStart.getDate() + i);
+      const dateStr = checkDate.toISOString().split('T')[0];
+
+      const hasEntry = habitEntries.some(
+        entry => entry.habitId === habitId && entry.date === dateStr && entry.count > 0
+      );
+
+      if (hasEntry) completedDays++;
+    }
+
+    return {
+      completed: completedDays,
+      total: 7,
+      percentage: Math.round((completedDays / 7) * 100),
+    };
   };
 
   const toggleHabitComplete = async (habitId: string, target: number) => {
@@ -546,60 +394,36 @@ export default function HabitsPage() {
     const isCurrentlyCompleted = completed >= target;
 
     if (isCurrentlyCompleted) {
-      // Desmarcar - eliminar la entrada más reciente del día
       await unmarkHabitComplete(habitId, today);
     } else {
-      // Marcar - agregar nueva entrada
       await markHabitComplete(habitId, target, today);
     }
   };
 
-  const markHabitComplete = async (
-    habitId: string,
-    target: number,
-    today: string
-  ) => {
+  const markHabitComplete = async (habitId: string, target: number, today: string) => {
     try {
-      const response = await authenticatedFetch(
-        apiUrls.habits.entries(habitId),
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            date: today,
-            count: 1,
-          }),
-        }
-      );
+      const response = await authenticatedFetch(apiUrls.habits.entries(habitId), {
+        method: 'POST',
+        body: JSON.stringify({ date: today, count: 1 }),
+      });
 
       const data = await response.json();
-
       if (response.ok) {
-        // Verificar que tenemos un ID válido del backend
         if (!data.data?.id) {
-          console.error('Backend did not return a valid ID:', data);
           toast.error('Error: El servidor no devolvió un ID válido');
           return;
         }
 
-        // Agregar la nueva entrada al estado local con el ID real del backend
         const newEntry: HabitEntry = {
-          id: data.data.id, // Usar SOLO el ID del backend
+          id: data.data.id,
           habitId,
           date: today,
           count: 1,
         };
-        const updatedEntries = [...habitEntries, newEntry];
-        setHabitEntries(updatedEntries);
+        
+        setHabitEntries(prev => [...prev, newEntry]);
 
-        // Calcular el progreso con la nueva entrada
-        const todayEntries = updatedEntries.filter(
-          entry => entry.habitId === habitId && entry.date === today
-        );
-        const newCompleted = todayEntries.reduce(
-          (sum, entry) => sum + entry.count,
-          0
-        );
-
+        const newCompleted = getTodayProgress(habitId, target).completed + 1;
         if (newCompleted >= target) {
           toast.success('¡Meta del día completada! 🎉');
         } else {
@@ -616,7 +440,6 @@ export default function HabitsPage() {
 
   const unmarkHabitComplete = async (habitId: string, today: string) => {
     try {
-      // Encontrar la entrada más reciente del día para este hábito
       const todayEntries = habitEntries.filter(
         entry => entry.habitId === habitId && entry.date === today
       );
@@ -626,43 +449,14 @@ export default function HabitsPage() {
         return;
       }
 
-      // Tomar la entrada más reciente
       const entryToDelete = todayEntries[todayEntries.length - 1];
-
-      // Llamar al endpoint para eliminar la entrada
-      const response = await authenticatedFetch(
-        apiUrls.habits.deleteEntry(entryToDelete.id),
-        {
-          method: 'DELETE',
-        }
-      );
+      const response = await authenticatedFetch(apiUrls.habits.deleteEntry(entryToDelete.id), {
+        method: 'DELETE',
+      });
 
       if (response.ok) {
-        // Actualizar el estado local eliminando la entrada
-        const updatedEntries = habitEntries.filter(
-          entry => entry.id !== entryToDelete.id
-        );
-        setHabitEntries(updatedEntries);
-
-        // Calcular el nuevo progreso
-        const remainingTodayEntries = updatedEntries.filter(
-          entry => entry.habitId === habitId && entry.date === today
-        );
-        const newCompleted = remainingTodayEntries.reduce(
-          (sum, entry) => sum + entry.count,
-          0
-        );
-
-        if (newCompleted === 0) {
-          toast.success('Hábito desmarcado');
-        } else {
-          // Obtener el target del hábito
-          const habit = habits.find(h => h.id === habitId);
-          const target = habit?.target || 1;
-          toast.success(
-            `Desmarcado. Progreso actual: ${newCompleted}/${target}`
-          );
-        }
+        setHabitEntries(prev => prev.filter(entry => entry.id !== entryToDelete.id));
+        toast.success('Hábito desmarcado');
       } else {
         const data = await response.json();
         toast.error('Error: ' + data.message);
@@ -673,77 +467,125 @@ export default function HabitsPage() {
     }
   };
 
-  // Funciones para calcular estadísticas
-  const getTodayProgress = (habitId: string, target: number) => {
-    const today = new Date().toISOString().split('T')[0];
-    const todayEntries = habitEntries.filter(
-      entry => entry.habitId === habitId && entry.date === today
-    );
-    const todayCount = todayEntries.reduce(
-      (sum, entry) => sum + entry.count,
-      0
-    );
-    return { completed: todayCount, target };
-  };
+  // 🎨 RENDERIZADO DIRECTO DE HÁBITOS - Como en tareas
+  const renderHabits = () => {
+    return habits.map((habit) => {
+      const todayProgress = getTodayProgress(habit.id, habit.target);
+      const streak = getStreak(habit.id);
+      const weeklyProgress = getWeeklyProgress(habit.id);
+      const isCompleted = todayProgress.completed >= todayProgress.target;
+      const streakLevel = getStreakLevel(streak);
+      
+      // 🏆 Colores planos según nivel de logro
+      const getCardStyles = (level: string) => {
+        switch (level) {
+          case 'gold':
+            return 'bg-yellow-100 border-2 border-yellow-300 shadow-lg';
+          case 'silver':
+            return 'bg-gray-100 border-2 border-gray-300 shadow-lg';
+          case 'bronze':
+            return 'bg-orange-100 border-2 border-orange-300 shadow-lg';
+          default:
+            return 'bg-white border-2 border-gray-200 shadow-lg';
+        }
+      };
 
-  const getStreak = (habitId: string) => {
-    // Calcular días consecutivos desde hoy hacia atrás
-    let streak = 0;
-    const today = new Date();
+      return (
+        <div key={habit.id} className={`${getCardStyles(streakLevel.level)} rounded-lg p-4 relative overflow-hidden cursor-pointer hover:scale-105 transition-transform duration-200`} onClick={() => openActionModal(habit)}>
+          {/* Header with icon and name */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center space-x-2">
+              <span className="text-2xl">{getHabitIcon(habit.name)}</span>
+              <h3 className="font-bold text-gray-800 text-base leading-tight">
+                {habit.name}
+              </h3>
+            </div>
+          </div>
 
-    for (let i = 0; i < 30; i++) {
-      const checkDate = new Date(today);
-      checkDate.setDate(today.getDate() - i);
-      const dateStr = checkDate.toISOString().split('T')[0];
+          {/* Frequency and target info */}
+          <p className="text-gray-600 font-medium text-sm mb-3">
+            {habit.frequency} | Meta: {habit.target} vez(es)
+          </p>
 
-      const hasEntry = habitEntries.some(
-        entry =>
-          entry.habitId === habitId && entry.date === dateStr && entry.count > 0
+          {/* Toggle button centered */}
+          <div className="flex justify-center mb-4">
+            <button
+              className={`w-16 h-16 rounded-full border-2 flex items-center justify-center transition-all duration-200 cursor-pointer shadow-lg hover:scale-110 ${
+                isCompleted
+                  ? 'border-green-500 bg-green-500 text-white hover:bg-green-600'
+                  : 'border-blue-500 bg-blue-500 hover:bg-blue-600 text-white'
+              }`}
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleHabitComplete(habit.id, habit.target);
+              }}
+              title={isCompleted ? 'Click para desmarcar' : 'Click para marcar como completado'}
+            >
+              <span className="text-3xl font-bold">{isCompleted ? '✓' : '+' }</span>
+            </button>
+          </div>
+
+          {/* Stats row */}
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="text-center">
+              <div className="text-xs font-bold text-gray-600 mb-1">
+                Hoy
+              </div>
+              <div
+                className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center text-sm font-bold transition-all duration-200 border-2 shadow-lg ${
+                  isCompleted
+                    ? 'bg-green-500 text-white border-green-600'
+                    : 'bg-gray-200 text-gray-700 border-gray-300'
+                }`}
+              >
+                {todayProgress.completed}/{todayProgress.target}
+              </div>
+              {isCompleted && (
+                <div className="text-xs text-green-600 mt-1 font-bold">
+                  ¡Completado!
+                </div>
+              )}
+            </div>
+
+            <div className="text-center">
+              <div className="text-xs font-bold text-gray-600 mb-1">
+                Racha {streakLevel.emoji}
+              </div>
+              <div className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 border-2 bg-gradient-to-br ${streakLevel.color} border-white shadow-lg`}>
+                <span className={`text-white font-bold ${streak > 0 ? 'text-base' : 'text-lg'}`}>
+                  {streak > 0 ? streak : '–'}
+                </span>
+              </div>
+              {streak > 0 && (
+                <div className={`text-xs font-bold mt-1 ${streakLevel.text}`}>
+                  {streakLevel.level === 'gold' && 'Leyenda'}
+                  {streakLevel.level === 'silver' && 'Experto'}
+                  {streakLevel.level === 'bronze' && 'En marcha'}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Progress bar */}
+          <div className="mb-4">
+            <div className="flex justify-between text-xs text-gray-600 mb-2 font-bold">
+              <span>Progreso semanal</span>
+              <span>
+                {weeklyProgress.completed}/{weeklyProgress.total} días
+              </span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-3 border border-gray-300">
+              <div
+                className="bg-green-500 h-3 rounded-full transition-all duration-300 shadow-sm"
+                style={{ width: `${weeklyProgress.percentage}%` }}
+              ></div>
+            </div>
+          </div>
+
+
+        </div>
       );
-
-      if (hasEntry) {
-        streak++;
-      } else if (i > 0) {
-        // No romper la racha el primer día (hoy) si no se ha completado
-        break;
-      }
-    }
-
-    return streak;
-  };
-
-  const getWeeklyProgress = (habitId: string) => {
-    const today = new Date();
-    const weekStart = new Date(today);
-    weekStart.setDate(today.getDate() - today.getDay()); // Domingo de esta semana
-
-    let completedDays = 0;
-
-    for (let i = 0; i < 7; i++) {
-      const checkDate = new Date(weekStart);
-      checkDate.setDate(weekStart.getDate() + i);
-      const dateStr = checkDate.toISOString().split('T')[0];
-
-      const hasEntry = habitEntries.some(
-        entry =>
-          entry.habitId === habitId && entry.date === dateStr && entry.count > 0
-      );
-
-      if (hasEntry) {
-        completedDays++;
-      }
-    }
-
-    return {
-      completed: completedDays,
-      total: 7,
-      percentage: Math.round((completedDays / 7) * 100),
-    };
-  };
-
-  const isCompletedToday = (habitId: string, target: number) => {
-    const { completed } = getTodayProgress(habitId, target);
-    return completed >= target;
+    });
   };
 
   if (authLoading) {
@@ -779,17 +621,12 @@ export default function HabitsPage() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Link
-                href="/dashboard"
-                className="text-blue-100 hover:text-white"
-              >
+              <Link href="/dashboard" className="text-blue-100 hover:text-white">
                 ← Dashboard
               </Link>
-              <h1 className="text-2xl font-bold text-white">
-                🎯 Seguimiento de Hábitos
-              </h1>
+              <h1 className="text-2xl font-bold text-white">🎯 Seguimiento de Hábitos</h1>
             </div>
-            <Link href="/" className="text-blue-100 hover:text-white">
+            <Link href="/" className="text-blue-100 hover:text-white font-bold text-lg">
               Cerrar Sesión
             </Link>
           </div>
@@ -798,45 +635,17 @@ export default function HabitsPage() {
 
       {/* Content */}
       <div className="container mx-auto px-4 py-8">
-        {/* Today's Date */}
-        <div className="bg-white/25 backdrop-blur-md shadow-lg border border-white/45 p-4 rounded-lg mb-8 text-center">
-          <h2
-            className="text-xl font-bold text-white"
-            style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
-          >
-            📅 Hoy:{' '}
-            {new Date().toLocaleDateString('es-ES', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })}
-          </h2>
-        </div>
-
         {/* Predefined Habits Section */}
         <div className="bg-white/25 backdrop-blur-md shadow-lg border border-white/45 p-6 rounded-lg mb-8">
           {/* Create Custom Habit Button */}
-          <div className="mb-6">
-            <h2
-              className="text-xl font-bold text-white mb-4"
-              style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
-            >
-              Crear Hábito Personalizado
-            </h2>
+          <div className="mb-6 flex justify-center">
             <button
               onClick={openCreateHabitModal}
-              className="w-full bg-purple-600/70 backdrop-blur-md text-white px-6 py-4 rounded-lg font-bold border border-purple-400/70 hover:bg-purple-700/80 transition-all duration-150 shadow-lg text-lg"
+              className="bg-purple-600/70 backdrop-blur-md text-white px-4 py-2 rounded-lg font-bold border border-purple-400/70 hover:bg-purple-700/80 transition-all duration-150 shadow-lg text-sm"
               style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}
             >
               🌟 Crear Nuevo Hábito
             </button>
-            <p
-              className="text-white/80 text-sm mt-2 text-center font-medium"
-              style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}
-            >
-              Configura nombre, descripción, frecuencia y metas personalizadas
-            </p>
           </div>
 
           <h3
@@ -856,34 +665,15 @@ export default function HabitsPage() {
                 <div
                   key={index}
                   onClick={() => !isAdded && addPredefinedHabit(habit.name)}
-                  className={`px-0 py-1.5 rounded border transition-all duration-150 cursor-pointer ${
+                  className={`w-full h-16 flex flex-col items-center justify-center px-1 py-1 rounded cursor-pointer transition-colors will-change-auto ${
                     isAdded
-                      ? 'bg-white/30 border-white/60 shadow-md cursor-not-allowed'
-                      : 'bg-white/10 border-white/20 hover:bg-white/20 hover:border-white/40'
+                      ? 'bg-green-50/80 border border-green-200'
+                      : 'bg-blue-50/80 border border-blue-200 hover:bg-blue-100/90'
                   }`}
-                  style={{
-                    backgroundColor: isAdded ? '#10b98140' : undefined,
-                    borderColor: isAdded ? '#10b98180' : undefined,
-                  }}
                 >
-                  <div className="text-center">
-                    <div className="text-sm mb-0.5">{habit.icon}</div>
-                    <div
-                      className={`text-xs font-bold leading-tight ${
-                        isAdded ? 'text-white' : 'text-white/90'
-                      }`}
-                      style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
-                    >
-                      {habit.name}
-                    </div>
-                    {isAdded && (
-                      <div
-                        className="text-xs text-green-200 font-bold mt-0.5"
-                        style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
-                      >
-                        ✓ Agregado
-                      </div>
-                    )}
+                  <div className="text-sm mb-1">{habit.icon}</div>
+                  <div className="text-xs font-bold leading-tight text-gray-800 text-center px-1 truncate w-full">
+                    {habit.name}
                   </div>
                 </div>
               );
@@ -894,12 +684,26 @@ export default function HabitsPage() {
         {/* Habits List */}
         <div className="bg-white/25 backdrop-blur-md shadow-lg border border-white/45 rounded-lg">
           <div className="p-6 border-b border-white/40">
-            <h2
-              className="text-xl font-bold text-white"
-              style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
-            >
-              Mis Hábitos ({habits.length})
-            </h2>
+            <div className="flex items-center justify-between">
+              <h2
+                className="text-xl font-bold text-white"
+                style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
+              >
+                Mis Hábitos ({habits.length})
+              </h2>
+              <div
+                className="text-sm font-bold text-white/90"
+                style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
+              >
+                📅 Hoy:{' '}
+                {new Date().toLocaleDateString('es-ES', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })}
+              </div>
+            </div>
           </div>
 
           <div className="p-6">
@@ -921,172 +725,7 @@ export default function HabitsPage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {habits.map((habit: any) => {
-                  const todayProgress = getTodayProgress(
-                    habit.id,
-                    habit.target
-                  );
-                  const streak = getStreak(habit.id);
-                  const weeklyProgress = getWeeklyProgress(habit.id);
-                  const isCompleted = isCompletedToday(habit.id, habit.target);
-
-                  return (
-                    <div
-                      key={habit.id}
-                      className="bg-white/30 backdrop-blur-md border border-white/45 rounded-lg p-4 shadow-lg"
-                    >
-                      {/* Header with icon and name */}
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-2xl">
-                            {getHabitIcon(habit.name)}
-                          </span>
-                          <h3
-                            className="font-bold text-white text-base leading-tight"
-                            style={{
-                              textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)',
-                            }}
-                          >
-                            {habit.name}
-                          </h3>
-                        </div>
-                      </div>
-
-                      {/* Frequency and target info */}
-                      <p
-                        className="text-white/90 font-medium text-sm mb-3"
-                        style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}
-                      >
-                        {habit.frequency} | Meta: {habit.target} vez(es)
-                      </p>
-
-                      {/* Toggle button centered */}
-                      <div className="flex justify-center mb-4">
-                        <button
-                          className={`w-16 h-16 rounded-full border-2 flex items-center justify-center transition-all duration-150 cursor-pointer backdrop-blur-md ${
-                            isCompleted
-                              ? 'border-green-400 bg-green-500/70 text-white hover:bg-green-600/80 shadow-green-500/20'
-                              : 'border-green-400 bg-white/30 hover:bg-green-500/40 text-green-200 hover:text-white'
-                          } shadow-lg`}
-                          onClick={() =>
-                            toggleHabitComplete(habit.id, habit.target)
-                          }
-                          title={
-                            isCompleted
-                              ? 'Click para desmarcar'
-                              : 'Click para marcar como completado'
-                          }
-                        >
-                          <span className="text-3xl font-bold">
-                            {isCompleted ? '✓' : '+'}
-                          </span>
-                        </button>
-                      </div>
-
-                      {/* Stats row */}
-                      <div className="grid grid-cols-2 gap-3 mb-4">
-                        {/* Today progress */}
-                        <div className="text-center">
-                          <div
-                            className="text-xs font-bold text-green-200 mb-1"
-                            style={{
-                              textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)',
-                            }}
-                          >
-                            Hoy
-                          </div>
-                          <div
-                            className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center text-sm font-bold transition-colors duration-150 backdrop-blur-md border ${
-                              isCompleted
-                                ? 'bg-green-500/70 text-green-100 border-green-400/50'
-                                : 'bg-white/30 text-white border-white/50'
-                            } shadow-lg`}
-                            style={{
-                              textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)',
-                            }}
-                          >
-                            {todayProgress.completed}/{todayProgress.target}
-                          </div>
-                          {isCompleted && (
-                            <div
-                              className="text-xs text-green-200 mt-1 font-bold"
-                              style={{
-                                textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)',
-                              }}
-                            >
-                              ¡Completado!
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Streak */}
-                        <div className="text-center">
-                          <div
-                            className="text-xs font-bold text-orange-200 mb-1"
-                            style={{
-                              textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)',
-                            }}
-                          >
-                            Racha
-                          </div>
-                          <div
-                            className="text-xl font-bold text-orange-200"
-                            style={{
-                              textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)',
-                            }}
-                          >
-                            {streak > 0 ? `🔥 ${streak}` : '–'}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Progress bar */}
-                      <div className="mb-4">
-                        <div
-                          className="flex justify-between text-xs text-white mb-2 font-bold"
-                          style={{
-                            textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)',
-                          }}
-                        >
-                          <span>Progreso semanal</span>
-                          <span>
-                            {weeklyProgress.completed}/{weeklyProgress.total}{' '}
-                            días
-                          </span>
-                        </div>
-                        <div className="w-full bg-white/30 backdrop-blur-md rounded-full h-2 border border-white/50">
-                          <div
-                            className="bg-green-500/90 h-2 rounded-full transition-all duration-150 shadow-sm"
-                            style={{ width: `${weeklyProgress.percentage}%` }}
-                          ></div>
-                        </div>
-                      </div>
-
-                      {/* Action buttons */}
-                      <div className="grid grid-cols-2 gap-2">
-                        <button
-                          className="text-white bg-blue-400/40 backdrop-blur-md border border-blue-300/40 hover:bg-blue-500/60 text-sm font-bold py-2 rounded-lg transition-all duration-150 hover:shadow-md"
-                          onClick={() => editHabit(habit)}
-                          title="Editar hábito"
-                          style={{
-                            textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)',
-                          }}
-                        >
-                          Editar
-                        </button>
-                        <button
-                          className="text-white bg-red-400/40 backdrop-blur-md border border-red-300/40 hover:bg-red-500/60 text-sm font-bold py-2 rounded-lg transition-all duration-150 hover:shadow-md"
-                          onClick={() => deleteHabit(habit.id, habit.name)}
-                          style={{
-                            textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)',
-                          }}
-                        >
-                          Eliminar
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
+                {renderHabits()}
               </div>
             )}
           </div>
@@ -1109,6 +748,17 @@ export default function HabitsPage() {
         isEditing={isEditingMode}
         onConfirm={handleHabitModalConfirm}
         onCancel={closeHabitModal}
+      />
+
+      {/* Item Action Modal */}
+      <ItemActionModal
+        isOpen={isActionModalOpen}
+        title={selectedHabit?.name || ''}
+        description={selectedHabit?.description}
+        type="habit"
+        onEdit={handleEditFromAction}
+        onDelete={handleDeleteFromAction}
+        onClose={closeActionModal}
       />
     </div>
   );

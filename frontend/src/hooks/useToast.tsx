@@ -6,7 +6,7 @@ import Toast from '@/components/Toast';
 interface ToastData {
   id: string;
   message: string;
-  type: 'success' | 'error' | 'info' | 'warning' | 'delete';
+  type: 'success' | 'error' | 'info' | 'warning' | 'delete' | 'welcome';
   duration?: number;
 }
 
@@ -16,7 +16,7 @@ export function useToast() {
   const showToast = useCallback(
     (
       message: string,
-      type: 'success' | 'error' | 'info' | 'warning' | 'delete' = 'info',
+      type: 'success' | 'error' | 'info' | 'warning' | 'delete' | 'welcome' = 'info',
       duration?: number
     ) => {
       const id = Math.random().toString(36).substr(2, 9);
@@ -67,6 +67,13 @@ export function useToast() {
     [showToast]
   );
 
+  const welcome = useCallback(
+    (message: string, duration?: number) => {
+      showToast(message, 'welcome', duration);
+    },
+    [showToast]
+  );
+
   const ToastContainer = useCallback(
     () => (
       <>
@@ -91,6 +98,7 @@ export function useToast() {
     warning,
     info,
     delete: deleteToast,
+    welcome,
     ToastContainer,
   };
 }

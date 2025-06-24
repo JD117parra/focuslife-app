@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 interface ToastProps {
   message: string;
-  type: 'success' | 'error' | 'info' | 'warning' | 'delete';
+  type: 'success' | 'error' | 'info' | 'warning' | 'delete' | 'welcome';
   duration?: number;
   onClose: () => void;
 }
@@ -29,7 +29,7 @@ export default function Toast({
 
   const getToastStyles = () => {
     const baseStyles =
-      'fixed top-4 right-4 p-4 rounded-lg shadow-lg transform transition-all duration-300 ease-in-out z-50 max-w-sm';
+      'fixed bottom-4 right-4 p-4 rounded-lg shadow-lg transform transition-all duration-300 ease-in-out z-50 max-w-sm';
 
     if (!visible) {
       return `${baseStyles} translate-x-full opacity-0`;
@@ -46,6 +46,8 @@ export default function Toast({
         return `${baseStyles} bg-blue-500 text-white translate-x-0 opacity-100`;
       case 'delete':
         return `${baseStyles} bg-orange-500 text-white translate-x-0 opacity-100`;
+      case 'welcome':
+        return `${baseStyles} bg-purple-400 text-white translate-x-0 opacity-100 border-4 border-purple-300 shadow-2xl`;
       default:
         return `${baseStyles} bg-gray-500 text-white translate-x-0 opacity-100`;
     }
@@ -63,6 +65,8 @@ export default function Toast({
         return '🗑️';
       case 'info':
         return 'ℹ️';
+      case 'welcome':
+        return '👋';
       default:
         return '📢';
     }
