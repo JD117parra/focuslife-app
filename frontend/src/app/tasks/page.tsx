@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/hooks/useAuth';
@@ -29,6 +29,9 @@ export default function TasksPage() {
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  
+  // Control para evitar duplicación de notificación de bienvenida
+  const welcomeShownRef = useRef(false);
 
   // Estado para el modal de tareas
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
@@ -42,6 +45,8 @@ export default function TasksPage() {
   // Estado para el dropdown de búsqueda
   const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
+  const [currentMonth, setCurrentMonth] = useState(new Date());
 
   const toast = useToast();
   const {
@@ -74,7 +79,7 @@ export default function TasksPage() {
     setFilteredTasks(baseTasks);
   }, [tasks]);
 
-  const loadTasks = useCallback(async () => {
+  const loadTasks = async () => {
     try {
       const response = await authenticatedFetch(apiUrls.tasks.list());
       const data = await response.json();
@@ -95,18 +100,22 @@ export default function TasksPage() {
     } finally {
       setLoading(false);
     }
-  }, [authenticatedFetch, toast, searchQuery, priorityFilter, applySearchAndPriorityFilter]);
+  };
 
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
       loadTasks();
-      // Toast de bienvenida
-      setTimeout(() => {
-        toast.welcome(
-          `¿Alguna tarea pendiente ${user?.name || user?.email || 'Usuario'}? 📋`,
-          4000
-        );
-      }, 500);
+      
+      // Toast de bienvenida - solo una vez
+      if (!welcomeShownRef.current) {
+        welcomeShownRef.current = true;
+        setTimeout(() => {
+          toast.welcome(
+            `¿Tienes tareas pendientes para hoy ${user?.name || user?.email || 'Usuario'}? 📋`,
+            4000
+          );
+        }, 500);
+      }
     } else if (!authLoading && !isAuthenticated) {
       setLoading(false);
     }
@@ -603,6 +612,156 @@ export default function TasksPage() {
     return result;
   };
 
+  // Funciones para el calendario mensual
+  const getDaysInMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (date: Date) => {
+    const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+    return firstDay === 0 ? 6 : firstDay - 1; // Convertir domingo=0 a lunes=0
+  };
+
+  const getTasksForDate = (date: Date, tasks: Task[]) => {
+    const dateString = date.toISOString().split('T')[0];
+    return tasks.filter(task => {
+      if (!task.dueDate) return false;
+      const taskDate = new Date(task.dueDate).toISOString().split('T')[0];
+      return taskDate === dateString;
+    });
+  };
+
+  const formatMonthYear = (date: Date) => {
+    return date.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+  };
+
+  const navigateMonth = (direction: 'prev' | 'next') => {
+    setCurrentMonth(prev => {
+      const newDate = new Date(prev);
+      if (direction === 'prev') {
+        newDate.setMonth(newDate.getMonth() - 1);
+      } else {
+        newDate.setMonth(newDate.getMonth() + 1);
+      }
+      return newDate;
+    });
+  };
+
+  const renderCalendarView = () => {
+    const daysInMonth = getDaysInMonth(currentMonth);
+    const firstDay = getFirstDayOfMonth(currentMonth);
+    const today = new Date();
+    const isCurrentMonth = currentMonth.getMonth() === today.getMonth() && currentMonth.getFullYear() === today.getFullYear();
+    
+    const days = [];
+    const dayNames = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+    
+    // Días vacíos al inicio
+    for (let i = 0; i < firstDay; i++) {
+      days.push(
+        <div key={`empty-${i}`} className="h-24 bg-white/5 border border-white/10 rounded-lg"></div>
+      );
+    }
+    
+    // Días del mes
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+      const tasksForDay = getTasksForDate(date, filteredTasks);
+      const isToday = isCurrentMonth && day === today.getDate();
+      
+      days.push(
+        <div
+          key={day}
+          className={`h-24 border border-white/20 rounded-lg px-3 py-2 relative overflow-hidden ${
+            isToday 
+              ? 'bg-blue-500/30 border-blue-400/50' 
+              : 'bg-white/10 hover:bg-white/15'
+          } transition-colors duration-200`}
+        >
+          <div className={`text-sm font-medium mb-2 ${
+            isToday ? 'text-blue-100' : 'text-white/90'
+          }`} style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
+            {day}
+            {isToday && <span className="ml-1 text-xs">•</span>}
+          </div>
+          
+          <div className="space-y-1">
+            {tasksForDay.slice(0, 1).map(task => (
+              <div
+                key={task.id}
+                onClick={() => openActionModal(task)}
+                className={`text-xs p-1 rounded cursor-pointer hover:scale-105 transition-transform duration-150 ${
+                  task.status === 'COMPLETED'
+                    ? 'bg-green-500/60 text-green-100 line-through'
+                    : task.priority === 'HIGH'
+                      ? 'bg-red-500/60 text-red-100'
+                      : task.priority === 'MEDIUM'
+                        ? 'bg-yellow-500/60 text-yellow-100'
+                        : 'bg-blue-500/60 text-blue-100'
+                }`}
+                style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
+                title={task.description || task.title}
+              >
+                {task.title.length > 10 ? task.title.substring(0, 10) + '...' : task.title}
+              </div>
+            ))}
+            
+            {tasksForDay.length > 1 && (
+              <div className="text-xs text-white/70 font-medium" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
+                +{tasksForDay.length - 1} más
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+    
+    return (
+      <div className="max-w-6xl mx-auto space-y-4">
+        {/* Header del calendario */}
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => navigateMonth('prev')}
+            className="flex items-center gap-2 px-2 py-1.5 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg text-white hover:bg-white/30 transition-colors duration-200 text-sm"
+            style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
+          >
+            ← Anterior
+          </button>
+          
+          <h3 className="text-lg font-bold text-white capitalize" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
+            {formatMonthYear(currentMonth)}
+          </h3>
+          
+          <button
+            onClick={() => navigateMonth('next')}
+            className="flex items-center gap-2 px-2 py-1.5 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg text-white hover:bg-white/30 transition-colors duration-200 text-sm"
+            style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
+          >
+            Siguiente →
+          </button>
+        </div>
+        
+        {/* Nombres de los días */}
+        <div className="grid grid-cols-7 gap-4">
+          {dayNames.map(dayName => (
+            <div
+              key={dayName}
+              className="h-8 flex items-center justify-center text-sm font-bold text-white/80 bg-white/10 rounded-lg border border-white/20"
+              style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
+            >
+              {dayName}
+            </div>
+          ))}
+        </div>
+        
+        {/* Grid del calendario */}
+        <div className="grid grid-cols-7 gap-4">
+          {days}
+        </div>
+      </div>
+    );
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-300 via-blue-400 to-indigo-500 flex items-center justify-center">
@@ -629,6 +788,9 @@ export default function TasksPage() {
   }
 
   if (!isAuthenticated) {
+    if (!authLoading && typeof window !== 'undefined') {
+      window.location.href = '/';
+    }
     return null;
   }
 
@@ -777,20 +939,17 @@ export default function TasksPage() {
               </h2>
               
               {/* Barra de búsqueda con dropdown */}
-              <div className="relative flex-1 max-w-md">
+              <div className="relative flex-1 max-w-56">
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={e => handleSearch(e.target.value)}
                   onFocus={() => setIsSearchDropdownOpen(true)}
                   onBlur={() => setTimeout(() => setIsSearchDropdownOpen(false), 200)}
-                  className="w-full p-2 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white placeholder-white/60 font-medium text-sm pl-8 pr-10"
-                  placeholder="🔍 Buscar tareas..."
+                  className="w-full p-2 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white placeholder-white/60 font-medium text-sm pl-3 pr-10"
+                  placeholder="Buscar tareas..."
                   style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}
                 />
-                <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-white/60 text-sm">
-                  🔍
-                </div>
                 <button
                   onClick={() => setIsSearchDropdownOpen(!isSearchDropdownOpen)}
                   className="absolute right-2 top-1/2 transform -translate-y-1/2 text-white/60 text-sm hover:text-white"
@@ -800,9 +959,40 @@ export default function TasksPage() {
                 
                 {/* Dropdown de prioridad */}
                 {isSearchDropdownOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-white/95 backdrop-blur-md border border-white/40 rounded-lg shadow-lg z-10">
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white/25 backdrop-blur-md border border-white/45 rounded-lg shadow-lg z-10">
                     <div className="p-2">
-                      <div className="text-xs font-bold text-gray-700 mb-2 px-2">Filtrar por prioridad:</div>
+                      {/* Sección Vista */}
+                      <div className="mb-3">
+                        <div className="text-xs font-bold text-white/90 mb-2 px-2" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>Vista:</div>
+                        {[
+                          { key: 'list', label: 'Vista Lista', icon: '📋' },
+                          { key: 'calendar', label: 'Vista Calendario', icon: '🗓️' },
+                        ].map(option => (
+                          <button
+                            key={option.key}
+                            onClick={() => {
+                              setViewMode(option.key as 'list' | 'calendar');
+                              setIsSearchDropdownOpen(false);
+                            }}
+                            className={`w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded transition-colors ${
+                              viewMode === option.key
+                                ? 'bg-white/30 text-white font-medium border border-white/40'
+                                : 'text-white/90 hover:bg-white/20 border border-transparent'
+                            }`}
+                            style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}
+                          >
+                            <span>{option.icon}</span>
+                            <span>{option.label}</span>
+                            {viewMode === option.key && <span className="ml-auto text-white/90">✓</span>}
+                          </button>
+                        ))}
+                      </div>
+                      
+                      {/* Separador */}
+                      <div className="border-t border-white/30 my-2"></div>
+                      
+                      {/* Sección Prioridad */}
+                      <div className="text-xs font-bold text-white/90 mb-2 px-2" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>Filtrar por prioridad:</div>
                       {[
                         { key: 'all', label: 'Todas las prioridades', icon: '📊' },
                         { key: 'HIGH', label: 'Alta prioridad', icon: '🔴' },
@@ -817,13 +1007,14 @@ export default function TasksPage() {
                           }}
                           className={`w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded transition-colors ${
                             priorityFilter === option.key
-                              ? 'bg-blue-100 text-blue-800 font-medium'
-                              : 'text-gray-700 hover:bg-gray-100'
+                              ? 'bg-white/30 text-white font-medium border border-white/40'
+                              : 'text-white/90 hover:bg-white/20 border border-transparent'
                           }`}
+                          style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}
                         >
                           <span>{option.icon}</span>
                           <span>{option.label}</span>
-                          {priorityFilter === option.key && <span className="ml-auto text-blue-600">✓</span>}
+                          {priorityFilter === option.key && <span className="ml-auto text-white/90">✓</span>}
                         </button>
                       ))}
                     </div>
@@ -878,7 +1069,10 @@ export default function TasksPage() {
               </div>
             ) : (
               <div className="space-y-3">
-                {renderTasksWithSeparators(filteredTasks)}
+                {viewMode === 'list' 
+                  ? renderTasksWithSeparators(filteredTasks)
+                  : renderCalendarView()
+                }
               </div>
             )}
           </div>

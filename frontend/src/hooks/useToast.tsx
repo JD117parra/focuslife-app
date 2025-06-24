@@ -19,7 +19,7 @@ export function useToast() {
       type: 'success' | 'error' | 'info' | 'warning' | 'delete' | 'welcome' = 'info',
       duration?: number
     ) => {
-      const id = Math.random().toString(36).substr(2, 9);
+      const id = Date.now().toString() + Math.random().toString(36).substr(2, 5);
       const newToast: ToastData = { id, message, type, duration };
 
       setToasts(prev => [...prev, newToast]);
@@ -76,17 +76,20 @@ export function useToast() {
 
   const ToastContainer = useCallback(
     () => (
-      <>
-        {toasts.map(toast => (
-          <Toast
-            key={toast.id}
-            message={toast.message}
-            type={toast.type}
-            duration={toast.duration}
-            onClose={() => removeToast(toast.id)}
-          />
-        ))}
-      </>
+      <div className="fixed inset-0 pointer-events-none z-[10000]">
+        <div className="absolute bottom-4 right-4 space-y-2">
+          {toasts.map(toast => (
+            <div key={toast.id} className="pointer-events-auto">
+              <Toast
+                message={toast.message}
+                type={toast.type}
+                duration={toast.duration}
+                onClose={() => removeToast(toast.id)}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
     ),
     [toasts, removeToast]
   );

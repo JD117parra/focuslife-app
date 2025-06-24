@@ -121,8 +121,11 @@ export default function DashboardPage() {
     );
   }
 
-  // Si no está autenticado, el hook ya redirige
-  if (!isAuthenticated) {
+  // Si no está autenticado, redirigir a la página principal
+  if (!authLoading && !isAuthenticated) {
+    if (typeof window !== 'undefined') {
+      window.location.href = '/';
+    }
     return null;
   }
 
@@ -136,9 +139,9 @@ export default function DashboardPage() {
               FocusLife Dashboard
             </h1>
             <div className="flex items-center space-x-6">
-              <span className="text-blue-100 mr-6">
+              <span className="text-blue-100 mr-6 text-lg">
                 ¡Hola{' '}
-                <span className="font-medium text-white">
+                <span className="font-bold text-white text-xl">
                   {user?.name || user?.email || 'Usuario'}
                 </span>!
               </span>
@@ -252,7 +255,7 @@ export default function DashboardPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-5xl mx-auto">
               {/* Widget de Tareas */}
-              <div className="bg-blue-500/40 backdrop-blur-md shadow-lg border-2 border-blue-300/70 rounded-lg widget-stat">
+              <div className="bg-blue-500/40 shadow-lg border-2 border-blue-300/70 rounded-lg widget-stat">
                 <div className="mb-3">
                   <h3 className="font-semibold text-blue-50 flex items-center text-shadow-strong">
                     📋 Tareas
@@ -305,7 +308,7 @@ export default function DashboardPage() {
               </div>
 
               {/* Widget de Hábitos */}
-              <div className="bg-green-500/40 backdrop-blur-md shadow-lg border-2 border-green-400/60 rounded-lg widget-stat">
+              <div className="bg-green-500/40 shadow-lg border-2 border-green-400/60 rounded-lg widget-stat">
                 <div className="mb-3">
                   <h3 className="font-semibold text-green-50 flex items-center text-shadow-strong">
                     🎯 Hábitos
@@ -345,7 +348,7 @@ export default function DashboardPage() {
               </div>
 
               {/* Widget de Finanzas */}
-              <div className="bg-purple-500/40 backdrop-blur-md shadow-lg border-2 border-purple-400/60 rounded-lg widget-stat">
+              <div className="bg-purple-500/40 shadow-lg border-2 border-purple-400/60 rounded-lg widget-stat">
                 <div className="mb-3">
                   <h3 className="font-semibold text-white flex items-center text-shadow-strong">
                     💰 Finanzas

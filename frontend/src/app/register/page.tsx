@@ -55,8 +55,8 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-300 via-blue-400 to-indigo-500 flex items-center justify-center px-4 py-8">
-      <div className="bg-white/15 backdrop-blur-md shadow-lg border border-white/30 p-8 rounded-lg w-full max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-slate-300 via-blue-400 to-indigo-500 flex items-center justify-center px-4 py-24">
+      <div className="glass-effect shadow-lg border border-white/30 p-8 rounded-lg w-full max-w-md">
         <h1
           className="text-2xl font-bold text-center text-white mb-6"
           style={{
@@ -82,7 +82,7 @@ export default function RegisterPage() {
               type="text"
               value={name}
               onChange={e => setName(e.target.value)}
-              className="w-full p-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white placeholder-white/60"
+              className="w-full p-3 bg-white/20 border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white placeholder-white/60"
               placeholder="Tu nombre"
               disabled={loading}
               required
@@ -103,7 +103,7 @@ export default function RegisterPage() {
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              className="w-full p-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white placeholder-white/60"
+              className="w-full p-3 bg-white/20 border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white placeholder-white/60"
               placeholder="tu@email.com"
               disabled={loading}
               required
@@ -124,7 +124,7 @@ export default function RegisterPage() {
               type="email"
               value={confirmEmail}
               onChange={e => setConfirmEmail(e.target.value)}
-              className={`w-full p-3 bg-white/20 backdrop-blur-sm rounded-lg focus:ring-2 text-white placeholder-white/60 ${
+              className={`w-full p-3 bg-white/20 rounded-lg focus:ring-2 text-white placeholder-white/60 ${
                 confirmEmail && email !== confirmEmail
                   ? 'border-red-300 focus:ring-red-300 focus:border-red-300'
                   : 'border border-white/30 focus:ring-white/50 focus:border-white/50'
@@ -154,7 +154,7 @@ export default function RegisterPage() {
               type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
-              className="w-full p-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white placeholder-white/60"
+              className="w-full p-3 bg-white/20 border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white placeholder-white/60"
               placeholder="Mínimo 6 caracteres"
               disabled={loading}
               required
@@ -175,7 +175,7 @@ export default function RegisterPage() {
               type="password"
               value={confirmPassword}
               onChange={e => setConfirmPassword(e.target.value)}
-              className={`w-full p-3 bg-white/20 backdrop-blur-sm rounded-lg focus:ring-2 text-white placeholder-white/60 ${
+              className={`w-full p-3 bg-white/20 rounded-lg focus:ring-2 text-white placeholder-white/60 ${
                 confirmPassword && password !== confirmPassword
                   ? 'border-red-300 focus:ring-red-300 focus:border-red-300'
                   : 'border border-white/30 focus:ring-white/50 focus:border-white/50'
@@ -196,8 +196,8 @@ export default function RegisterPage() {
             disabled={loading}
             className={`w-full py-3 rounded-lg font-bold transition-all duration-300 ${
               loading
-                ? 'bg-white/10 text-white/50 cursor-not-allowed backdrop-blur-sm border border-white/20'
-                : 'bg-blue-600/60 backdrop-blur-md text-white border border-blue-400/60 hover:bg-blue-700/70 shadow-lg'
+                ? 'bg-white/10 text-white/50 cursor-not-allowed border border-white/20'
+                : 'bg-blue-600/60 text-white border border-blue-400/60 hover:bg-blue-700/70 shadow-lg'
             }`}
             style={{
               textShadow: loading
@@ -209,19 +209,16 @@ export default function RegisterPage() {
           </button>
         </form>
 
-        <div className="mt-4 text-center space-y-2">
+        <div className="mt-4 text-center">
           <p className="text-white/90">
             ¿Ya tienes cuenta?{' '}
             <Link
-              href="/login"
+              href="/"
               className="text-white font-semibold hover:text-white/80"
             >
               Iniciar Sesión
             </Link>
           </p>
-          <Link href="/" className="text-white/80 hover:text-white block">
-            ← Volver al inicio
-          </Link>
         </div>
       </div>
     </div>

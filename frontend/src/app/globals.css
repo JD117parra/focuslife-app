@@ -7,57 +7,53 @@
 
 /* 🪟 Componente glassmorphism básico */
 .glass-card {
-  background: rgba(255, 255, 255, 0.15) !important;
-  border: 1px solid rgba(255, 255, 255, 0.3) !important;
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
-  border-radius: 12px !important;
-  backdrop-filter: blur(16px) !important;
-  transform: translateZ(0) !important;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  border-radius: 12px;
+  /* Reemplazar backdrop-filter con alternativa compatible */
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  transform: translateZ(0);
 }
 
 /* 🎯 Widget de estadísticas glassmorphism */
 .widget-glass {
-  backdrop-filter: blur(16px) !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1) !important;
-  border-radius: 12px !important;
-  border-width: 2px !important;
-  border-style: solid !important;
-  padding: 1.5rem !important;
+  /* Alternativa a backdrop-filter para compatibilidad */
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.08) 100%);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  border-width: 2px;
+  border-style: solid;
+  padding: 1.5rem;
 }
 
 /* 🎪 Efectos hover para glassmorphism */
 .glass-hover {
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease !important;
-  will-change: transform !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  will-change: transform;
 }
 
 .glass-hover:hover {
-  transform: translateZ(0) scale(1.02) !important;
-  box-shadow:
-    0 12px 40px rgba(0, 0, 0, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+  transform: translateZ(0) scale(1.02);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 /* 🎨 Botones glassmorphism */
 .btn-glass {
-  background: rgba(255, 255, 255, 0.1) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  border-radius: 8px !important;
-  padding: 0.5rem 1rem !important;
-  color: white !important;
-  font-weight: 500 !important;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
-  transition: all 0.2s ease !important;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  color: white;
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  transition: all 0.2s ease;
 }
 
 .btn-glass:hover {
-  background: rgba(255, 255, 255, 0.2) !important;
-  border: 1px solid rgba(255, 255, 255, 0.3) !important;
-  transform: translateY(-1px) !important;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
 }
 
 /* ===== CLASES EXISTENTES ===== */
@@ -121,42 +117,37 @@
 
 /* Optimized blur replacement - maintains glass effect with better performance */
 .glass-effect {
-  background: rgba(255, 255, 255, 0.15) !important;
-  border: 1px solid rgba(255, 255, 255, 0.3) !important;
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
-  border-radius: 0.5rem !important;
-  transform: translateZ(0) !important;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  border-radius: 0.5rem;
+  /* Alternativa compatible para el efecto glassmorphism */
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  transform: translateZ(0);
 }
 
 .glass-effect-hover {
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease !important;
-  will-change: transform !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  will-change: transform;
 }
 
 .glass-effect-hover:hover {
-  transform: translateZ(0) scale(1.02) !important;
-  box-shadow:
-    0 12px 40px rgba(0, 0, 0, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+  transform: translateZ(0) scale(1.02);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  background-color: rgba(255, 255, 255, 0.2);
 }
 
 /* Optimized text shadows */
 .text-shadow-light {
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .text-shadow-medium {
-  text-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.5),
-    0 1px 2px rgba(0, 0, 0, 0.3) !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .text-shadow-strong {
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 @theme inline {
@@ -302,12 +293,8 @@
 
   /* Reduce paint complexity - Optimized background */
   .bg-gradient-optimized {
-    background: #60a5fa;
-    background-image:
-      linear-gradient(135deg, rgba(203, 213, 225, 0.3) 0%, transparent 50%),
-      linear-gradient(45deg, rgba(99, 102, 241, 0.3) 50%, transparent 100%);
-    background-attachment: local;
-    will-change: auto;
-    transform: translateZ(0);
+    background: linear-gradient(135deg, #64748b 0%, #3b82f6 50%, #6366f1 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
   }
 }

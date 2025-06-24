@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
@@ -241,6 +241,9 @@ export default function FinancesPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Control para evitar duplicación de notificación de bienvenida
+  const welcomeShownRef = useRef(false);
 
   // Estado para el modal de transacciones
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
@@ -372,13 +375,17 @@ export default function FinancesPage() {
     if (!authLoading && isAuthenticated) {
       loadTransactions();
       loadCategories();
-      // Toast de bienvenida
-      setTimeout(() => {
-        toast.welcome(
-          `¿Alguna cuenta que hacer hoy ${user?.name || user?.email || 'Usuario'}? 💰`,
-          4000
-        );
-      }, 500);
+      
+      // Toast de bienvenida - solo una vez
+      if (!welcomeShownRef.current) {
+        welcomeShownRef.current = true;
+        setTimeout(() => {
+          toast.welcome(
+            `¿Alguna cuenta que hacer hoy ${user?.name || user?.email || 'Usuario'}? 💰`,
+            4000
+          );
+        }, 500);
+      }
     } else if (!authLoading && !isAuthenticated) {
       setLoading(false);
     }
@@ -675,6 +682,9 @@ export default function FinancesPage() {
   }
 
   if (!isAuthenticated) {
+    if (!authLoading && typeof window !== 'undefined') {
+      window.location.href = '/';
+    }
     return null;
   }
 

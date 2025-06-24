@@ -245,6 +245,11 @@ router.post(
         return;
       }
 
+      if (!taskData.dueDate) {
+        res.status(400).json({ message: 'Due date is required' });
+        return;
+      }
+
       const task = await TaskService.createTask(req.user.id, taskData);
 
       res.status(201).json({

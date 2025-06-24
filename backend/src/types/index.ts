@@ -27,7 +27,7 @@ export interface ApiResponse<T = any> {
 export interface CreateTaskDto {
   title: string;
   description?: string;
-  dueDate?: string; // ISO string
+  dueDate: string; // ISO string - OBLIGATORIO al crear
   priority?: 'LOW' | 'MEDIUM' | 'HIGH';
   categoryId?: string;
 }
