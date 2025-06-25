@@ -58,6 +58,21 @@
 
 /* ===== CLASES EXISTENTES ===== */
 
+/* 📋 Estilos optimizados para tarjetas de tareas - Legibilidad mejorada */
+.task-card {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(156, 163, 175, 0.3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 8px;
+  transform: translateZ(0);
+}
+
+.task-card:hover {
+  transform: translateZ(0) scale(1.01);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
 /* Optimized Card Styles - Better performance while maintaining aesthetics */
 .card-glass {
   background: rgba(255, 255, 255, 0.9) !important;
@@ -272,6 +287,31 @@
     /* transform: translateZ(0); */
     /* backface-visibility: hidden; */
     /* perspective: 1000px; */
+  }
+
+  /* Soporte para line-clamp - Mejora legibilidad */
+  .line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+  }
+
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+
+  .line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
   }
 
   /* Optimize rendering for better scroll performance */

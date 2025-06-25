@@ -5,10 +5,13 @@ import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 import { useConfirm } from '@/hooks/useConfirm';
-import { EditTransactionModal, ItemActionModal } from '@/components/ui';
+import { EditTransactionModal, ItemActionModal, TemplateModal } from '@/components/ui';
 import { apiUrls } from '@/config/api';
+import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 
-// 🎯 PLANTILLAS SIMPLES - Se crean UNA sola vez (no en cada render)
+// 💸 PLANTILLAS DE GASTOS - MOVIDAS A TemplateModal.tsx
+// Se mantienen por compatibilidad hasta confirmar funcionamiento
+/*
 const EXPENSE_TEMPLATES = [
   {
     description: 'Supermercado',
@@ -119,6 +122,7 @@ const EXPENSE_TEMPLATES = [
     category: 'Seguros',
   },
 ] as const;
+*/
 
 const INCOME_TEMPLATES = [
   {
@@ -242,6 +246,9 @@ export default function FinancesPage() {
   const [, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   
+  // Estado para el filtro de transacciones
+  const [activeFilter, setActiveFilter] = useState<'ALL' | 'INCOME' | 'EXPENSE'>('ALL');
+  
   // Control para evitar duplicación de notificación de bienvenida
   const welcomeShownRef = useRef(false);
 
@@ -254,6 +261,9 @@ export default function FinancesPage() {
   // Estado para el modal de acciones
   const [isActionModalOpen, setIsActionModalOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+
+  // Estado para el modal de plantillas
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
 
   const {
     authenticatedFetch,
@@ -409,7 +419,23 @@ export default function FinancesPage() {
     setIsTransactionModalOpen(true);
   };
 
-  const openTemplateTransactionModal = (template: TemplateData) => {
+  const closeTransactionModal = () => {
+    setIsTransactionModalOpen(false);
+    setEditingTransaction(null);
+    setIsEditingMode(false);
+  };
+
+  // Funciones para manejar el modal de plantillas
+  const openTemplateModal = () => {
+    setIsTemplateModalOpen(true);
+  };
+
+  const closeTemplateModal = () => {
+    setIsTemplateModalOpen(false);
+  };
+
+  const handleTemplateSelect = (template: any) => {
+    // Convertir template a formato de transacción
     const templateTransaction: TransactionWithCategory = {
       id: '',
       amount: 0,
@@ -418,15 +444,16 @@ export default function FinancesPage() {
       date: new Date().toISOString(),
       category: template.category,
     };
+    
+    closeTemplateModal();
     setEditingTransaction(templateTransaction);
     setIsEditingMode(false);
     setIsTransactionModalOpen(true);
   };
 
-  const closeTransactionModal = () => {
-    setIsTransactionModalOpen(false);
-    setEditingTransaction(null);
-    setIsEditingMode(false);
+  const handleCreateFromScratch = () => {
+    closeTemplateModal();
+    openCreateTransactionModal();
   };
 
   const handleTransactionModalConfirm = async (transactionData: TransactionData) => {
@@ -572,10 +599,8 @@ export default function FinancesPage() {
     }
   };
 
-  // Función para usar plantilla
-  const applyTemplate = (template: TemplateData) => {
-    openTemplateTransactionModal(template);
-  };
+  // Función para usar plantilla - OBSOLETA
+  // Movida a TemplateModal.tsx, se mantiene por compatibilidad
 
   // 🧮 Calcular totales - SIMPLES sin memoización innecesaria
   const getTotalIncome = () => {
@@ -594,9 +619,301 @@ export default function FinancesPage() {
     return getTotalIncome() - getTotalExpenses();
   };
 
+  // 📊 Funciones para análisis mensual
+  const getCurrentMonthTransactions = () => {
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    return transactions.filter(t => {
+      const transactionDate = new Date(t.date);
+      return transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear;
+    });
+  };
+
+  const getPreviousMonthTransactions = () => {
+    const now = new Date();
+    const previousMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+    const previousYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+    return transactions.filter(t => {
+      const transactionDate = new Date(t.date);
+      return transactionDate.getMonth() === previousMonth && transactionDate.getFullYear() === previousYear;
+    });
+  };
+
+  const getMonthlyComparison = () => {
+    const currentMonthTransactions = getCurrentMonthTransactions();
+    const previousMonthTransactions = getPreviousMonthTransactions();
+    
+    const currentIncome = currentMonthTransactions
+      .filter(t => t.type === 'INCOME')
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+    
+    const currentExpenses = currentMonthTransactions
+      .filter(t => t.type === 'EXPENSE')
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+      
+    const previousIncome = previousMonthTransactions
+      .filter(t => t.type === 'INCOME')
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+      
+    const previousExpenses = previousMonthTransactions
+      .filter(t => t.type === 'EXPENSE')
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+    
+    return {
+      current: { income: currentIncome, expenses: currentExpenses, balance: currentIncome - currentExpenses },
+      previous: { income: previousIncome, expenses: previousExpenses, balance: previousIncome - previousExpenses },
+      growth: {
+        income: previousIncome > 0 ? ((currentIncome - previousIncome) / previousIncome * 100) : 0,
+        expenses: previousExpenses > 0 ? ((currentExpenses - previousExpenses) / previousExpenses * 100) : 0,
+        balance: previousIncome - previousExpenses !== 0 ? (((currentIncome - currentExpenses) - (previousIncome - previousExpenses)) / Math.abs(previousIncome - previousExpenses) * 100) : 0
+      }
+    };
+  };
+
+  // Funciones para manejar filtros
+  const handleFilterChange = (filter: 'ALL' | 'INCOME' | 'EXPENSE') => {
+    setActiveFilter(filter);
+  };
+
+  // Filtrar transacciones según el filtro activo
+  const getFilteredTransactions = () => {
+    switch (activeFilter) {
+      case 'INCOME':
+        return transactions.filter(t => t.type === 'INCOME');
+      case 'EXPENSE':
+        return transactions.filter(t => t.type === 'EXPENSE');
+      default:
+        return transactions;
+    }
+  };
+
+  // 📊 Renderizar dashboard de resumen financiero
+  const renderFinancialDashboard = () => {
+    const monthlyComparison = getMonthlyComparison();
+    const currentMonth = new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+    const previousMonth = new Date(new Date().getFullYear(), new Date().getMonth() - 1).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+    
+    // Datos para el gráfico de barras
+    const chartData = [
+      {
+        name: 'Mes Anterior',
+        Ingresos: monthlyComparison.previous.income,
+        Gastos: monthlyComparison.previous.expenses,
+        Balance: monthlyComparison.previous.balance
+      },
+      {
+        name: 'Mes Actual',
+        Ingresos: monthlyComparison.current.income,
+        Gastos: monthlyComparison.current.expenses,
+        Balance: monthlyComparison.current.balance
+      }
+    ];
+    
+    // Datos para el gráfico circular
+    const pieData = [
+      { name: 'Ingresos', value: monthlyComparison.current.income, color: '#10b981' },
+      { name: 'Gastos', value: monthlyComparison.current.expenses, color: '#ef4444' }
+    ];
+    
+    return (
+      <div className="space-y-6">
+        {/* Header del Dashboard */}
+        <div className="text-center mb-8">
+          <h3 className="text-2xl font-bold text-white mb-2" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
+            📊 Resumen Financiero - {currentMonth}
+          </h3>
+          <p className="text-white/90" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
+            Análisis completo de tus finanzas y comparación mensual
+          </p>
+        </div>
+
+        {/* Tarjetas de comparación mensual */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg p-6 shadow-lg">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-lg font-bold text-white" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
+                💵 Ingresos
+              </h4>
+              <div className={`px-2 py-1 rounded-full text-xs font-bold ${
+                monthlyComparison.growth.income >= 0 
+                  ? 'bg-green-100 text-green-700' 
+                  : 'bg-red-100 text-red-700'
+              }`}>
+                {monthlyComparison.growth.income >= 0 ? '⬆️' : '⬇️'} {Math.abs(monthlyComparison.growth.income).toFixed(1)}%
+              </div>
+            </div>
+            <div className="space-y-2">
+              <p className="text-2xl font-bold text-green-200" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
+                +${monthlyComparison.current.income.toLocaleString()}
+              </p>
+              <p className="text-sm text-white/80" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
+                {previousMonth}: +${monthlyComparison.previous.income.toLocaleString()}
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg p-6 shadow-lg">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-lg font-bold text-white" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
+                💸 Gastos
+              </h4>
+              <div className={`px-2 py-1 rounded-full text-xs font-bold ${
+                monthlyComparison.growth.expenses <= 0 
+                  ? 'bg-green-100 text-green-700' 
+                  : 'bg-red-100 text-red-700'
+              }`}>
+                {monthlyComparison.growth.expenses >= 0 ? '⬆️' : '⬇️'} {Math.abs(monthlyComparison.growth.expenses).toFixed(1)}%
+              </div>
+            </div>
+            <div className="space-y-2">
+              <p className="text-2xl font-bold text-red-200" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
+                -${monthlyComparison.current.expenses.toLocaleString()}
+              </p>
+              <p className="text-sm text-white/80" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
+                {previousMonth}: -${monthlyComparison.previous.expenses.toLocaleString()}
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg p-6 shadow-lg">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-lg font-bold text-white" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
+                ⚖️ Balance
+              </h4>
+              <div className={`px-2 py-1 rounded-full text-xs font-bold ${
+                monthlyComparison.growth.balance >= 0 
+                  ? 'bg-green-100 text-green-700' 
+                  : 'bg-red-100 text-red-700'
+              }`}>
+                {monthlyComparison.growth.balance >= 0 ? '⬆️' : '⬇️'} {Math.abs(monthlyComparison.growth.balance).toFixed(1)}%
+              </div>
+            </div>
+            <div className="space-y-2">
+              <p className={`text-2xl font-bold ${
+                monthlyComparison.current.balance >= 0 ? 'text-blue-200' : 'text-orange-200'
+              }`} style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
+                ${monthlyComparison.current.balance.toLocaleString()}
+              </p>
+              <p className="text-sm text-white/80" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
+                {previousMonth}: ${monthlyComparison.previous.balance.toLocaleString()}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Gráficos */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Gráfico de Barras - Comparación Mensual */}
+          <div className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg p-6 shadow-lg">
+            <h4 className="text-lg font-bold text-white mb-4" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
+              📈 Comparación Mensual
+            </h4>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.2)" />
+                <XAxis dataKey="name" stroke="white" fontSize={12} />
+                <YAxis stroke="white" fontSize={12} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'rgba(255,255,255,0.9)', 
+                    border: 'none', 
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                  }}
+                  formatter={(value) => [`${Number(value).toLocaleString()}`, '']}
+                />
+                <Legend />
+                <Bar dataKey="Ingresos" fill="#10b981" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Gastos" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Balance" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Gráfico Circular - Distribución Actual */}
+          <div className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg p-6 shadow-lg">
+            <h4 className="text-lg font-bold text-white mb-4" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
+              🍰 Distribución del Mes
+            </h4>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={pieData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {pieData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value) => [`${Number(value).toLocaleString()}`, '']} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Mensaje de análisis */}
+        <div className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg p-6 shadow-lg">
+          <h4 className="text-lg font-bold text-white mb-4" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>
+            📝 Análisis Financiero
+          </h4>
+          <div className="space-y-3">
+            {monthlyComparison.growth.income > 0 ? (
+              <p className="text-green-200 font-medium" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
+                🚀 ¡Excelente! Tus ingresos aumentaron un {monthlyComparison.growth.income.toFixed(1)}% respecto al mes anterior.
+              </p>
+            ) : monthlyComparison.growth.income < 0 ? (
+              <p className="text-orange-200 font-medium" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
+                📉 Tus ingresos disminuyeron un {Math.abs(monthlyComparison.growth.income).toFixed(1)}% este mes. Considera nuevas oportunidades de ingresos.
+              </p>
+            ) : (
+              <p className="text-blue-200 font-medium" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
+                📊 Tus ingresos se mantuvieron estables este mes.
+              </p>
+            )}
+            
+            {monthlyComparison.growth.expenses < 0 ? (
+              <p className="text-green-200 font-medium" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
+                🎉 ¡Buen trabajo! Redujiste tus gastos en un {Math.abs(monthlyComparison.growth.expenses).toFixed(1)}%.
+              </p>
+            ) : monthlyComparison.growth.expenses > 0 ? (
+              <p className="text-red-200 font-medium" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
+                ⚠️ Tus gastos aumentaron un {monthlyComparison.growth.expenses.toFixed(1)}%. Revisa tus categorías de gasto.
+              </p>
+            ) : (
+              <p className="text-blue-200 font-medium" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
+                📋 Tus gastos se mantuvieron estables este mes.
+              </p>
+            )}
+            
+            {monthlyComparison.current.balance > monthlyComparison.previous.balance ? (
+              <p className="text-green-200 font-medium" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
+                🎆 ¡Felicitaciones! Tu balance mejoró ${(monthlyComparison.current.balance - monthlyComparison.previous.balance).toLocaleString()} respecto al mes anterior.
+              </p>
+            ) : monthlyComparison.current.balance < monthlyComparison.previous.balance ? (
+              <p className="text-orange-200 font-medium" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
+                💰 Tu balance disminuyó ${Math.abs(monthlyComparison.current.balance - monthlyComparison.previous.balance).toLocaleString()}. Considera ajustar tus hábitos financieros.
+              </p>
+            ) : (
+              <p className="text-blue-200 font-medium" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}>
+                📊 Tu balance se mantuvo estable este mes.
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // 🎨 RENDERIZADO DIRECTO DE TRANSACCIONES - Como en tareas
   const renderTransactions = () => {
-    return transactions.map((transaction) => (
+    const filteredTransactions = getFilteredTransactions();
+    return filteredTransactions.map((transaction) => (
       <div key={transaction.id} className="flex items-center justify-between p-4 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg shadow-lg cursor-pointer hover:scale-[1.02] transition-transform duration-200" onClick={() => openActionModal(transaction)}>
         <div className="flex items-center space-x-4">
           <div
@@ -728,59 +1045,11 @@ export default function FinancesPage() {
         {/* Sección de Creación de Transacciones */}
         <div className="bg-white/15 backdrop-blur-md shadow-lg border border-white/30 p-6 rounded-lg mb-6">
           {/* Botón Crear Transacción */}
-          <div className="mb-6 flex justify-center">
+          <div className="mb-6 px-4">
             <button
-            onClick={openCreateTransactionModal}
-            className="bg-purple-600/70 backdrop-blur-md text-white px-4 py-2 rounded-lg font-bold border border-purple-400/70 hover:bg-purple-700/80 transition-all duration-150 shadow-lg text-sm"
+            onClick={openTemplateModal}
+            className="w-full bg-purple-600/70 backdrop-blur-md text-white px-6 py-4 rounded-lg font-bold border border-purple-400/70 hover:bg-purple-700/80 transition-all duration-150 shadow-lg text-base"
             style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}>💰 Nueva Transacción</button>
-          </div>
-
-          <h3
-            className="text-xl font-bold text-white mb-4"
-            style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
-          >
-            💸 Plantillas de Gastos
-          </h3>
-
-          <div className="grid grid-cols-6 md:grid-cols-12 gap-1 mb-6">
-            {EXPENSE_TEMPLATES.map((template, index) => (
-              <div
-                key={index}
-                onClick={() => applyTemplate(template)}
-                className="px-0 py-1.5 rounded cursor-pointer bg-red-50/80 border border-red-200 hover:bg-red-100/90 transition-colors will-change-auto"
-              >
-                <div className="text-center">
-                  <div className="text-sm mb-0.5">{template.icon}</div>
-                  <div className="text-xs font-bold leading-tight text-gray-800">
-                    {template.description}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <h3
-            className="text-xl font-bold text-white mb-4"
-            style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
-          >
-            💵 Plantillas de Ingresos
-          </h3>
-
-          <div className="grid grid-cols-6 md:grid-cols-12 gap-1">
-            {INCOME_TEMPLATES.map((template, index) => (
-              <div
-                key={index}
-                onClick={() => applyTemplate(template)}
-                className="px-0 py-1.5 rounded cursor-pointer bg-green-50/80 border border-green-200 hover:bg-green-100/90 transition-colors will-change-auto"
-              >
-                <div className="text-center">
-                  <div className="text-sm mb-0.5">{template.icon}</div>
-                  <div className="text-xs font-bold leading-tight text-gray-800">
-                    {template.description}
-                  </div>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
 
@@ -792,12 +1061,33 @@ export default function FinancesPage() {
                 className="text-xl font-bold text-white"
                 style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
               >
-                Transacciones Recientes ({transactions.length})
+                {activeFilter === 'ALL' 
+                  ? `Transacciones Recientes (${getFilteredTransactions().length} de ${transactions.length})`
+                  : activeFilter === 'INCOME'
+                    ? `Ingresos (${getFilteredTransactions().length} de ${transactions.length})`
+                    : `Gastos (${getFilteredTransactions().length} de ${transactions.length})`
+                }
+                {activeFilter !== 'ALL' && (
+                  <button
+                    onClick={() => handleFilterChange('ALL')}
+                    className="ml-3 text-sm bg-white/20 backdrop-blur-sm border border-white/30 px-3 py-1 rounded-lg hover:bg-white/30 transition-all duration-150"
+                    style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
+                  >
+                    Mostrar todas
+                  </button>
+                )}
               </h2>
               
               {/* Financial Summary Cards */}
               <div className="flex gap-4">
-                <div className="bg-green-100/90 border-2 border-green-300 p-3 rounded-lg min-w-[150px]">
+                <div 
+                  className={`p-3 rounded-lg min-w-[180px] cursor-pointer transition-all duration-200 hover:scale-105 ${
+                    activeFilter === 'INCOME'
+                      ? 'bg-green-200/90 border-2 border-green-400 shadow-lg'
+                      : 'bg-green-100/90 border-2 border-green-300'
+                  }`}
+                  onClick={() => handleFilterChange('INCOME')}
+                >
                   <h3 className="text-xs font-bold text-green-800 mb-1">
                     Ingresos
                   </h3>
@@ -806,7 +1096,14 @@ export default function FinancesPage() {
                   </p>
                 </div>
 
-                <div className="bg-red-100/90 border-2 border-red-300 p-3 rounded-lg min-w-[150px]">
+                <div 
+                  className={`p-3 rounded-lg min-w-[180px] cursor-pointer transition-all duration-200 hover:scale-105 ${
+                    activeFilter === 'EXPENSE'
+                      ? 'bg-red-200/90 border-2 border-red-400 shadow-lg'
+                      : 'bg-red-100/90 border-2 border-red-300'
+                  }`}
+                  onClick={() => handleFilterChange('EXPENSE')}
+                >
                   <h3 className="text-xs font-bold text-red-800 mb-1">
                     Gastos
                   </h3>
@@ -816,11 +1113,16 @@ export default function FinancesPage() {
                 </div>
 
                 <div
-                  className={`p-3 rounded-lg border-2 min-w-[150px] ${
-                    balance >= 0
-                      ? 'bg-blue-100/90 border-blue-300'
-                      : 'bg-orange-100/90 border-orange-300'
+                  className={`p-3 rounded-lg border-2 min-w-[180px] cursor-pointer transition-all duration-200 hover:scale-105 ${
+                    activeFilter === 'ALL'
+                      ? balance >= 0
+                        ? 'bg-blue-200/90 border-blue-400 shadow-lg'
+                        : 'bg-orange-200/90 border-orange-400 shadow-lg'
+                      : balance >= 0
+                        ? 'bg-blue-100/90 border-blue-300'
+                        : 'bg-orange-100/90 border-orange-300'
                   }`}
+                  onClick={() => handleFilterChange('ALL')}
                 >
                   <h3
                     className={`text-xs font-bold mb-1 ${
@@ -842,7 +1144,35 @@ export default function FinancesPage() {
           </div>
 
           <div className="p-6">
-            {transactions.length === 0 ? (
+            {activeFilter === 'ALL' ? (
+              /* Dashboard de resumen financiero */
+              renderFinancialDashboard()
+            ) : getFilteredTransactions().length === 0 ? (
+              /* Mensaje cuando no hay transacciones del tipo filtrado */
+              <div className="text-center py-8">
+                <div className="text-4xl mb-4">💳</div>
+                <p
+                  className="text-white font-bold text-lg"
+                  style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
+                >
+                  No hay {activeFilter === 'INCOME' ? 'ingresos' : 'gastos'} registrados.
+                </p>
+                <p
+                  className="text-white/90 text-base font-medium"
+                  style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}
+                >
+                  Haz click en "Mostrar todas" para ver el resumen completo.
+                </p>
+              </div>
+            ) : (
+              /* Lista de transacciones filtradas */
+              <div className="space-y-3">
+                {renderTransactions()}
+              </div>
+            )}
+            
+            {/* Mensaje cuando no hay transacciones en total */}
+            {transactions.length === 0 && (
               <div className="text-center py-8">
                 <div className="text-4xl mb-4">💳</div>
                 <p
@@ -858,10 +1188,6 @@ export default function FinancesPage() {
                   Registra tu primera transacción usando el botón de arriba.
                 </p>
               </div>
-            ) : (
-              <div className="space-y-3">
-                {renderTransactions()}
-              </div>
             )}
           </div>
         </div>
@@ -872,6 +1198,15 @@ export default function FinancesPage() {
 
       {/* Confirm Modal */}
       <confirm.ConfirmModal />
+
+      {/* Template Modal */}
+      <TemplateModal
+        isOpen={isTemplateModalOpen}
+        type="finance"
+        onTemplateSelect={handleTemplateSelect}
+        onCreateFromScratch={handleCreateFromScratch}
+        onCancel={closeTemplateModal}
+      />
 
       {/* Transaction Modal */}
       <EditTransactionModal
@@ -885,12 +1220,21 @@ export default function FinancesPage() {
       {/* Item Action Modal */}
       <ItemActionModal
         isOpen={isActionModalOpen}
-        title={selectedTransaction?.description || ''}
-        description={selectedTransaction?.category?.name ? `Categoría: ${selectedTransaction.category.name}` : undefined}
-        type="transaction"
+        task={selectedTransaction ? {
+          id: selectedTransaction.id,
+          title: selectedTransaction.description,
+          description: selectedTransaction.category?.name ? `Categoría: ${selectedTransaction.category.name}` : undefined,
+          status: selectedTransaction.type, // INCOME o EXPENSE
+          priority: selectedTransaction.amount.toString(), // Monto como string
+          dueDate: selectedTransaction.date,
+          category: selectedTransaction.category,
+          createdAt: selectedTransaction.date,
+          updatedAt: selectedTransaction.date,
+        } : null}
         onEdit={handleEditFromAction}
         onDelete={handleDeleteFromAction}
         onClose={closeActionModal}
+        type="transaction"
       />
     </div>
   );

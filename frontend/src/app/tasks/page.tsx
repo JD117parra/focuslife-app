@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/hooks/useAuth';
 import { useConfirm } from '@/hooks/useConfirm';
-import { EditTaskModal, ItemActionModal } from '@/components/ui';
+import { EditTaskModal, ItemActionModal, TemplateModal } from '@/components/ui';
 import { apiUrls } from '@/config/api';
 
 interface Task {
@@ -41,6 +41,9 @@ export default function TasksPage() {
   // Estado para el modal de acciones
   const [isActionModalOpen, setIsActionModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+
+  // Estado para el modal de plantillas
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
 
   // Estado para el dropdown de búsqueda
   const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
@@ -134,27 +137,40 @@ export default function TasksPage() {
     setIsTaskModalOpen(true);
   };
 
-  const openTemplateTaskModal = (template: {
-    title: string;
-    desc: string;
-    priority: 'LOW' | 'MEDIUM' | 'HIGH';
-  }) => {
+  const closeTaskModal = () => {
+    setIsTaskModalOpen(false);
+    setEditingTask(null);
+    setIsEditingMode(false);
+  };
+
+  // Funciones para manejar el modal de plantillas
+  const openTemplateModal = () => {
+    setIsTemplateModalOpen(true);
+  };
+
+  const closeTemplateModal = () => {
+    setIsTemplateModalOpen(false);
+  };
+
+  const handleTemplateSelect = (template: any) => {
+    // Convertir template a formato de tarea
     const templateTask: Partial<Task> = {
       title: template.title,
-      description: template.desc,
+      description: template.description,
       priority: template.priority,
       status: 'PENDING',
       dueDate: null,
     };
+    
+    closeTemplateModal();
     setEditingTask(templateTask as Task);
     setIsEditingMode(false);
     setIsTaskModalOpen(true);
   };
 
-  const closeTaskModal = () => {
-    setIsTaskModalOpen(false);
-    setEditingTask(null);
-    setIsEditingMode(false);
+  const handleCreateFromScratch = () => {
+    closeTemplateModal();
+    openCreateTaskModal();
   };
 
   interface TaskData {
@@ -380,24 +396,16 @@ export default function TasksPage() {
     }
   };
 
-  const applyTemplate = (template: {
-    title: string;
-    desc: string;
-    priority: 'LOW' | 'MEDIUM' | 'HIGH';
-  }) => {
-    openTemplateTaskModal(template);
-  };
-
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'HIGH':
-        return 'bg-red-500/60 text-red-100 border border-red-400/40';
+        return 'bg-red-100 text-red-700 border border-red-300 font-semibold';
       case 'MEDIUM':
-        return 'bg-yellow-500/60 text-yellow-100 border border-yellow-400/40';
+        return 'bg-orange-100 text-orange-700 border border-orange-300 font-semibold';
       case 'LOW':
-        return 'bg-green-500/60 text-green-100 border border-green-400/40';
+        return 'bg-green-100 text-green-700 border border-green-300 font-semibold';
       default:
-        return 'bg-gray-500/60 text-gray-100 border border-gray-400/40';
+        return 'bg-gray-100 text-gray-700 border border-gray-300 font-semibold';
     }
   };
 
@@ -440,16 +448,13 @@ export default function TasksPage() {
             key={`separator-${task.priority}-${index}`}
             className="flex items-center my-4"
           >
-            <div className="flex-1 h-px bg-white/20"></div>
-            <div
-              className="px-4 text-xs font-bold text-white/60"
-              style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
-            >
+            <div className="flex-1 h-px bg-gray-300"></div>
+            <div className="px-4 py-2 text-sm font-bold text-gray-700 bg-white/90 rounded-full border border-gray-200">
               {task.priority === 'MEDIUM'
                 ? '🟡 Prioridad Media'
                 : '🟢 Prioridad Baja'}
             </div>
-            <div className="flex-1 h-px bg-white/20"></div>
+            <div className="flex-1 h-px bg-gray-300"></div>
           </div>
         );
       }
@@ -457,14 +462,11 @@ export default function TasksPage() {
       if (currentPriority === null && task.priority === 'HIGH') {
         result.push(
           <div key={`header-high`} className="flex items-center mb-4">
-            <div className="flex-1 h-px bg-white/20"></div>
-            <div
-              className="px-4 text-xs font-bold text-white/60"
-              style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
-            >
+            <div className="flex-1 h-px bg-gray-300"></div>
+            <div className="px-4 py-2 text-sm font-bold text-gray-700 bg-white/90 rounded-full border border-gray-200">
               🔴 Prioridad Alta
             </div>
-            <div className="flex-1 h-px bg-white/20"></div>
+            <div className="flex-1 h-px bg-gray-300"></div>
           </div>
         );
       }
@@ -479,31 +481,31 @@ export default function TasksPage() {
         status: string
       ) => {
         if (dateInfo?.isOverdue && status !== 'COMPLETED') {
-          return 'border-l-rose-200 bg-rose-50/80';
+          return 'border-l-red-400 bg-red-50/95 shadow-md';
         }
         if (dateInfo?.isToday) {
-          return 'border-l-blue-300 bg-blue-100/60';
+          return 'border-l-blue-400 bg-blue-50/95 shadow-md';
         }
         switch (priority) {
           case 'HIGH':
-            return 'border-l-rose-200 bg-rose-50/80';
+            return 'border-l-red-400 bg-red-50/95 shadow-md';
           case 'MEDIUM':
-            return 'border-l-amber-200 bg-amber-50/80';
+            return 'border-l-orange-400 bg-orange-50/95 shadow-md';
           case 'LOW':
-            return 'border-l-teal-300 bg-teal-100/60';
+            return 'border-l-green-400 bg-green-50/95 shadow-md';
           default:
-            return 'border-l-slate-300 bg-slate-100/60';
+            return 'border-l-gray-400 bg-white/95 shadow-md';
         }
       };
 
       result.push(
         <div
           key={task.id}
-          className={`p-3 rounded-lg border-l-4 border border-white/30 ${getPriorityStyles(
+          className={`p-4 rounded-lg border-l-4 border border-gray-200/50 ${getPriorityStyles(
             task.priority,
             dateInfo,
             task.status
-          )} shadow-lg cursor-pointer hover:scale-[1.02] transition-transform duration-200`}
+          )} cursor-pointer hover:scale-[1.01] hover:shadow-lg transition-all duration-200`}
           onClick={() => openActionModal(task)}
         >
           <div className="flex items-center justify-between">
@@ -512,25 +514,27 @@ export default function TasksPage() {
                 type="checkbox"
                 checked={task.status === 'COMPLETED'}
                 className="h-4 w-4 text-blue-600 rounded"
+                onClick={(e) => {
+                  e.stopPropagation();
+                }}
                 onChange={(e) => {
                   e.stopPropagation();
                   toggleTask(task.id, task.status);
                 }}
               />
               <div className="flex-1 min-w-0">
-                <div className="flex items-center space-x-2 mb-1">
+                <div className="flex items-center space-x-2 mb-2">
                   <span
-                    className={`font-medium truncate ${
+                    className={`font-semibold text-base leading-snug ${
                       task.status === 'COMPLETED'
-                        ? 'line-through text-white/50'
-                        : 'text-white'
+                        ? 'line-through text-gray-500'
+                        : 'text-gray-800'
                     }`}
-                    style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
                   >
                     {task.title}
                   </span>
                   <span
-                    className={`px-1.5 py-0.5 text-xs rounded-full font-medium whitespace-nowrap ${getPriorityColor(
+                    className={`px-2 py-1 text-xs rounded-full whitespace-nowrap ${getPriorityColor(
                       task.priority
                     )}`}
                   >
@@ -543,10 +547,7 @@ export default function TasksPage() {
                 </div>
 
                 {task.description && (
-                  <div
-                    className="text-sm text-white/80 truncate font-medium"
-                    style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}
-                  >
+                  <div className="text-sm text-gray-600 font-medium leading-relaxed line-clamp-2">
                     {task.description}
                   </div>
                 )}
@@ -559,24 +560,20 @@ export default function TasksPage() {
                   <div
                     className={`flex items-center space-x-1 ${
                       dateInfo.isOverdue && task.status !== 'COMPLETED'
-                        ? 'text-red-200 font-medium'
+                        ? 'text-red-600 font-semibold'
                         : dateInfo.isToday
-                          ? 'text-blue-200 font-medium'
-                          : 'text-white/70'
+                          ? 'text-blue-600 font-semibold'
+                          : 'text-gray-600 font-medium'
                     }`}
-                    style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
                   >
                     <span>📅</span>
                     <span className="whitespace-nowrap">{dateInfo.text}</span>
                     {dateInfo.isOverdue && task.status !== 'COMPLETED' && (
-                      <span className="text-red-200">⚠️</span>
+                      <span className="text-red-600">⚠️</span>
                     )}
                   </div>
                 ) : (
-                  <div
-                    className="text-white/60 flex items-center space-x-1 font-medium"
-                    style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}
-                  >
+                  <div className="text-gray-500 flex items-center space-x-1 font-medium">
                     <span>📅</span>
                     <span className="whitespace-nowrap">Sin fecha</span>
                   </div>
@@ -585,14 +582,13 @@ export default function TasksPage() {
 
               <div>
                 <span
-                  className={`px-1.5 py-0.5 rounded-full text-xs whitespace-nowrap border ${
+                  className={`px-2 py-1 rounded-full text-xs font-semibold whitespace-nowrap border ${
                     task.status === 'COMPLETED'
-                      ? 'bg-green-500/60 text-green-100 border-green-400/40'
+                      ? 'bg-green-100 text-green-700 border-green-300'
                       : task.status === 'IN_PROGRESS'
-                        ? 'bg-blue-500/60 text-blue-100 border-blue-400/40'
-                        : 'bg-yellow-500/60 text-yellow-100 border-yellow-400/40'
+                        ? 'bg-blue-100 text-blue-700 border-blue-300'
+                        : 'bg-yellow-100 text-yellow-700 border-yellow-300'
                   }`}
-                  style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
                 >
                   {task.status === 'COMPLETED'
                     ? 'Completada'
@@ -659,7 +655,7 @@ export default function TasksPage() {
     // Días vacíos al inicio
     for (let i = 0; i < firstDay; i++) {
       days.push(
-        <div key={`empty-${i}`} className="h-24 bg-white/5 border border-white/10 rounded-lg"></div>
+        <div key={`empty-${i}`} className="h-24 bg-white/15 border border-white/20 rounded-lg"></div>
       );
     }
     
@@ -672,10 +668,10 @@ export default function TasksPage() {
       days.push(
         <div
           key={day}
-          className={`h-24 border border-white/20 rounded-lg px-3 py-2 relative overflow-hidden ${
+          className={`h-24 border border-white/25 rounded-lg px-3 py-2 relative overflow-hidden ${
             isToday 
-              ? 'bg-blue-500/30 border-blue-400/50' 
-              : 'bg-white/10 hover:bg-white/15'
+              ? 'bg-blue-500/40 border-blue-400/60' 
+              : 'bg-white/15 hover:bg-white/25'
           } transition-colors duration-200`}
         >
           <div className={`text-sm font-medium mb-2 ${
@@ -746,7 +742,7 @@ export default function TasksPage() {
           {dayNames.map(dayName => (
             <div
               key={dayName}
-              className="h-8 flex items-center justify-center text-sm font-bold text-white/80 bg-white/10 rounded-lg border border-white/20"
+              className="h-8 flex items-center justify-center text-sm font-bold text-white/90 bg-white/15 rounded-lg border border-white/25"
               style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
             >
               {dayName}
@@ -821,110 +817,15 @@ export default function TasksPage() {
         {/* Sección de Creación de Tareas */}
         <div className="bg-white/15 backdrop-blur-md shadow-lg border border-white/30 p-6 rounded-lg mb-6">
           {/* Botón Crear Tarea */}
-<div className="mb-6 flex justify-center">
+<div className="mb-6 px-4">
   <button
-    onClick={openCreateTaskModal}
-    className="bg-blue-600/70 backdrop-blur-md text-white px-4 py-2 rounded-lg font-bold border border-blue-400/70 hover:bg-blue-700/80 transition-all duration-150 shadow-lg text-sm"
+    onClick={openTemplateModal}
+    className="w-full bg-blue-600/70 backdrop-blur-md text-white px-6 py-4 rounded-lg font-bold border border-blue-400/70 hover:bg-blue-700/80 transition-all duration-150 shadow-lg text-base"
     style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}
   >
     ✨ Crear Nueva Tarea
   </button>
 </div>
-
-          <h3
-            className="text-xl font-bold text-white mb-4"
-            style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}
-          >
-            📝 Plantillas Rápidas
-          </h3>
-
-          <div className="grid grid-cols-6 md:grid-cols-12 gap-1">
-            {[
-              {
-                title: 'Revisar emails',
-                desc: 'Chequear y responder correos importantes',
-                priority: 'MEDIUM',
-                icon: '📧',
-              },
-              {
-                title: 'Llamar a un cliente',
-                desc: 'Seguimiento de proyecto o consulta',
-                priority: 'HIGH',
-                icon: '📞',
-              },
-              {
-                title: 'Comprar víveres',
-                desc: 'Lista de compras para la semana',
-                priority: 'MEDIUM',
-                icon: '🛒',
-              },
-              {
-                title: 'Revisar presupuesto',
-                desc: 'Análisis mensual de finanzas',
-                priority: 'MEDIUM',
-                icon: '📊',
-              },
-              {
-                title: 'Preparar presentación',
-                desc: 'Slides para reunión del próximo jueves',
-                priority: 'HIGH',
-                icon: '📊',
-              },
-              {
-                title: 'Renovar documentos',
-                desc: 'Licencia, seguro o trámites pendientes',
-                priority: 'MEDIUM',
-                icon: '📝',
-              },
-              {
-                title: 'Hacer ejercicio',
-                desc: 'Rutina de ejercicios o ir al gimnasio',
-                priority: 'MEDIUM',
-                icon: '💪',
-              },
-              {
-                title: 'Pagar facturas',
-                desc: 'Servicios, tarjetas y pagos pendientes',
-                priority: 'HIGH',
-                icon: '💳',
-              },
-              {
-                title: 'Limpiar casa',
-                desc: 'Tareas de limpieza y organización',
-                priority: 'LOW',
-                icon: '🧹',
-              },
-              {
-                title: 'Estudiar curso',
-                desc: 'Revisar material de estudio o capacitación',
-                priority: 'MEDIUM',
-                icon: '📚',
-              },
-              {
-                title: 'Backup datos',
-                desc: 'Respaldar archivos importantes',
-                priority: 'LOW',
-                icon: '💾',
-              },
-              {
-                title: 'Cita médica',
-                desc: 'Agendar o asistir a consulta médica',
-                priority: 'HIGH',
-                icon: '🏥',
-              },
-            ].map((template, index) => (
-            <div
-            key={index}
-            onClick={() => applyTemplate(template)}
-            className="bg-white border-2 border-gray-200 shadow-lg rounded-sm p-2 cursor-pointer transition-colors duration-200 h-14 flex flex-col items-center justify-center hover:bg-gray-50"
-              >
-                <div className="text-xs mb-0.5">{template.icon}</div>
-                <div className="text-[10px] font-bold leading-tight text-gray-800 text-center px-1 truncate">
-                  {template.title}
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
 
         {/* Lista de Tareas */}
@@ -939,31 +840,31 @@ export default function TasksPage() {
               </h2>
               
               {/* Barra de búsqueda con dropdown */}
-              <div className="relative flex-1 max-w-56">
+              <div className="relative flex-1 max-w-[15rem]">
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={e => handleSearch(e.target.value)}
                   onFocus={() => setIsSearchDropdownOpen(true)}
                   onBlur={() => setTimeout(() => setIsSearchDropdownOpen(false), 200)}
-                  className="w-full p-2 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white placeholder-white/60 font-medium text-sm pl-3 pr-10"
+                  className="w-full p-2 bg-white/95 border border-gray-300/60 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700 placeholder-gray-500 font-medium text-sm pl-3 pr-10 shadow-sm"
                   placeholder="Buscar tareas..."
-                  style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}
+                  style={{}}
                 />
                 <button
                   onClick={() => setIsSearchDropdownOpen(!isSearchDropdownOpen)}
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-white/60 text-sm hover:text-white"
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm hover:text-gray-700"
                 >
                   ▼
                 </button>
                 
                 {/* Dropdown de prioridad */}
                 {isSearchDropdownOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-white/25 backdrop-blur-md border border-white/45 rounded-lg shadow-lg z-10">
-                    <div className="p-2">
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white/95 border border-gray-300/60 rounded-lg shadow-xl z-10 backdrop-blur-sm">
+                    <div className="p-3">
                       {/* Sección Vista */}
-                      <div className="mb-3">
-                        <div className="text-xs font-bold text-white/90 mb-2 px-2" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>Vista:</div>
+                      <div className="mb-4">
+                        <div className="text-sm font-bold text-gray-700 mb-3 px-2">Vista:</div>
                         {[
                           { key: 'list', label: 'Vista Lista', icon: '📋' },
                           { key: 'calendar', label: 'Vista Calendario', icon: '🗓️' },
@@ -974,25 +875,24 @@ export default function TasksPage() {
                               setViewMode(option.key as 'list' | 'calendar');
                               setIsSearchDropdownOpen(false);
                             }}
-                            className={`w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded transition-colors ${
+                            className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors ${
                               viewMode === option.key
-                                ? 'bg-white/30 text-white font-medium border border-white/40'
-                                : 'text-white/90 hover:bg-white/20 border border-transparent'
+                                ? 'bg-blue-100 text-blue-700 font-semibold border border-blue-300 shadow-sm'
+                                : 'text-gray-600 hover:bg-gray-100 border border-transparent font-medium'
                             }`}
-                            style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}
                           >
                             <span>{option.icon}</span>
                             <span>{option.label}</span>
-                            {viewMode === option.key && <span className="ml-auto text-white/90">✓</span>}
+                            {viewMode === option.key && <span className="ml-auto text-blue-600">✓</span>}
                           </button>
                         ))}
                       </div>
                       
                       {/* Separador */}
-                      <div className="border-t border-white/30 my-2"></div>
+                      <div className="border-t border-gray-300 my-3"></div>
                       
                       {/* Sección Prioridad */}
-                      <div className="text-xs font-bold text-white/90 mb-2 px-2" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)' }}>Filtrar por prioridad:</div>
+                      <div className="text-sm font-bold text-gray-700 mb-3 px-2">Filtrar por prioridad:</div>
                       {[
                         { key: 'all', label: 'Todas las prioridades', icon: '📊' },
                         { key: 'HIGH', label: 'Alta prioridad', icon: '🔴' },
@@ -1005,16 +905,15 @@ export default function TasksPage() {
                             handlePriorityFilter(option.key);
                             setIsSearchDropdownOpen(false);
                           }}
-                          className={`w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded transition-colors ${
+                          className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors ${
                             priorityFilter === option.key
-                              ? 'bg-white/30 text-white font-medium border border-white/40'
-                              : 'text-white/90 hover:bg-white/20 border border-transparent'
+                              ? 'bg-green-100 text-green-700 font-semibold border border-green-300 shadow-sm'
+                              : 'text-gray-600 hover:bg-gray-100 border border-transparent font-medium'
                           }`}
-                          style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.6)' }}
                         >
                           <span>{option.icon}</span>
                           <span>{option.label}</span>
-                          {priorityFilter === option.key && <span className="ml-auto text-white/90">✓</span>}
+                          {priorityFilter === option.key && <span className="ml-auto text-green-600">✓</span>}
                         </button>
                       ))}
                     </div>
@@ -1085,6 +984,15 @@ export default function TasksPage() {
       {/* Confirm Modal */}
       <confirm.ConfirmModal />
 
+      {/* Template Modal */}
+      <TemplateModal
+        isOpen={isTemplateModalOpen}
+        type="task"
+        onTemplateSelect={handleTemplateSelect}
+        onCreateFromScratch={handleCreateFromScratch}
+        onCancel={closeTemplateModal}
+      />
+
       {/* Task Modal */}
       <EditTaskModal
         isOpen={isTaskModalOpen}
@@ -1097,12 +1005,11 @@ export default function TasksPage() {
       {/* Item Action Modal */}
       <ItemActionModal
         isOpen={isActionModalOpen}
-        title={selectedTask?.title || ''}
-        description={selectedTask?.description}
-        type="task"
+        task={selectedTask}
         onEdit={handleEditFromAction}
         onDelete={handleDeleteFromAction}
         onClose={closeActionModal}
+        type="task"
       />
     </div>
   );
