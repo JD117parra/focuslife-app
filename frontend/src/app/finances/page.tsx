@@ -237,7 +237,7 @@ interface TemplateData {
   icon?: string;
 }
 
-interface TransactionWithCategory extends Transaction {
+interface TransactionWithCategory extends Omit<Transaction, 'category'> {
   category?: string | { name: string };
 }
 
