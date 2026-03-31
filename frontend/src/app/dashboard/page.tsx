@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
@@ -65,6 +64,7 @@ export default function DashboardPage() {
     authenticatedFetch,
     isAuthenticated,
     isLoading: authLoading,
+    logout,
   } = useAuth();
 
   // 🏆 SISTEMA DE NIVELES ÉPICOS
@@ -531,12 +531,12 @@ export default function DashboardPage() {
                   {user?.name || user?.email || 'Usuario'}
                 </span>!
               </span>
-              <Link
-                href="/"
+              <button
+                onClick={logout}
                 className="text-blue-100 hover:text-white font-bold text-lg"
               >
                 Cerrar Sesión
-              </Link>
+              </button>
             </div>
           </div>
         </div>
