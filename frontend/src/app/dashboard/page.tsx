@@ -678,7 +678,7 @@ export default function DashboardPage() {
                         </span>
                       </div>
 
-                      {taskStats.byDate.overdue > 0 && (
+                      {(taskStats.byDate.overdue ?? 0) > 0 && (
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-red-200 flex items-center text-shadow-light">
                             ⚠️ Vencidas
