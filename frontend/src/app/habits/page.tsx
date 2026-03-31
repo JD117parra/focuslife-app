@@ -13,7 +13,7 @@ interface Habit {
   id: string;
   name: string;
   description?: string;
-  frequency: string;
+  frequency: 'DAILY' | 'WEEKLY' | 'MONTHLY';
   target: number;
   isActive: boolean;
 }
@@ -1411,8 +1411,16 @@ export default function HabitsPage() {
       {/* Item Action Modal */}
       <ItemActionModal
         isOpen={isActionModalOpen}
-        title={selectedHabit?.name || ''}
-        description={selectedHabit?.description}
+        task={selectedHabit ? {
+          id: selectedHabit.id,
+          title: selectedHabit.name,
+          description: selectedHabit.description,
+          status: selectedHabit.isActive ? 'ACTIVE' : 'INACTIVE',
+          priority: '',
+          dueDate: null,
+          createdAt: '',
+          updatedAt: '',
+        } : null}
         type="habit"
         onEdit={handleEditFromAction}
         onDelete={handleDeleteFromAction}

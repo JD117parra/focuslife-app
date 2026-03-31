@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, type ReactElement } from 'react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/hooks/useAuth';
@@ -176,16 +176,16 @@ export default function TasksPage() {
   interface TaskData {
     title: string;
     description?: string;
-    priority: 'LOW' | 'MEDIUM' | 'HIGH';
+    priority: string;
     status: string;
     dueDate?: string | null;
   }
 
-  const handleTaskModalConfirm = async (taskData: TaskData) => {
+  const handleTaskModalConfirm = async (taskData: Partial<TaskData>) => {
     if (isEditingMode && editingTask?.id) {
-      await updateTaskComplete(editingTask.id, taskData);
+      await updateTaskComplete(editingTask.id, taskData as TaskData);
     } else {
-      await createTaskComplete(taskData);
+      await createTaskComplete(taskData as TaskData);
     }
     closeTaskModal();
   };
@@ -438,7 +438,7 @@ export default function TasksPage() {
   // Función para agrupar tareas por prioridad con separadores
   const renderTasksWithSeparators = (tasks: Task[]) => {
     const sortedTasks = sortTasksByPriority(tasks);
-    const result: JSX.Element[] = [];
+    const result: ReactElement[] = [];
     let currentPriority: string | null = null;
 
     sortedTasks.forEach((task, index) => {

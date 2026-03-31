@@ -456,11 +456,11 @@ export default function FinancesPage() {
     openCreateTransactionModal();
   };
 
-  const handleTransactionModalConfirm = async (transactionData: TransactionData) => {
+  const handleTransactionModalConfirm = async (transactionData: Partial<TransactionData>) => {
     if (isEditingMode && editingTransaction?.id) {
-      await updateTransactionComplete(editingTransaction.id, transactionData);
+      await updateTransactionComplete(editingTransaction.id, transactionData as TransactionData);
     } else {
-      await createTransactionComplete(transactionData);
+      await createTransactionComplete(transactionData as TransactionData);
     }
     closeTransactionModal();
   };
@@ -842,7 +842,7 @@ export default function FinancesPage() {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
@@ -1211,7 +1211,12 @@ export default function FinancesPage() {
       {/* Transaction Modal */}
       <EditTransactionModal
         isOpen={isTransactionModalOpen}
-        transaction={editingTransaction}
+        transaction={editingTransaction ? {
+          ...editingTransaction,
+          category: typeof editingTransaction.category === 'object'
+            ? editingTransaction.category?.name
+            : editingTransaction.category,
+        } : null}
         isEditing={isEditingMode}
         onConfirm={handleTransactionModalConfirm}
         onCancel={closeTransactionModal}
@@ -1227,7 +1232,11 @@ export default function FinancesPage() {
           status: selectedTransaction.type, // INCOME o EXPENSE
           priority: selectedTransaction.amount.toString(), // Monto como string
           dueDate: selectedTransaction.date,
-          category: selectedTransaction.category,
+          category: selectedTransaction.category ? {
+            id: selectedTransaction.category.id ?? '',
+            name: selectedTransaction.category.name,
+            color: selectedTransaction.category.color ?? '',
+          } : undefined,
           createdAt: selectedTransaction.date,
           updatedAt: selectedTransaction.date,
         } : null}

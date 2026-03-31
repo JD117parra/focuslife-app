@@ -159,6 +159,7 @@ export function useEditModal() {
         <EditTaskModal
           isOpen={taskEditState.isOpen}
           task={taskEditState.task}
+          isEditing={false}
           onConfirm={taskEditState.onConfirm}
           onCancel={taskEditState.onCancel}
         />
