@@ -18,7 +18,7 @@ export class TransactionService {
       endDate?: string;
     }
   ): Promise<TransactionResponse[]> {
-    const whereClause: any = { userId };
+    const whereClause: Record<string, any> = { userId };
 
     // Aplicar filtros
     if (filters?.type) {
@@ -127,7 +127,7 @@ export class TransactionService {
     }
 
     // Procesar el monto si se está actualizando
-    const updateData: any = { ...transactionData };
+    const updateData: Record<string, any> = { ...transactionData };
     if (updateData.amount !== undefined && updateData.type) {
       updateData.amount =
         updateData.type === 'EXPENSE'
@@ -190,7 +190,7 @@ export class TransactionService {
       endDate?: string;
     }
   ) {
-    const whereClause: any = { userId };
+    const whereClause: Record<string, any> = { userId };
 
     if (period?.startDate || period?.endDate) {
       whereClause.date = {};
@@ -350,12 +350,9 @@ export class TransactionService {
 
         if (!existingCategory) {
           await prisma.category.create({ data: category });
-          console.log(`✅ Categoría creada: ${category.name}`);
-        } else {
-          console.log(`ℹ️ Categoría ya existe: ${category.name}`);
         }
       } catch (error) {
-        console.log(`⚠️ Error creando categoría ${category.name}:`, error);
+        console.error(`Error creating category ${category.name}:`, error);
       }
     }
   }

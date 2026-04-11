@@ -172,7 +172,7 @@ export class HabitService {
     startDate?: string,
     endDate?: string
   ): Promise<HabitEntryResponse[]> {
-    const whereClause: any = {
+    const whereClause: Record<string, any> = {
       habitId,
       userId,
     };
@@ -267,10 +267,6 @@ export class HabitService {
     userId: string,
     date: string
   ): Promise<boolean> {
-    console.log(
-      `🔍 Attempting to unmark habit ${habitId} for user ${userId} on date ${date}`
-    );
-
     // Verificar que el hábito existe y pertenece al usuario
     const habit = await prisma.habit.findFirst({
       where: { id: habitId, userId },
@@ -286,10 +282,6 @@ export class HabitService {
     const targetDate = new Date(date);
     targetDate.setHours(0, 0, 0, 0);
 
-    console.log(
-      `🔍 Looking for entry with normalized date: ${targetDate.toISOString()}`
-    );
-
     // Buscar la entrada específica para esta fecha
     const existingEntry = await prisma.habitEntry.findFirst({
       where: {
@@ -303,18 +295,14 @@ export class HabitService {
     });
 
     if (!existingEntry) {
-      console.log(`❌ No entry found for habit ${habitId} on date ${date}`);
       throw new Error('No habit entry found for this date');
     }
-
-    console.log(`✅ Found entry ${existingEntry.id}, deleting...`);
 
     // Eliminar la entrada
     await prisma.habitEntry.delete({
       where: { id: existingEntry.id },
     });
 
-    console.log(`✅ Successfully unmarked habit ${habitId} for date ${date}`);
     return true;
   }
 

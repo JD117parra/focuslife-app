@@ -1,11 +1,13 @@
 import { Router, Response } from 'express';
 import { TransactionService } from '../services/transactionService';
-import {
-  CreateTransactionDto,
-  UpdateTransactionDto,
-  CreateCategoryDto,
-} from '../types';
 import { authenticateToken, AuthenticatedRequest } from '../middleware/auth';
+import {
+  createTransactionSchema,
+  updateTransactionSchema,
+  createCategorySchema,
+  transactionQuerySchema,
+  validateBody,
+} from '../validators/schemas';
 
 const router = Router();
 
@@ -20,16 +22,11 @@ router.get(
         return;
       }
 
-      const { type, categoryId, startDate, endDate } = req.query;
+      const query = validateBody(transactionQuerySchema, req.query);
 
       const transactions = await TransactionService.getUserTransactions(
         req.user.id,
-        {
-          type: type as 'INCOME' | 'EXPENSE',
-          categoryId: categoryId as string,
-          startDate: startDate as string,
-          endDate: endDate as string,
-        }
+        query
       );
 
       res.json({
@@ -142,18 +139,7 @@ router.post(
         return;
       }
 
-      const transactionData: CreateTransactionDto = req.body;
-
-      if (
-        !transactionData.amount ||
-        !transactionData.description ||
-        !transactionData.type
-      ) {
-        res
-          .status(400)
-          .json({ message: 'Amount, description and type are required' });
-        return;
-      }
+      const transactionData = validateBody(createTransactionSchema, req.body);
 
       const transaction = await TransactionService.createTransaction(
         req.user.id,
@@ -185,7 +171,7 @@ router.put(
       }
 
       const { id } = req.params;
-      const transactionData: UpdateTransactionDto = req.body;
+      const transactionData = validateBody(updateTransactionSchema, req.body);
 
       const transaction = await TransactionService.updateTransaction(
         id,
@@ -271,12 +257,7 @@ router.post(
         return;
       }
 
-      const categoryData: CreateCategoryDto = req.body;
-
-      if (!categoryData.name) {
-        res.status(400).json({ message: 'Category name is required' });
-        return;
-      }
+      const categoryData = validateBody(createCategorySchema, req.body);
 
       const category = await TransactionService.createCategory({
         ...categoryData,

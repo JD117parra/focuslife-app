@@ -66,8 +66,31 @@ export const updateTransactionSchema = z.object({
   amount: z.number().positive().optional(),
   description: z.string().min(1).max(500).optional(),
   type: z.enum(['INCOME', 'EXPENSE']).optional(),
-  categoryId: z.string().nullable().optional(),
+  categoryId: z.string().optional(),
   date: z.string().optional(),
+});
+
+// ============ CATEGORY SCHEMAS ============
+
+export const createCategorySchema = z.object({
+  name: z.string().min(1, 'Name is required').max(100),
+  type: z.enum(['TASK', 'FINANCE']),
+  color: z.string().max(20).optional(),
+  icon: z.string().max(50).optional(),
+});
+
+// ============ QUERY PARAM SCHEMAS ============
+
+export const dateRangeQuerySchema = z.object({
+  startDate: z.string().min(1, 'startDate is required').optional(),
+  endDate: z.string().min(1, 'endDate is required').optional(),
+});
+
+export const transactionQuerySchema = z.object({
+  type: z.enum(['INCOME', 'EXPENSE']).optional(),
+  categoryId: z.string().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
 });
 
 // ============ HELPER ============

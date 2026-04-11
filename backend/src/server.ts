@@ -32,7 +32,7 @@ app.use(cors({
 app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser());
 app.use(helmet());
-app.use(morgan('combined'));
+app.use(morgan(process.env.NODE_ENV === 'production' ? 'short' : 'dev'));
 
 // Global rate limiting: 100 requests per 15 minutes per IP
 const globalLimiter = rateLimit({
@@ -44,16 +44,28 @@ const globalLimiter = rateLimit({
 });
 app.use('/api/', globalLimiter);
 
-// CSRF protection: validate Origin header on state-changing requests
+// CSRF protection: validate Origin/Referer on state-changing requests
 const allowedOrigins = [
   process.env.FRONTEND_URL || 'http://localhost:3000',
 ];
 app.use('/api/', (req: Request, res: Response, next) => {
   if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
     const origin = req.headers.origin;
-    if (origin && !allowedOrigins.includes(origin)) {
-      res.status(403).json({ message: 'Forbidden: invalid origin' });
-      return;
+    const referer = req.headers.referer;
+
+    // Check Origin header first
+    if (origin) {
+      if (!allowedOrigins.includes(origin)) {
+        res.status(403).json({ message: 'Forbidden: invalid origin' });
+        return;
+      }
+    } else if (referer) {
+      // Fallback to Referer if Origin is missing
+      const refererOrigin = new URL(referer).origin;
+      if (!allowedOrigins.includes(refererOrigin)) {
+        res.status(403).json({ message: 'Forbidden: invalid referer' });
+        return;
+      }
     }
   }
   next();
@@ -75,16 +87,7 @@ app.use('/api/habits', habitRoutes);
 app.use('/api/transactions', transactionRoutes);
 
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/health`);
-  console.log(`🔐 Auth endpoints: /api/auth/register, /api/auth/login`);
-  console.log(`📋 Task endpoints: /api/tasks (GET, POST, PUT, DELETE)`);
-  console.log(
-    `🎯 Habit endpoints: /api/habits (GET, POST, PUT, DELETE, entries)`
-  );
-  console.log(
-    `💰 Transaction endpoints: /api/transactions (GET, POST, PUT, DELETE, stats, categories)`
-  );
+  console.log(`Server running on port ${PORT}`);
 });
 
 export default app;

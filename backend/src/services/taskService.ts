@@ -104,9 +104,6 @@ export class TaskService {
       },
     });
 
-    console.log(
-      `✅ Task created: "${title}" ${dueDate ? `(due: ${dueDate})` : '(no due date)'}`
-    );
     return task;
   }
 
@@ -288,7 +285,6 @@ export class TaskService {
       },
     });
 
-    console.log(`📅 Found ${tasks.length} tasks for today`);
     return tasks;
   }
 
@@ -322,7 +318,6 @@ export class TaskService {
       },
     });
 
-    console.log(`⚠️ Found ${tasks.length} overdue tasks`);
     return tasks;
   }
 
@@ -361,7 +356,6 @@ export class TaskService {
       },
     });
 
-    console.log(`📆 Found ${tasks.length} tasks for this week`);
     return tasks;
   }
 
@@ -384,7 +378,6 @@ export class TaskService {
       },
     });
 
-    console.log(`📝 Found ${tasks.length} tasks without due date`);
     return tasks;
   }
 
@@ -429,9 +422,6 @@ export class TaskService {
       },
     });
 
-    console.log(
-      `📊 Found ${tasks.length} tasks between ${startDate} and ${endDate}`
-    );
     return tasks;
   }
 }

@@ -60,11 +60,8 @@ export class AuthService {
     // Crear categorías por defecto para el nuevo usuario
     try {
       await TransactionService.createDefaultCategories();
-      console.log(
-        `✅ Categorías creadas automáticamente para usuario: ${user.email}`
-      );
     } catch (error) {
-      console.error('⚠️ Error creando categorías por defecto:', error);
+      console.error('Error creating default categories:', error);
       // No fallar el registro si las categorías no se pueden crear
     }
 
