@@ -5,29 +5,11 @@ import { authenticateToken, AuthenticatedRequest } from '../middleware/auth';
 
 const router = Router();
 
-// LOGGING MEJORADO PARA DEBUG
-router.use((req, res, next) => {
-  console.log(
-    '🎯 HABITS ROUTER:',
-    req.method,
-    req.originalUrl,
-    req.body ? 'Body:' : '',
-    req.body
-  );
-  next();
-});
-
 // DELETE /api/habits/:habitId/unmark - Desmarcar hábito para una fecha específica (más intuitivo)
 router.delete(
   '/:habitId/unmark',
   authenticateToken,
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-    console.log(
-      '🎯 UNMARK endpoint reached for habit:',
-      req.params.habitId,
-      'date:',
-      req.body.date
-    );
     try {
       if (!req.user) {
         res.status(401).json({ message: 'User not authenticated' });
@@ -61,7 +43,6 @@ router.delete(
   '/entries/:entryId',
   authenticateToken,
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-    console.log('🟢 DELETE ENTRY endpoint reached:', req.params.entryId);
     try {
       if (!req.user) {
         res.status(401).json({ message: 'User not authenticated' });
@@ -283,12 +264,6 @@ router.post(
   '/:id/entries',
   authenticateToken,
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-    console.log(
-      '✅ MARK HABIT endpoint reached for habit:',
-      req.params.id,
-      'date:',
-      req.body.date
-    );
     try {
       if (!req.user) {
         res.status(401).json({ message: 'User not authenticated' });
@@ -323,7 +298,6 @@ router.get(
   '/:id/entries',
   authenticateToken,
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-    console.log('📋 GET ENTRIES endpoint reached for habit:', req.params.id);
     try {
       if (!req.user) {
         res.status(401).json({ message: 'User not authenticated' });

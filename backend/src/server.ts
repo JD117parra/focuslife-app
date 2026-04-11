@@ -14,7 +14,7 @@ import transactionRoutes from './routes/transactions';
 dotenv.config();
 
 // Validate required environment variables on startup
-const requiredEnvVars = ['JWT_SECRET', 'DATABASE_URL'];
+const requiredEnvVars = ['JWT_SECRET', 'DATABASE_URL', 'FRONTEND_URL', 'NODE_ENV'];
 const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
 if (missingVars.length > 0) {
   console.error(`Missing required environment variables: ${missingVars.join(', ')}`);

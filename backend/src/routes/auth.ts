@@ -1,8 +1,8 @@
 import { Router, Request, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import { AuthService } from '../services/authService';
-import { CreateUserDto, LoginDto } from '../types';
 import { authenticateToken, AuthenticatedRequest } from '../middleware/auth';
+import { registerSchema, loginSchema, validateBody } from '../validators/schemas';
 
 const router = Router();
 
@@ -28,13 +28,7 @@ const cookieOptions = {
 // POST /api/auth/register
 router.post('/register', authLimiter, async (req: Request, res: Response): Promise<void> => {
   try {
-    const userData: CreateUserDto = req.body;
-
-    if (!userData.email || !userData.password) {
-      res.status(400).json({ message: 'Email and password are required' });
-      return;
-    }
-
+    const userData = validateBody(registerSchema, req.body);
     const result = await AuthService.register(userData);
 
     // Set httpOnly cookie with JWT token
@@ -57,13 +51,7 @@ router.post('/register', authLimiter, async (req: Request, res: Response): Promi
 // POST /api/auth/login
 router.post('/login', authLimiter, async (req: Request, res: Response): Promise<void> => {
   try {
-    const loginData: LoginDto = req.body;
-
-    if (!loginData.email || !loginData.password) {
-      res.status(400).json({ message: 'Email and password are required' });
-      return;
-    }
-
+    const loginData = validateBody(loginSchema, req.body);
     const result = await AuthService.login(loginData);
 
     // Set httpOnly cookie with JWT token
