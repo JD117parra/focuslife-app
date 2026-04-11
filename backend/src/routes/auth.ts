@@ -1,9 +1,19 @@
 import { Router, Request, Response } from 'express';
+import rateLimit from 'express-rate-limit';
 import { AuthService } from '../services/authService';
 import { CreateUserDto, LoginDto } from '../types';
 import { authenticateToken, AuthenticatedRequest } from '../middleware/auth';
 
 const router = Router();
+
+// Strict rate limiting for auth endpoints: 5 attempts per 15 minutes per IP
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many attempts, please try again in 15 minutes.' },
+});
 
 // Cookie configuration for httpOnly tokens
 const isProduction = process.env.NODE_ENV === 'production';
@@ -16,7 +26,7 @@ const cookieOptions = {
 };
 
 // POST /api/auth/register
-router.post('/register', async (req: Request, res: Response): Promise<void> => {
+router.post('/register', authLimiter, async (req: Request, res: Response): Promise<void> => {
   try {
     const userData: CreateUserDto = req.body;
 
@@ -45,7 +55,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
 });
 
 // POST /api/auth/login
-router.post('/login', async (req: Request, res: Response): Promise<void> => {
+router.post('/login', authLimiter, async (req: Request, res: Response): Promise<void> => {
   try {
     const loginData: LoginDto = req.body;
 
