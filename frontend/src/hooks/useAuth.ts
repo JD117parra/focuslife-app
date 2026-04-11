@@ -16,38 +16,18 @@ interface UseAuthReturn {
   authenticatedFetch: (url: string, options?: RequestInit) => Promise<Response>;
 }
 
-// Función auxiliar para verificar si estamos en el cliente
+// Helper to check if we're in the browser
 const isClient = () => typeof window !== 'undefined';
-
-// Función auxiliar para obtener token de manera segura
-const getTokenSafe = (): string | null => {
-  if (!isClient()) return null;
-  return localStorage.getItem('authToken');
-};
-
-// Función auxiliar para guardar token de manera segura
-const setTokenSafe = (token: string): void => {
-  if (!isClient()) return;
-  localStorage.setItem('authToken', token);
-};
-
-// Función auxiliar para eliminar token de manera segura
-const removeTokenSafe = (): void => {
-  if (!isClient()) return;
-  localStorage.removeItem('authToken');
-};
 
 export const useAuth = (): UseAuthReturn => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Manejar errores de autenticación
+  // Handle auth errors
   const handleAuthError = useCallback((reason: string) => {
     console.warn('Auth error:', reason);
-    removeTokenSafe();
     setUser(null);
 
-    // Solo redirigir si estamos en el cliente y no estamos ya en login/register
     if (isClient()) {
       const currentPath = window.location.pathname;
       if (
@@ -55,60 +35,44 @@ export const useAuth = (): UseAuthReturn => {
         !currentPath.includes('/register') &&
         currentPath !== '/'
       ) {
-        window.location.href = '/login';
+        window.location.href = '/';
       }
     }
   }, []);
 
-  // Función para hacer fetch con autenticación automática
+  // Fetch with credentials (httpOnly cookies sent automatically)
   const authenticatedFetch = useCallback(async (
     url: string,
     options: RequestInit = {}
   ): Promise<Response> => {
-    const token = getTokenSafe();
-
-    if (!token) {
-      handleAuthError('No hay token de autenticación');
-      throw new Error('No authentication token');
-    }
-
     const response = await fetch(url, {
       ...options,
+      credentials: 'include',
       headers: {
-        Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
         ...options.headers,
       },
     });
 
-    // Si hay error de autenticación, manejar automáticamente
     if (response.status === 401 || response.status === 403) {
-      handleAuthError('Token expirado o inválido');
+      handleAuthError('Token expired or invalid');
       throw new Error('Authentication failed');
     }
 
     return response;
   }, [handleAuthError]);
 
-  // Verificar autenticación al cargar - solo en el cliente
+  // Check authentication on mount via /api/auth/me
   const checkAuth = useCallback(async () => {
-    // Solo ejecutar en el cliente
     if (!isClient()) {
       setIsLoading(false);
       return;
     }
 
     try {
-      const token = getTokenSafe();
-
-      if (!token) {
-        setIsLoading(false);
-        return;
-      }
-
       const response = await fetch(apiUrls.auth.me(), {
+        credentials: 'include',
         headers: {
-          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
@@ -117,15 +81,15 @@ export const useAuth = (): UseAuthReturn => {
         const data = await response.json();
         setUser(data.data);
       } else {
-        handleAuthError('Error verificando usuario');
+        setUser(null);
       }
     } catch (error) {
       console.error('Error checking auth:', error);
-      handleAuthError('Error de conexión');
+      setUser(null);
     } finally {
       setIsLoading(false);
     }
-  }, [handleAuthError]);
+  }, []);
 
   // Login
   const login = async (email: string, password: string): Promise<boolean> => {
@@ -135,12 +99,12 @@ export const useAuth = (): UseAuthReturn => {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({ email, password }),
       });
 
       if (response.ok) {
         const data = await response.json();
-        setTokenSafe(data.data.token);
         setUser(data.data.user);
         return true;
       } else {
@@ -153,22 +117,27 @@ export const useAuth = (): UseAuthReturn => {
     }
   };
 
-  // Logout
-  const logout = useCallback(() => {
-    removeTokenSafe();
+  // Logout - calls server to clear httpOnly cookie
+  const logout = useCallback(async () => {
+    try {
+      await fetch(apiUrls.auth.logout(), {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
     setUser(null);
     if (isClient()) {
       window.location.href = '/';
     }
   }, []);
 
-  // Verificar autenticación al montar el componente - solo en el cliente
+  // Verify auth on component mount
   useEffect(() => {
-    // Solo ejecutar si estamos en el cliente
     if (isClient()) {
       checkAuth();
     } else {
-      // Si estamos en el servidor, marcar como no cargando
       setIsLoading(false);
     }
   }, [checkAuth]);

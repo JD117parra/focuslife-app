@@ -8,39 +8,18 @@ interface AuthResponse {
       email: string;
       name: string;
     };
-    token: string;
   };
 }
 
-// Función auxiliar para verificar si estamos en el cliente
-const isClient = () => typeof window !== 'undefined';
-
 export class AuthService {
-  // Guardar token en localStorage (solo en el cliente)
-  static setToken(token: string): void {
-    if (!isClient()) return;
-    localStorage.setItem('authToken', token);
-  }
-
-  // Obtener token de localStorage (solo en el cliente)
-  static getToken(): string | null {
-    if (!isClient()) return null;
-    return localStorage.getItem('authToken');
-  }
-
-  // Eliminar token (solo en el cliente)
-  static removeToken(): void {
-    if (!isClient()) return;
-    localStorage.removeItem('authToken');
-  }
-
-  // Login
+  // Login - token is set as httpOnly cookie by the server
   static async login(email: string, password: string): Promise<AuthResponse> {
     const response = await fetch(apiUrls.auth.login(), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
       body: JSON.stringify({ email, password }),
     });
 
@@ -52,7 +31,7 @@ export class AuthService {
     return response.json();
   }
 
-  // Register
+  // Register - token is set as httpOnly cookie by the server
   static async register(
     email: string,
     password: string,
@@ -63,6 +42,7 @@ export class AuthService {
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
       body: JSON.stringify({ email, password, name }),
     });
 
@@ -74,15 +54,18 @@ export class AuthService {
     return response.json();
   }
 
-  // Verificar si está logueado (solo en el cliente)
-  static isLoggedIn(): boolean {
-    return this.getToken() !== null;
-  }
+  // Logout - clears httpOnly cookie on the server
+  static async logout(): Promise<void> {
+    try {
+      await fetch(apiUrls.auth.logout(), {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
 
-  // Logout (solo en el cliente)
-  static logout(): void {
-    this.removeToken();
-    if (isClient()) {
+    if (typeof window !== 'undefined') {
       window.location.href = '/';
     }
   }

@@ -26,8 +26,13 @@ export default function RegisterPage() {
       return;
     }
 
-    if (password.length < 6) {
-      console.error('La contraseña debe tener al menos 6 caracteres');
+    if (password.length < 8) {
+      console.error('La contraseña debe tener al menos 8 caracteres');
+      return;
+    }
+
+    if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
+      console.error('La contraseña debe contener al menos una mayúscula, una minúscula y un número');
       return;
     }
 
@@ -36,11 +41,8 @@ export default function RegisterPage() {
     try {
       const response = await AuthService.register(email, password, name);
 
-      // Guardar token y redireccionar
-      AuthService.setToken(response.data.token);
-
       console.log(
-        `¡Registro exitoso! Bienvenido ${response.data.user.name || response.data.user.email}`
+        `Registro exitoso! Bienvenido ${response.data.user.name || response.data.user.email}`
       );
 
       // Redireccionar al dashboard
@@ -155,7 +157,7 @@ export default function RegisterPage() {
               value={password}
               onChange={e => setPassword(e.target.value)}
               className="w-full p-3 bg-white/20 border border-white/30 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 text-white placeholder-white/60"
-              placeholder="Mínimo 6 caracteres"
+              placeholder="Mínimo 8 caracteres (mayúscula, minúscula, número)"
               disabled={loading}
               required
             />
