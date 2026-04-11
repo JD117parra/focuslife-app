@@ -1,21 +1,38 @@
 import { Router, Request, Response } from 'express';
+import rateLimit from 'express-rate-limit';
 import { AuthService } from '../services/authService';
-import { CreateUserDto, LoginDto } from '../types';
 import { authenticateToken, AuthenticatedRequest } from '../middleware/auth';
+import { registerSchema, loginSchema, validateBody } from '../validators/schemas';
 
 const router = Router();
 
+// Strict rate limiting for auth endpoints: 5 attempts per 15 minutes per IP
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many attempts, please try again in 15 minutes.' },
+});
+
+// Cookie configuration for httpOnly tokens
+const isProduction = process.env.NODE_ENV === 'production';
+const cookieOptions = {
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: isProduction ? ('none' as const) : ('lax' as const),
+  path: '/',
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+};
+
 // POST /api/auth/register
-router.post('/register', async (req: Request, res: Response): Promise<void> => {
+router.post('/register', authLimiter, async (req: Request, res: Response): Promise<void> => {
   try {
-    const userData: CreateUserDto = req.body;
-
-    if (!userData.email || !userData.password) {
-      res.status(400).json({ message: 'Email and password are required' });
-      return;
-    }
-
+    const userData = validateBody(registerSchema, req.body);
     const result = await AuthService.register(userData);
+
+    // Set httpOnly cookie with JWT token
+    res.cookie('token', result.token, cookieOptions);
 
     res.status(201).json({
       message: 'User registered successfully',
@@ -33,16 +50,13 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
 });
 
 // POST /api/auth/login
-router.post('/login', async (req: Request, res: Response): Promise<void> => {
+router.post('/login', authLimiter, async (req: Request, res: Response): Promise<void> => {
   try {
-    const loginData: LoginDto = req.body;
-
-    if (!loginData.email || !loginData.password) {
-      res.status(400).json({ message: 'Email and password are required' });
-      return;
-    }
-
+    const loginData = validateBody(loginSchema, req.body);
     const result = await AuthService.login(loginData);
+
+    // Set httpOnly cookie with JWT token
+    res.cookie('token', result.token, cookieOptions);
 
     res.json({
       message: 'Login successful',
@@ -56,6 +70,17 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
     const message = error instanceof Error ? error.message : 'Login failed';
     res.status(401).json({ message });
   }
+});
+
+// POST /api/auth/logout
+router.post('/logout', (_req: Request, res: Response): void => {
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? ('none' as const) : ('lax' as const),
+    path: '/',
+  });
+  res.json({ message: 'Logged out successfully' });
 });
 
 // GET /api/auth/me

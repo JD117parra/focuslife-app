@@ -1,317 +1,201 @@
-# 🎯 FocusLife App
+# FocusLife App
 
-> A complete productivity application for managing tasks, tracking habits, and monitoring personal finances.
+> Aplicacion de productividad para gestionar tareas, seguimiento de habitos y finanzas personales.
 
-## 📋 Overview
+## Descripcion
 
-FocusLife is a comprehensive productivity application that helps users manage their daily tasks, build positive habits, and track their financial health. Built with modern web technologies, it provides a seamless experience across all productivity management needs.
+FocusLife es una aplicacion de productividad que ayuda a los usuarios a gestionar sus tareas diarias, construir habitos positivos y controlar su salud financiera. Construida con tecnologias web modernas, ofrece una experiencia completa de gestion de productividad.
 
-![FocusLife Dashboard](https://img.shields.io/badge/Status-Production%20Ready-green)
-![Version](https://img.shields.io/badge/Version-1.0.0-blue)
+![Status](https://img.shields.io/badge/Status-Production%20Ready-green)
+![Version](https://img.shields.io/badge/Version-2.0.0-blue)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
-## ✨ Features
+**Live Demo:** [focuslife-app.vercel.app](https://focuslife-app.vercel.app)
 
-### 🔐 Authentication & Security
-- **JWT-based authentication** with secure token management
-- **User registration and login** system
-- **Protected routes** with middleware validation
-- **Session management** with automatic redirects
-
-### 📋 Task Management
-- **CRUD operations** for tasks (Create, Read, Update, Delete)
-- **Status tracking** (Pending, In Progress, Completed)
-- **Real-time updates** with optimistic UI updates
-- **Task statistics** and progress tracking
-
-### 🎯 Habit Tracking
-- **Custom habit creation** with frequency settings (Daily, Weekly, Monthly)
-- **Progress tracking** with completion counters
-- **Habit entries logging** with date and notes
-- **Statistics dashboard** showing completion rates and streaks
-
-### 💰 Financial Management
-- **Income and expense tracking** with categorization
-- **Transaction management** with CRUD operations
-- **Financial statistics** including balance, totals, and trends
-- **Monthly summaries** and reporting
-- **Pre-defined categories** for quick transaction entry
-
-### 📊 Real-time Dashboard
-- **Live statistics** from all modules
-- **Dynamic data visualization** 
-- **Quick navigation** to all app sections
-- **User-specific data** with personalized greetings
-
-### 🎨 Modern UX/UI
-- **Toast notifications** for user feedback (Success, Error, Warning, Delete)
-- **Responsive design** for all screen sizes
-- **Loading states** and smooth transitions
-- **Intuitive navigation** with consistent design patterns
-
-## 🛠️ Technology Stack
+## Tecnologias
 
 ### Frontend
-- **Next.js 15.3.3** - React framework with App Router
-- **TypeScript** - Type-safe development
-- **Tailwind CSS** - Utility-first CSS framework
-- **Custom Components** - Reusable UI components
-- **Custom Hooks** - Reusable logic (useToast)
+- **Next.js 15** con App Router y TypeScript
+- **Tailwind CSS** para estilos
+- **Middleware de Next.js** para proteccion de rutas server-side
 
 ### Backend
-- **Node.js** - JavaScript runtime
-- **Express.js** - Web application framework
-- **TypeScript** - Type-safe server development
-- **Prisma ORM** - Database toolkit and query builder
-- **SQLite** - Lightweight database for development
+- **Express 5** con TypeScript
+- **Prisma ORM** con PostgreSQL (Supabase)
+- **Zod** para validacion de schemas
 
-### Security & Middleware
-- **JWT (jsonwebtoken)** - Token-based authentication
-- **bcryptjs** - Password hashing
-- **Helmet** - Security headers
-- **CORS** - Cross-origin resource sharing
-- **Morgan** - HTTP request logging
+### Seguridad
+- **JWT** con tokens en httpOnly cookies (proteccion XSS)
+- **bcryptjs** (12 rounds) para hash de passwords
+- **Helmet** para security headers
+- **express-rate-limit** para proteccion contra fuerza bruta
+- **CSRF** proteccion via validacion de Origin header
+- **Middleware server-side** para proteccion de rutas
 
-## 📁 Project Structure
+### Despliegue
+- **Vercel** - Frontend
+- **Render** - Backend API
+- **Supabase** - Base de datos PostgreSQL
+
+## Estructura del Proyecto
 
 ```
 focuslife-app/
 ├── backend/
 │   ├── src/
-│   │   ├── config/
-│   │   │   └── database.ts          # Prisma configuration
-│   │   ├── middleware/
-│   │   │   └── auth.ts              # JWT authentication middleware
+│   │   ├── config/database.ts
+│   │   ├── middleware/auth.ts
 │   │   ├── routes/
-│   │   │   ├── auth.ts              # Authentication routes
-│   │   │   ├── tasks.ts             # Task management routes
-│   │   │   ├── habits.ts            # Habit tracking routes
-│   │   │   └── transactions.ts      # Financial transaction routes
+│   │   │   ├── auth.ts
+│   │   │   ├── tasks.ts
+│   │   │   ├── habits.ts
+│   │   │   └── transactions.ts
 │   │   ├── services/
-│   │   │   ├── authService.ts       # Authentication business logic
-│   │   │   ├── taskService.ts       # Task management logic
-│   │   │   ├── habitService.ts      # Habit tracking logic
-│   │   │   └── transactionService.ts # Financial logic
-│   │   ├── types/
-│   │   │   └── index.ts             # TypeScript type definitions
-│   │   ├── utils/
-│   │   │   └── auth.ts              # Authentication utilities
-│   │   └── server.ts                # Express server setup
-│   ├── prisma/
-│   │   ├── migrations/              # Database migrations
-│   │   └── schema.prisma            # Database schema
-│   └── package.json
+│   │   │   ├── authService.ts
+│   │   │   ├── taskService.ts
+│   │   │   ├── habitService.ts
+│   │   │   └── transactionService.ts
+│   │   ├── validators/schemas.ts
+│   │   ├── types/index.ts
+│   │   ├── utils/auth.ts
+│   │   └── server.ts
+│   └── prisma/schema.prisma
 ├── frontend/
 │   ├── src/
 │   │   ├── app/
-│   │   │   ├── dashboard/           # Main dashboard page
-│   │   │   ├── tasks/               # Task management page
-│   │   │   ├── habits/              # Habit tracking page
-│   │   │   ├── finances/            # Financial management page
-│   │   │   ├── login/               # Login page
-│   │   │   └── register/            # Registration page
+│   │   │   ├── dashboard/
+│   │   │   ├── tasks/
+│   │   │   ├── habits/
+│   │   │   ├── finances/
+│   │   │   └── register/
 │   │   ├── components/
-│   │   │   └── Toast.tsx            # Toast notification component
 │   │   ├── hooks/
-│   │   │   └── useToast.tsx         # Custom toast hook
-│   │   └── services/
-│   │       └── auth.ts              # Frontend authentication service
-│   └── package.json
+│   │   ├── services/auth.ts
+│   │   ├── config/api.ts
+│   │   └── middleware.ts
+│   └── next.config.ts
 └── README.md
 ```
 
-## 🚀 Installation & Setup
+## Instalacion
 
-### Prerequisites
-- Node.js (v18 or higher)
-- npm or yarn
+### Prerrequisitos
+- Node.js v18+
+- npm
 - Git
 
-### 1. Clone the repository
+### 1. Clonar el repositorio
 ```bash
-git clone https://github.com/yourusername/focuslife-app.git
+git clone https://github.com/JD117parra/focuslife-app.git
 cd focuslife-app
 ```
 
-### 2. Backend Setup
+### 2. Backend
 ```bash
 cd backend
 npm install
-```
-
-### 3. Database Setup
-```bash
-# Generate Prisma client
 npx prisma generate
-
-# Run database migrations
 npx prisma migrate dev
-
-# (Optional) Open Prisma Studio to view data
-npx prisma studio
 ```
 
-### 4. Environment Configuration
-Create a `.env` file in the backend directory:
+Crear archivo `.env`:
 ```env
-DATABASE_URL="file:./dev.db"
-JWT_SECRET="your-secret-key-here"
+DATABASE_URL="tu-connection-string-postgresql"
+JWT_SECRET="tu-secret-seguro-aqui"
 JWT_EXPIRES_IN="7d"
 PORT=5000
 NODE_ENV="development"
 FRONTEND_URL="http://localhost:3000"
 ```
 
-### 5. Frontend Setup
+### 3. Frontend
 ```bash
 cd ../frontend
 npm install
 ```
 
-### 6. Start Development Servers
-
-**Backend (Terminal 1):**
-```bash
-cd backend
-npm run dev
+Crear archivo `.env.local`:
+```env
+NEXT_PUBLIC_API_URL=http://localhost:5000
 ```
 
-**Frontend (Terminal 2):**
+### 4. Iniciar
 ```bash
-cd frontend
-npm run dev
+# Terminal 1 - Backend
+cd backend && npm run dev
+
+# Terminal 2 - Frontend
+cd frontend && npm run dev
 ```
 
-### 7. Access the Application
 - Frontend: http://localhost:3000
-- Backend API: http://localhost:5000
-- Backend Health Check: http://localhost:5000/health
+- Backend: http://localhost:5000
+- Health check: http://localhost:5000/health
 
-## 📚 API Documentation
+## API Endpoints
 
-### Authentication Endpoints
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/login` - User login
-- `GET /api/auth/me` - Get current user profile
+### Autenticacion
+| Metodo | Endpoint | Descripcion |
+|--------|----------|-------------|
+| POST | `/api/auth/register` | Registro de usuario |
+| POST | `/api/auth/login` | Inicio de sesion |
+| POST | `/api/auth/logout` | Cerrar sesion |
+| GET | `/api/auth/me` | Perfil del usuario |
 
-### Task Management
-- `GET /api/tasks` - Get all user tasks
-- `POST /api/tasks` - Create new task
-- `PUT /api/tasks/:id` - Update task
-- `DELETE /api/tasks/:id` - Delete task
-- `GET /api/tasks/stats` - Get task statistics
+### Tareas
+| Metodo | Endpoint | Descripcion |
+|--------|----------|-------------|
+| GET | `/api/tasks` | Listar tareas |
+| POST | `/api/tasks` | Crear tarea |
+| PUT | `/api/tasks/:id` | Actualizar tarea |
+| DELETE | `/api/tasks/:id` | Eliminar tarea |
+| GET | `/api/tasks/stats` | Estadisticas |
 
-### Habit Tracking
-- `GET /api/habits` - Get all user habits
-- `POST /api/habits` - Create new habit
-- `PUT /api/habits/:id` - Update habit
-- `DELETE /api/habits/:id` - Delete habit
-- `GET /api/habits/stats` - Get habit statistics
-- `POST /api/habits/:id/entries` - Log habit completion
+### Habitos
+| Metodo | Endpoint | Descripcion |
+|--------|----------|-------------|
+| GET | `/api/habits` | Listar habitos |
+| POST | `/api/habits` | Crear habito |
+| PUT | `/api/habits/:id` | Actualizar habito |
+| DELETE | `/api/habits/:id` | Eliminar habito |
+| GET | `/api/habits/stats` | Estadisticas |
+| POST | `/api/habits/:id/entries` | Registrar completado |
 
-### Financial Management
-- `GET /api/transactions` - Get all transactions
-- `POST /api/transactions` - Create new transaction
-- `PUT /api/transactions/:id` - Update transaction
-- `DELETE /api/transactions/:id` - Delete transaction
-- `GET /api/transactions/stats` - Get financial statistics
-- `GET /api/transactions/summary` - Get monthly summary
+### Finanzas
+| Metodo | Endpoint | Descripcion |
+|--------|----------|-------------|
+| GET | `/api/transactions` | Listar transacciones |
+| POST | `/api/transactions` | Crear transaccion |
+| PUT | `/api/transactions/:id` | Actualizar transaccion |
+| DELETE | `/api/transactions/:id` | Eliminar transaccion |
+| GET | `/api/transactions/stats` | Estadisticas |
+| GET | `/api/transactions/summary` | Resumen mensual |
 
-## 🎮 Usage
+## Seguridad
 
-### Getting Started
-1. **Register** a new account or **login** with existing credentials
-2. **Explore the dashboard** to see real-time statistics
-3. **Create your first task** in the Task Management section
-4. **Set up habits** you want to track
-5. **Log financial transactions** to monitor your budget
+- Tokens JWT almacenados en httpOnly cookies (no accesibles por JavaScript)
+- Rate limiting: 100 req/15min global, 5 req/15min en auth
+- Validacion de inputs con Zod schemas
+- Password minimo 8 caracteres con mayuscula, minuscula y numero
+- Proteccion CSRF via validacion de Origin header
+- Security headers (X-Frame-Options, X-Content-Type-Options, etc.)
+- Proteccion de rutas server-side con Next.js middleware
+- Variables de entorno validadas al iniciar el servidor
 
-### Key Features Usage
+## Arquitectura
 
-#### Task Management
-- Create tasks with titles and descriptions
-- Mark tasks as completed using checkboxes
-- Delete tasks with confirmation prompts
-- View real-time task statistics on dashboard
+```
+[Vercel - Frontend]  -->  [Render - API Express]  -->  [Supabase - PostgreSQL]
+     Next.js 15              Express + Prisma              Base de datos
+     Middleware               JWT + Cookies
+```
 
-#### Habit Tracking
-- Create habits with custom names and frequencies
-- Set targets for daily completion goals
-- Delete habits when no longer needed
-- Monitor progress through statistics
+## Autor
 
-#### Financial Tracking
-- Log income and expenses with descriptions
-- View real-time balance calculations
-- Organize transactions by type
-- Monitor monthly financial summaries
-
-## 🏗️ Architecture Highlights
-
-### Frontend Architecture
-- **Component-based design** with reusable UI elements
-- **Custom hooks** for shared logic (useToast)
-- **Type-safe development** with TypeScript
-- **Responsive design** with Tailwind CSS
-
-### Backend Architecture
-- **Layered architecture** (Routes → Services → Database)
-- **Middleware-based security** with JWT authentication
-- **Type-safe API** development with TypeScript
-- **Database abstraction** with Prisma ORM
-
-### Database Design
-- **Normalized schema** with proper relationships
-- **User isolation** - all data scoped to authenticated users
-- **Referential integrity** with cascade deletes
-- **Audit trails** with created/updated timestamps
-
-## 🎯 Roadmap
-
-### Planned Features
-- [ ] **Advanced Analytics** - Charts and graphs for data visualization
-- [ ] **Categories System** - Organize tasks and transactions by categories
-- [ ] **Search & Filters** - Advanced filtering and search capabilities
-- [ ] **Data Export** - Export data to CSV/PDF formats
-- [ ] **Mobile App** - React Native mobile application
-- [ ] **Team Collaboration** - Share tasks and habits with team members
-- [ ] **Recurring Tasks** - Automated task creation on schedules
-- [ ] **Goal Setting** - Long-term goal tracking and management
-
-### Technical Improvements
-- [ ] **Unit Testing** - Comprehensive test coverage
-- [ ] **E2E Testing** - End-to-end testing with Cypress
-- [ ] **Performance Optimization** - Code splitting and lazy loading
-- [ ] **Deployment** - Docker containerization and CI/CD pipeline
-- [ ] **Real Database** - PostgreSQL/MySQL for production
-- [ ] **Caching** - Redis implementation for improved performance
-
-## 🤝 Contributing
-
-We welcome contributions to FocusLife! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 👨‍💻 Author
-
-**JD Parra**
+**Juan Parra J.D**
 - GitHub: [@JD117parra](https://github.com/JD117parra)
-- LinkedIn: (https://linkedin.com/in/juan-parra-2358b428b)
+- LinkedIn: [juan-parra-2358b428b](https://linkedin.com/in/juan-parra-2358b428b)
 
-## 🙏 Acknowledgments
+## Licencia
 
-- Built with modern web technologies
-- Inspired by productivity and personal management needs
-- Thanks to the open-source community for amazing tools and libraries
-
----
-
-**⭐ If you find this project helpful, please consider giving it a star!**
+MIT License

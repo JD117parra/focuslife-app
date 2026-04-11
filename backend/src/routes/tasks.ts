@@ -1,7 +1,7 @@
 import { Router, Response } from 'express';
 import { TaskService } from '../services/taskService';
-import { CreateTaskDto, UpdateTaskDto } from '../types';
 import { authenticateToken, AuthenticatedRequest } from '../middleware/auth';
+import { createTaskSchema, updateTaskSchema, validateBody } from '../validators/schemas';
 
 const router = Router();
 
@@ -238,18 +238,7 @@ router.post(
         return;
       }
 
-      const taskData: CreateTaskDto = req.body;
-
-      if (!taskData.title) {
-        res.status(400).json({ message: 'Title is required' });
-        return;
-      }
-
-      if (!taskData.dueDate) {
-        res.status(400).json({ message: 'Due date is required' });
-        return;
-      }
-
+      const taskData = validateBody(createTaskSchema, req.body);
       const task = await TaskService.createTask(req.user.id, taskData);
 
       res.status(201).json({
@@ -277,7 +266,7 @@ router.put(
       }
 
       const { id } = req.params;
-      const taskData: UpdateTaskDto = req.body;
+      const taskData = validateBody(updateTaskSchema, req.body);
 
       const task = await TaskService.updateTask(id, req.user.id, taskData);
 

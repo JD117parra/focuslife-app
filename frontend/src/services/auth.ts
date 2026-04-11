@@ -12,35 +12,34 @@ interface AuthResponse {
   };
 }
 
-// Función auxiliar para verificar si estamos en el cliente
-const isClient = () => typeof window !== 'undefined';
+// Save token as a cookie accessible by Next.js middleware
+function setTokenCookie(token: string): void {
+  if (typeof document === 'undefined') return;
+  const maxAge = 7 * 24 * 60 * 60; // 7 days in seconds
+  document.cookie = `token=${token}; path=/; max-age=${maxAge}; SameSite=Lax; Secure`;
+}
+
+// Remove token cookie
+function removeTokenCookie(): void {
+  if (typeof document === 'undefined') return;
+  document.cookie = 'token=; path=/; max-age=0; SameSite=Lax; Secure';
+}
+
+// Get token from cookie
+export function getTokenFromCookie(): string | null {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(/(?:^|; )token=([^;]*)/);
+  return match ? match[1] : null;
+}
 
 export class AuthService {
-  // Guardar token en localStorage (solo en el cliente)
-  static setToken(token: string): void {
-    if (!isClient()) return;
-    localStorage.setItem('authToken', token);
-  }
-
-  // Obtener token de localStorage (solo en el cliente)
-  static getToken(): string | null {
-    if (!isClient()) return null;
-    return localStorage.getItem('authToken');
-  }
-
-  // Eliminar token (solo en el cliente)
-  static removeToken(): void {
-    if (!isClient()) return;
-    localStorage.removeItem('authToken');
-  }
-
-  // Login
   static async login(email: string, password: string): Promise<AuthResponse> {
     const response = await fetch(apiUrls.auth.login(), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
       body: JSON.stringify({ email, password }),
     });
 
@@ -49,10 +48,11 @@ export class AuthService {
       throw new Error(error.message || 'Login failed');
     }
 
-    return response.json();
+    const data: AuthResponse = await response.json();
+    setTokenCookie(data.data.token);
+    return data;
   }
 
-  // Register
   static async register(
     email: string,
     password: string,
@@ -63,6 +63,7 @@ export class AuthService {
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
       body: JSON.stringify({ email, password, name }),
     });
 
@@ -71,18 +72,24 @@ export class AuthService {
       throw new Error(error.message || 'Registration failed');
     }
 
-    return response.json();
+    const data: AuthResponse = await response.json();
+    setTokenCookie(data.data.token);
+    return data;
   }
 
-  // Verificar si está logueado (solo en el cliente)
-  static isLoggedIn(): boolean {
-    return this.getToken() !== null;
-  }
+  static async logout(): Promise<void> {
+    try {
+      await fetch(apiUrls.auth.logout(), {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
 
-  // Logout (solo en el cliente)
-  static logout(): void {
-    this.removeToken();
-    if (isClient()) {
+    removeTokenCookie();
+
+    if (typeof window !== 'undefined') {
       window.location.href = '/';
     }
   }
