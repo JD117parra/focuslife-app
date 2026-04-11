@@ -8,11 +8,31 @@ interface AuthResponse {
       email: string;
       name: string;
     };
+    token: string;
   };
 }
 
+// Save token as a cookie accessible by Next.js middleware
+function setTokenCookie(token: string): void {
+  if (typeof document === 'undefined') return;
+  const maxAge = 7 * 24 * 60 * 60; // 7 days in seconds
+  document.cookie = `token=${token}; path=/; max-age=${maxAge}; SameSite=Lax; Secure`;
+}
+
+// Remove token cookie
+function removeTokenCookie(): void {
+  if (typeof document === 'undefined') return;
+  document.cookie = 'token=; path=/; max-age=0; SameSite=Lax; Secure';
+}
+
+// Get token from cookie
+export function getTokenFromCookie(): string | null {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(/(?:^|; )token=([^;]*)/);
+  return match ? match[1] : null;
+}
+
 export class AuthService {
-  // Login - token is set as httpOnly cookie by the server
   static async login(email: string, password: string): Promise<AuthResponse> {
     const response = await fetch(apiUrls.auth.login(), {
       method: 'POST',
@@ -28,10 +48,11 @@ export class AuthService {
       throw new Error(error.message || 'Login failed');
     }
 
-    return response.json();
+    const data: AuthResponse = await response.json();
+    setTokenCookie(data.data.token);
+    return data;
   }
 
-  // Register - token is set as httpOnly cookie by the server
   static async register(
     email: string,
     password: string,
@@ -51,10 +72,11 @@ export class AuthService {
       throw new Error(error.message || 'Registration failed');
     }
 
-    return response.json();
+    const data: AuthResponse = await response.json();
+    setTokenCookie(data.data.token);
+    return data;
   }
 
-  // Logout - clears httpOnly cookie on the server
   static async logout(): Promise<void> {
     try {
       await fetch(apiUrls.auth.logout(), {
@@ -64,6 +86,8 @@ export class AuthService {
     } catch (error) {
       console.error('Logout error:', error);
     }
+
+    removeTokenCookie();
 
     if (typeof window !== 'undefined') {
       window.location.href = '/';

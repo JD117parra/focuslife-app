@@ -38,6 +38,7 @@ router.post('/register', authLimiter, async (req: Request, res: Response): Promi
       message: 'User registered successfully',
       data: {
         user: result.user,
+        token: result.token,
       },
     });
   } catch (error) {
@@ -61,6 +62,7 @@ router.post('/login', authLimiter, async (req: Request, res: Response): Promise<
       message: 'Login successful',
       data: {
         user: result.user,
+        token: result.token,
       },
     });
   } catch (error) {
