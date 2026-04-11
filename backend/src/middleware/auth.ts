@@ -16,8 +16,11 @@ export const authenticateToken = async (
   next: NextFunction
 ): Promise<void> => {
   try {
+    // Try to get token from httpOnly cookie first, then fallback to Authorization header
+    const cookieToken = req.cookies?.token;
     const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+    const headerToken = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+    const token = cookieToken || headerToken;
 
     if (!token) {
       res.status(401).json({ message: 'Access token required' });

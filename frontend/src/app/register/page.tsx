@@ -36,11 +36,8 @@ export default function RegisterPage() {
     try {
       const response = await AuthService.register(email, password, name);
 
-      // Guardar token y redireccionar
-      AuthService.setToken(response.data.token);
-
       console.log(
-        `¡Registro exitoso! Bienvenido ${response.data.user.name || response.data.user.email}`
+        `Registro exitoso! Bienvenido ${response.data.user.name || response.data.user.email}`
       );
 
       // Redireccionar al dashboard

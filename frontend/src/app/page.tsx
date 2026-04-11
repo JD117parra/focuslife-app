@@ -16,8 +16,7 @@ export default function HomePage() {
     setLoading(true);
 
     try {
-      const response = await AuthService.login(loginEmail, loginPassword);
-      AuthService.setToken(response.data.token);
+      await AuthService.login(loginEmail, loginPassword);
       window.location.href = '/dashboard';
     } catch (error) {
       console.error(

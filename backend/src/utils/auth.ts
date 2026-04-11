@@ -19,15 +19,23 @@ export class AuthUtils {
     return await bcrypt.compare(password, hashedPassword);
   }
 
+  static getJwtSecret(): string {
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      throw new Error('JWT_SECRET environment variable is required. Server cannot start without it.');
+    }
+    return secret;
+  }
+
   static generateToken(userId: string, email: string): string {
-    const secret = process.env.JWT_SECRET || 'fallback-secret';
+    const secret = this.getJwtSecret();
     const payload = { userId, email };
 
     return jwt.sign(payload, secret, { expiresIn: '7d' });
   }
 
   static verifyToken(token: string): JwtPayload {
-    const secret = process.env.JWT_SECRET || 'fallback-secret';
+    const secret = this.getJwtSecret();
 
     try {
       return jwt.verify(token, secret) as JwtPayload;
